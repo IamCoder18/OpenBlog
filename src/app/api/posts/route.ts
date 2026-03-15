@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, getUserFromRequest } from "@/lib/auth";
 import { Pool } from "pg";
 import crypto from "crypto";
 
@@ -41,31 +41,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get("Authorization");
-    let userId = null;
-    let userRole = null;
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const apiKey = authHeader.split(" ")[1];
-      const hashedKey = crypto.createHash('sha256').update(apiKey).digest('hex');
-      const apiKeyResult = await pool.query(`SELECT "userId" FROM apikeys WHERE "key" = $1`, [hashedKey]);
-
-      if (apiKeyResult.rows.length > 0) {
-        userId = apiKeyResult.rows[0].userId;
-        const userResult = await pool.query(`SELECT "role" FROM "user" WHERE id = $1`, [userId]);
-        if(userResult.rows.length > 0) {
-           userRole = userResult.rows[0].role;
-        }
-      }
-    }
-
-    if (!userId) {
-      const session = await auth.api.getSession({ headers: req.headers });
-      if (session) {
-        userId = session.user.id;
-        userRole = (session.user as any).role;
-      }
-    }
+    const { userId, userRole } = await getUserFromRequest(req);
 
     if (!userId || (userRole !== "Agent" && userRole !== "Admin")) {
       return NextResponse.json({

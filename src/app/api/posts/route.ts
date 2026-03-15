@@ -47,7 +47,8 @@ export async function POST(req: Request) {
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const apiKey = authHeader.split(" ")[1];
-      const apiKeyResult = await pool.query(`SELECT "userId" FROM apikeys WHERE "key" = $1`, [apiKey]);
+      const hashedKey = crypto.createHash('sha256').update(apiKey).digest('hex');
+      const apiKeyResult = await pool.query(`SELECT "userId" FROM apikeys WHERE "key" = $1`, [hashedKey]);
 
       if (apiKeyResult.rows.length > 0) {
         userId = apiKeyResult.rows[0].userId;

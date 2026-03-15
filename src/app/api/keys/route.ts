@@ -50,11 +50,15 @@ export async function POST(req: Request) {
     const key = crypto.randomUUID();
     const id = crypto.randomUUID();
 
+    // Hash the API key before storing it in the database for security
+    const hashedKey = crypto.createHash('sha256').update(key).digest('hex');
+
     await pool.query(
       `INSERT INTO apikeys (id, "key", "userId") VALUES ($1, $2, $3)`,
-      [id, key, agentId]
+      [id, hashedKey, agentId]
     );
 
+    // Return the plain text key exactly once
     return NextResponse.json({ key }, { status: 201 });
   } catch (error) {
     console.error("Error creating API key:", error);

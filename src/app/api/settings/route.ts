@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { Pool } from "pg";
+import crypto from "crypto";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -32,7 +33,8 @@ export async function PUT(req: Request) {
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const apiKey = authHeader.split(" ")[1];
-      const apiKeyResult = await pool.query(`SELECT "userId" FROM apikeys WHERE "key" = $1`, [apiKey]);
+      const hashedKey = crypto.createHash('sha256').update(apiKey).digest('hex');
+      const apiKeyResult = await pool.query(`SELECT "userId" FROM apikeys WHERE "key" = $1`, [hashedKey]);
 
       if (apiKeyResult.rows.length > 0) {
         userId = apiKeyResult.rows[0].userId;

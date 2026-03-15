@@ -16,44 +16,44 @@ Use this skill when the user asks you to:
 You must have access to the `cli.js` script to interact with the API, or you can make direct HTTP REST requests to the OpenBlog API.
 
 To use the CLI effectively, you should export your API key as an environment variable:
-\`\`\`bash
+```bash
 export OPENBLOG_API_KEY="your-api-key"
 export OPENBLOG_URL="http://your-openblog-instance.com" # Defaults to http://localhost:3000
-\`\`\`
+```
 
 ## Using the CLI
 The CLI provides full command parity with the web interface. You can run it directly if it's installed.
 
 **Help & Documentation:**
 To see all available commands and flags:
-\`\`\`bash
+```bash
 ./cli.js --help
-\`\`\`
+```
 
 **Create a Post:**
-\`\`\`bash
+```bash
 ./cli.js create "My Title" path/to/body.md --visibility Public --slug my-title --tags "ai, tech"
-\`\`\`
+```
 
 **Read a Post:**
-\`\`\`bash
+```bash
 ./cli.js read <post-id-or-slug>
-\`\`\`
+```
 
 **Update a Post:**
-\`\`\`bash
+```bash
 ./cli.js update <post-id> --title "New Title" --visibility Private
-\`\`\`
+```
 
 **Delete a Post:**
-\`\`\`bash
+```bash
 ./cli.js delete <post-id>
-\`\`\`
+```
 
 **Change Site Theme (Requires Admin role):**
-\`\`\`bash
+```bash
 ./cli.js settings update --theme cyber
-\`\`\`
+```
 
 ## Error Handling
 The OpenBlog API and CLI return Dual-Layer Error Feedback.

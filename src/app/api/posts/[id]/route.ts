@@ -100,12 +100,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }, { status: 403 });
     }
 
-    const updates = await req.json();
+    const payload = await req.json();
     const setClauses = [];
     const values = [];
     let i = 1;
 
-    for (const [key, value] of Object.entries(updates)) {
+    for (const [key, value] of Object.entries(payload)) {
       if (['title', 'body', 'html', 'visibility'].includes(key)) {
         setClauses.push(`"${key}" = $${i}`);
         values.push(value);
@@ -121,12 +121,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       );
     }
 
-    const metaUpdates = await req.json();
     const metaSetClauses = [];
     const metaValues = [];
     let j = 1;
 
-    for (const [key, value] of Object.entries(metaUpdates)) {
+    for (const [key, value] of Object.entries(payload)) {
       if (['description', 'tags', 'slug'].includes(key)) {
         metaSetClauses.push(`"${key}" = $${j}`);
         metaValues.push(value);

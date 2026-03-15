@@ -3,11 +3,32 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+interface SessionUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Session {
+  user: SessionUser;
+  expires: string;
+}
+
+interface Post {
+  id: string;
+  title: string;
+  visibility: string;
+  authorName: string;
+  createdAt: string;
+}
+
 export default function AdminPanel() {
-  const [session, setSession] = useState<any>(null);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [theme, setTheme] = useState<string>("clean");
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -50,12 +71,14 @@ export default function AdminPanel() {
       });
       if (res.ok) {
         setTheme(newTheme);
+        setErrorMsg(null);
       } else {
         const errData = await res.json();
-        alert(`Failed to update theme: ${errData.error} (${errData.suggestion})`);
+        setErrorMsg(`Failed to update theme: ${errData.error} (${errData.suggestion})`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorMsg(`An unexpected error occurred: ${err.message}`);
     }
   };
 
@@ -115,6 +138,11 @@ export default function AdminPanel() {
                <p className={`text-sm mb-4 ${theme === 'cyber' ? 'text-green-700' : 'text-gray-600 dark:text-gray-400'}`}>
                  Toggle between aesthetic presets. Implementation of a robust theming engine to balance a high-tech "cyber" aesthetic with a clean feel.
                </p>
+               {errorMsg && (
+                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                   <span className="block sm:inline">{errorMsg}</span>
+                 </div>
+               )}
                <div className="flex gap-4">
                  <button
                    onClick={() => updateTheme('cyber')}

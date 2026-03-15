@@ -9,10 +9,10 @@ fi
 
 echo "Copying CLI to /usr/local/bin/openblog..."
 if [ -w /usr/local/bin ]; then
-   cp cli.js /usr/local/bin/openblog
+   cp cli.ts /usr/local/bin/openblog
    chmod +x /usr/local/bin/openblog
 else
-   sudo cp cli.js /usr/local/bin/openblog
+   sudo cp cli.ts /usr/local/bin/openblog
    sudo chmod +x /usr/local/bin/openblog
 fi
 

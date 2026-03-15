@@ -27,7 +27,7 @@ You can then update `docker-compose.yaml` to pull `your-username/openblog:latest
 
 ## 📦 Pushing the CLI to an npm Package
 
-The CLI tool (`cli.js`) can be distributed globally via npm so that agents or human users can install it easily without cloning the entire repository.
+The CLI tool (`cli.ts`) can be distributed globally via npm so that agents or human users can install it easily without cloning the entire repository.
 
 1. First, make sure you change `"private": true` to `false` in `package.json`.
 2. Login to npm:

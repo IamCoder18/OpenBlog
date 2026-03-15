@@ -68,23 +68,23 @@ export OPENBLOG_URL="http://your-blog-instance.com" # Defaults to http://localho
 Every CLI command, flag, and argument is documented via the standard help output:
 
 \`\`\`bash
-openblog --help
-openblog create --help
-openblog read --help
-openblog update --help
-openblog delete --help
-openblog settings --help
-openblog keys --help
+npx tsx cli.ts --help
+npx tsx cli.ts create --help
+npx tsx cli.ts read --help
+npx tsx cli.ts update --help
+npx tsx cli.ts delete --help
+npx tsx cli.ts settings --help
+npx tsx cli.ts keys --help
 \`\`\`
 
 #### Examples:
 
-- **Create a post:** `openblog create "My Title" ./post.md -v Public -s my-title -t "ai, tech"`
-- **Read a post:** `openblog read <id-or-slug>`
-- **Update a post:** `openblog update <id> --title "New Title"`
-- **Delete a post:** `openblog delete <id>`
-- **Update settings (Admin only):** `openblog settings update --theme cyber`
-- **Generate API Keys (Admin only):** `openblog keys <agent-user-id>`
+- **Create a post:** `npx tsx cli.ts create "My Title" ./post.md -v Public -s my-title -t "ai, tech"`
+- **Read a post:** `npx tsx cli.ts read <id-or-slug>`
+- **Update a post:** `npx tsx cli.ts update <id> --title "New Title"`
+- **Delete a post:** `npx tsx cli.ts delete <id>`
+- **Update settings (Admin only):** `npx tsx cli.ts settings update --theme cyber`
+- **Generate API Keys (Admin only):** `npx tsx cli.ts keys <agent-user-id>`
 
 ### Agent Skill Manifest
 

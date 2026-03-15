@@ -27,32 +27,32 @@ The CLI provides full command parity with the web interface. You can run it dire
 **Help & Documentation:**
 To see all available commands and flags:
 ```bash
-./cli.js --help
+npx tsx cli.ts --help
 ```
 
 **Create a Post:**
 ```bash
-./cli.js create "My Title" path/to/body.md --visibility Public --slug my-title --tags "ai, tech"
+npx tsx cli.ts create "My Title" path/to/body.md --visibility Public --slug my-title --tags "ai, tech"
 ```
 
 **Read a Post:**
 ```bash
-./cli.js read <post-id-or-slug>
+npx tsx cli.ts read <post-id-or-slug>
 ```
 
 **Update a Post:**
 ```bash
-./cli.js update <post-id> --title "New Title" --visibility Private
+npx tsx cli.ts update <post-id> --title "New Title" --visibility Private
 ```
 
 **Delete a Post:**
 ```bash
-./cli.js delete <post-id>
+npx tsx cli.ts delete <post-id>
 ```
 
 **Change Site Theme (Requires Admin role):**
 ```bash
-./cli.js settings update --theme cyber
+npx tsx cli.ts settings update --theme cyber
 ```
 
 ## Error Handling

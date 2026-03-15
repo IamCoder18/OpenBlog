@@ -49,6 +49,25 @@ function getClient(token, baseUrl) {
   });
 }
 
+// Helper to safely read a file
+function readFileSafely(filepath) {
+  try {
+    const absolutePath = path.resolve(process.cwd(), filepath);
+    if (!fs.existsSync(absolutePath)) {
+      console.error(JSON.stringify({
+        error: `File not found at ${absolutePath}`,
+        code: 'ERR_FILE_NOT_FOUND',
+        suggestion: 'Provide a valid relative or absolute file path.'
+      }, null, 2));
+      process.exit(1);
+    }
+    return fs.readFileSync(absolutePath, 'utf8');
+  } catch (e) {
+    console.error(JSON.stringify({ error: e.message, code: 'ERR_FILE_READ', suggestion: 'Check file permissions.' }));
+    process.exit(1);
+  }
+}
+
 // ----------------------------------------------------------------------
 // COMMAND: create
 // ----------------------------------------------------------------------
@@ -64,22 +83,7 @@ program.command('create')
     const { token, baseUrl } = getConfig();
     const client = getClient(token, baseUrl);
 
-    let body;
-    try {
-      const absolutePath = path.resolve(process.cwd(), filepath);
-      if (!fs.existsSync(absolutePath)) {
-        console.error(JSON.stringify({
-          error: `File not found at ${absolutePath}`,
-          code: 'ERR_FILE_NOT_FOUND',
-          suggestion: 'Provide a valid relative or absolute file path.'
-        }, null, 2));
-        process.exit(1);
-      }
-      body = fs.readFileSync(absolutePath, 'utf8');
-    } catch (e) {
-      console.error(JSON.stringify({ error: e.message, code: 'ERR_FILE_READ', suggestion: 'Check file permissions.' }));
-      process.exit(1);
-    }
+    const body = readFileSafely(filepath);
 
     const defaultSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const payload = {
@@ -142,18 +146,7 @@ program.command('update')
     if (options.tags) payload.tags = options.tags;
 
     if (options.filepath) {
-      try {
-        const absolutePath = path.resolve(process.cwd(), options.filepath);
-        if (fs.existsSync(absolutePath)) {
-          payload.body = fs.readFileSync(absolutePath, 'utf8');
-        } else {
-           console.error(JSON.stringify({ error: 'File not found', code: 'ERR_FILE_NOT_FOUND', suggestion: 'Check the filepath' }));
-           process.exit(1);
-        }
-      } catch (e) {
-        console.error(JSON.stringify({ error: e.message, code: 'ERR_FILE_READ', suggestion: 'Check file permissions.' }));
-        process.exit(1);
-      }
+      payload.body = readFileSafely(options.filepath);
     }
 
     if (Object.keys(payload).length === 0) {

@@ -29,21 +29,7 @@ You can then update `docker-compose.yaml` to pull `your-username/openblog:latest
 
 The CLI tool (`cli.js`) can be distributed globally via npm so that agents or human users can install it easily without cloning the entire repository.
 
-1. Create a minimal `package.json` for the CLI if you haven't already:
-   ```json
-   {
-     "name": "@your-org/openblog-cli",
-     "version": "1.0.0",
-     "description": "CLI tool for OpenBlog",
-     "bin": {
-       "openblog": "./cli.js"
-     },
-     "dependencies": {
-       "commander": "^11.0.0",
-       "axios": "^1.5.0"
-     }
-   }
-   ```
+1. First, make sure you change `"private": true` to `false` in `package.json`.
 2. Login to npm:
    ```bash
    npm login
@@ -61,7 +47,7 @@ The `openblog-skill` directory contains an Agent Skill manifest (`SKILL.md`) tha
 To distribute this skill, you can zip the folder:
 
 ```bash
-zip -r openblog-skill.zip openblog-skill/
+npm run build:skill
 ```
 
 Agents that support the progressive disclosure "Agent Skills" format can then download or mount this zip file, extracting the `SKILL.md` file to understand how to interact with the API and CLI tool seamlessly.

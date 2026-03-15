@@ -2,11 +2,15 @@
   "name": "openblog",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "openblog": "./cli.js"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:skill": "zip -r openblog-skill.zip openblog-skill/"
   },
   "dependencies": {
     "better-auth": "^1.5.5",

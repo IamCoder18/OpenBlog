@@ -7,9 +7,6 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-echo "Installing OpenBlog CLI dependencies globally..."
-npm install -g commander axios
-
 echo "Copying CLI to /usr/local/bin/openblog..."
 if [ -w /usr/local/bin ]; then
    cp cli.js /usr/local/bin/openblog

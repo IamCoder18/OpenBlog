@@ -29,25 +29,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const post = postResult.rows[0];
 
     if (post.visibility === 'Private') {
-      const session = await auth.api.getSession({ headers: req.headers });
+      const { userId, userRole } = await getUserFromRequest(req);
 
-      let isAuthorized = false;
-
-      if (session) {
-         if (session.user.id === post.authorId || (session.user as any).role === 'Admin') {
-             isAuthorized = true;
-         }
-      } else {
-        const authHeader = req.headers.get("Authorization");
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-          const apiKey = authHeader.split(" ")[1];
-          const hashedKey = crypto.createHash('sha256').update(apiKey).digest('hex');
-          const apiKeyResult = await pool.query(`SELECT "userId" FROM apikeys WHERE "key" = $1`, [hashedKey]);
-          if (apiKeyResult.rows.length > 0 && (apiKeyResult.rows[0].userId === post.authorId)) {
-            isAuthorized = true;
-          }
-        }
-      }
+      const isAuthorized = userId === post.authorId || userRole === 'Admin';
 
       if (!isAuthorized) {
         return NextResponse.json({

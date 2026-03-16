@@ -9,7 +9,7 @@ const pool = new Pool({
 
 export async function GET(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const { userId, userRole } = await getUserFromRequest(req);
 
     let query = `
       SELECT p.*, u.name as "authorName"
@@ -19,9 +19,15 @@ export async function GET(req: Request) {
     `;
     let values: any[] = [];
 
-    if (session) {
-      query += ` OR p."authorId" = $1 OR u.role = 'Admin'`;
-      values.push(session.user.id);
+    if (userRole === 'Admin') {
+      query = `
+        SELECT p.*, u.name as "authorName"
+        FROM posts p
+        JOIN "user" u ON p."authorId" = u.id
+      `;
+    } else if (userId) {
+      query += ` OR p."authorId" = $1`;
+      values.push(userId);
     }
 
     query += ` ORDER BY p."createdAt" DESC`;

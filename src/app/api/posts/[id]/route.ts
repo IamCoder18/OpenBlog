@@ -97,6 +97,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }
     }
 
+    await pool.query('BEGIN');
+
     if (setClauses.length > 0) {
        values.push(resolvedParams.id);
        await pool.query(
@@ -125,8 +127,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
        );
     }
 
+    await pool.query('COMMIT');
+
     return NextResponse.json({ success: true });
   } catch (error) {
+    await pool.query('ROLLBACK');
     console.error("Error updating post:", error);
     return NextResponse.json({
       error: "Failed to update post",
@@ -167,10 +172,14 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       }, { status: 403 });
     }
 
+    await pool.query('BEGIN');
+    await pool.query(`DELETE FROM metadata WHERE "postId" = $1`, [resolvedParams.id]);
     await pool.query(`DELETE FROM posts WHERE id = $1`, [resolvedParams.id]);
+    await pool.query('COMMIT');
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    await pool.query('ROLLBACK');
     console.error("Error deleting post:", error);
     return NextResponse.json({
       error: "Failed to delete post",

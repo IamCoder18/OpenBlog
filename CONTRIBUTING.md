@@ -9,7 +9,8 @@ The project is built around an API-first Next.js (App Router) structure and a Po
 - `src/app/api`: Server-side API routes for content management, themes, and authentication with robust JSON Dual-Layer Error Feedback.
 - `src/app/post/[slug]`: Markdown and LaTeX-capable renderer page.
 - `src/lib/auth.ts`: BetterAuth configuration logic.
-- `src/app/rss.xml/route.ts` & `src/app/sitemap.ts`: Native SEO and XML feeds.
+- `src/app/sitemap.ts`: Next.js native metadata file for generating `sitemap.xml`.
+- `src/app/rss.xml/route.ts`: Next.js App Router API route serving a dynamic RSS XML feed.
 - `cli.ts`: Native Node.js CLI tool for autonomous agents to perform full CRUD, parity with the frontend.
 - `openblog-skill/SKILL.md`: Standard Agent Skill Manifest for extending AI capabilities.
 

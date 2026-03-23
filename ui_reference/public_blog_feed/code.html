@@ -1,0 +1,461 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>OpenBlog | The Digital Curator</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed-dim": "#d2bbff",
+              "secondary-fixed": "#eaddff",
+              "inverse-on-surface": "#303032",
+              "tertiary-fixed": "#ffdcc6",
+              "surface-container": "#201f21",
+              "inverse-primary": "#732ee4",
+              "inverse-surface": "#e5e1e4",
+              secondary: "#d2bbff",
+              "on-surface-variant": "#ccc3d8",
+              "on-primary-fixed-variant": "#5a00c6",
+              "on-primary-fixed": "#25005a",
+              surface: "#131315",
+              "on-error": "#690005",
+              "on-background": "#e5e1e4",
+              "primary-fixed-dim": "#d2bbff",
+              "on-primary-container": "#ede0ff",
+              "surface-dim": "#131315",
+              "on-secondary-fixed-variant": "#523787",
+              "primary-fixed": "#eaddff",
+              "on-surface": "#e5e1e4",
+              "on-tertiary-fixed-variant": "#713700",
+              "on-tertiary": "#4f2500",
+              "surface-bright": "#39393b",
+              outline: "#958da1",
+              "surface-container-high": "#2a2a2c",
+              "on-tertiary-fixed": "#301400",
+              "surface-variant": "#353437",
+              "secondary-container": "#523787",
+              "surface-container-low": "#1b1b1d",
+              "on-secondary-container": "#c3a6ff",
+              "tertiary-fixed-dim": "#ffb784",
+              "error-container": "#93000a",
+              "surface-container-highest": "#353437",
+              primary: "#d2bbff",
+              "surface-tint": "#d2bbff",
+              "primary-container": "#7c3aed",
+              "outline-variant": "#4a4455",
+              tertiary: "#ffb784",
+              "on-secondary-fixed": "#25005a",
+              "on-secondary": "#3b1e6f",
+              "surface-container-lowest": "#0e0e10",
+              background: "#131315",
+              "on-tertiary-container": "#ffe0cd",
+              "tertiary-container": "#a15100",
+              "on-primary": "#3f008e",
+              error: "#ffb4ab",
+              "on-error-container": "#ffdad6",
+            },
+            fontFamily: {
+              headline: ["Manrope"],
+              body: ["Inter"],
+              label: ["Inter"],
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "0.75rem",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .editorial-gradient {
+        background: linear-gradient(135deg, #d2bbff 0%, #7c3aed 100%);
+      }
+      .glass-panel {
+        backdrop-filter: blur(20px);
+        background: rgba(53, 52, 55, 0.8);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background text-on-background font-body selection:bg-primary/30"
+  >
+    <!-- Top Navigation Bar -->
+    <nav
+      class="fixed top-0 w-full z-50 bg-zinc-950/70 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] shadow-violet-500/5"
+    >
+      <div
+        class="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto font-['Manrope'] tracking-tight antialiased text-sm font-medium"
+      >
+        <div class="text-xl font-bold tracking-tighter text-zinc-100">
+          OpenBlog
+        </div>
+        <div class="hidden md:flex items-center space-x-8">
+          <a
+            class="text-violet-300 border-b-2 border-violet-500 pb-1 duration-300 ease-in-out active:scale-95"
+            href="#"
+            >Feed</a
+          >
+          <a
+            class="text-zinc-400 hover:text-zinc-100 transition-colors duration-300 ease-in-out active:scale-95"
+            href="#"
+            >Explore</a
+          >
+          <a
+            class="text-zinc-400 hover:text-zinc-100 transition-colors duration-300 ease-in-out active:scale-95"
+            href="#"
+            >Dashboard</a
+          >
+        </div>
+        <div class="flex items-center space-x-4">
+          <button
+            class="p-2 hover:bg-zinc-800/50 rounded-lg transition-all duration-300 ease-in-out active:scale-95"
+          >
+            <span class="material-symbols-outlined text-on-surface-variant"
+              >notifications</span
+            >
+          </button>
+          <button
+            class="p-2 hover:bg-zinc-800/50 rounded-lg transition-all duration-300 ease-in-out active:scale-95"
+          >
+            <span class="material-symbols-outlined text-on-surface-variant"
+              >account_circle</span
+            >
+          </button>
+        </div>
+      </div>
+    </nav>
+    <main class="pt-24 pb-20 max-w-7xl mx-auto px-8">
+      <!-- Hero Featured Section (Editorial Intentional Asymmetry) -->
+      <header
+        class="relative mb-24 flex flex-col md:flex-row items-center gap-12"
+      >
+        <div class="w-full md:w-3/5 z-10">
+          <div
+            class="mb-4 inline-flex items-center space-x-2 text-primary font-label text-xs uppercase tracking-widest"
+          >
+            <span class="w-8 h-[1px] bg-primary"></span>
+            <span>Featured Insight</span>
+          </div>
+          <h1
+            class="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter leading-tight mb-6"
+          >
+            The Architecture <br />
+            of Digital Curation.
+          </h1>
+          <p
+            class="text-on-surface-variant text-lg max-w-xl mb-8 leading-relaxed"
+          >
+            Moving beyond the cold aesthetics of generic tech. Explore how
+            design language shapes our interaction with high-end editorial
+            content.
+          </p>
+          <button
+            class="editorial-gradient text-on-primary px-8 py-4 rounded-lg font-label font-semibold flex items-center group transition-all duration-300 active:scale-95"
+          >
+            Read the Full Story
+            <span
+              class="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform"
+              >arrow_forward</span
+            >
+          </button>
+        </div>
+        <div class="w-full md:w-2/5 aspect-[4/5] relative">
+          <div
+            class="absolute inset-0 bg-primary/10 rounded-xl transform translate-x-4 translate-y-4"
+          ></div>
+          <img
+            class="w-full h-full object-cover rounded-xl shadow-2xl relative z-0"
+            data-alt="Abstract violet and charcoal architectural geometry"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzILsUh-sb_MQ6oV86_Up0llm3qqmDniQhJFD8XC0CBuFbF-BCVdISfJSuR191lH9Tbt4w9tarrjEf1O79pKketzYe7ttJQHtzpABGMWIKQSoqEDC5tOj8cm9RUbUaNepUhvPOX_2ZEnQs6bA8kbx-F3pMsIYvBow6_1uxc4gpUSLbay98auC7eYvwj3GyUpmO1aGCuucw8pKkUR2lpM5VDNmK71WOXtBXMXJr4mi_JrpI8xmUeArqH1fsotLq-MkNvDX2FIWIBw"
+          />
+        </div>
+      </header>
+      <!-- Dynamic Feed Section -->
+      <section class="mb-20">
+        <div class="flex items-end justify-between mb-12">
+          <div>
+            <h2 class="font-headline text-3xl font-bold tracking-tight">
+              Recent Stories
+            </h2>
+            <p class="text-on-surface-variant font-label text-sm mt-2">
+              Latest updates from the curated collective
+            </p>
+          </div>
+          <div class="flex space-x-2">
+            <button
+              class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg transition-colors"
+            >
+              <span class="material-symbols-outlined">grid_view</span>
+            </button>
+            <button
+              class="p-2 text-zinc-500 hover:text-zinc-100 transition-colors"
+            >
+              <span class="material-symbols-outlined">view_list</span>
+            </button>
+          </div>
+        </div>
+        <!-- Bento Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+          <!-- Large Feature Card -->
+          <article
+            class="md:col-span-8 group relative overflow-hidden rounded-xl bg-surface-container-low hover:bg-surface-container transition-all duration-500"
+          >
+            <div class="aspect-video overflow-hidden">
+              <img
+                class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+                data-alt="Modern minimalist workspace with high-end technology"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOCAeZ5uDBGAwOIkRMYPMRNQZ9Q4TAaFw4hSlLQJWFAtFs2MF3HWowzuJkfi3tXrH3odphUgCHJxfqTmHm2YVrviOrJ8l047yQUwwriuMOhuQ19qeQaF3eV3eJ4PJnyQA8Cc-E_RMQQw2QT8zCbmPxHPbO-LReGG-b2mI_Hcp9SBFs496AHmgztvTLJQpfZ28yWRag2RYmsdofJ6LYE_5cn--G80zz6JGpcQNZvOPo3nDrbH5yDeWX9MWnscIgB_QUEG5c_XnuLg"
+              />
+            </div>
+            <div class="p-8">
+              <div class="flex items-center space-x-4 mb-4">
+                <span
+                  class="px-3 py-1 bg-violet-500/10 text-violet-400 text-[10px] uppercase font-bold tracking-widest rounded-full"
+                  >Engineering</span
+                >
+                <span class="text-zinc-500 text-xs font-label"
+                  >12 Min Read</span
+                >
+              </div>
+              <h3
+                class="font-headline text-2xl font-bold mb-4 group-hover:text-primary transition-colors"
+              >
+                Refining the Bleeding Edge: Next-Gen Component Systems
+              </h3>
+              <p
+                class="text-on-surface-variant line-clamp-2 leading-relaxed mb-6"
+              >
+                A deep dive into why 1px borders are a relic of the past and how
+                tonal layering creates a more organic user experience.
+              </p>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <div
+                    class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden"
+                  >
+                    <img
+                      class="w-full h-full object-cover"
+                      data-alt="Author profile avatar"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6tY7LNG1t_qa6FvQOAYF9v9-bIhuXlMf-niGA-_NmfSwmcB-3rXWwKSfv1wVHtBbXmq4oYO9g6CgFt0-5GWxDYWFCxNZLSd6Z3bIG-m8gqFv3WopI0Vs2aQ2RAL426qAwncmHjb07H7RxwuaBdehFj_lbMPcx_T-Jat5fM1df6JJgf0rNBuVgCP7sj4LcwghVHxfAjmyJ97lxufMOo4YkxXwrceaNrV_CWQMgKY-eu7o3X5Mr0mRT1S4BrUtPQONq0Xb_1NRZyA"
+                    />
+                  </div>
+                  <span class="text-sm font-medium text-zinc-300"
+                    >Marcus Thorne</span
+                  >
+                </div>
+                <button
+                  class="text-zinc-500 hover:text-primary transition-colors"
+                >
+                  <span class="material-symbols-outlined">bookmark_add</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Side Card 1 -->
+          <article
+            class="md:col-span-4 bg-surface-container-low rounded-xl p-8 flex flex-col justify-between hover:bg-surface-container transition-all duration-300"
+          >
+            <div>
+              <span
+                class="text-primary font-label text-[10px] uppercase tracking-widest font-bold"
+                >Opinion</span
+              >
+              <h3 class="font-headline text-xl font-bold mt-4 mb-4">
+                The Silent Language of Typography
+              </h3>
+              <p class="text-on-surface-variant text-sm leading-relaxed mb-6">
+                How font weight and character spacing dictate the perceived
+                authority of your brand's digital voice.
+              </p>
+            </div>
+            <div
+              class="flex items-center justify-between border-t border-outline-variant/10 pt-6"
+            >
+              <span class="text-xs text-zinc-500">6 hours ago</span>
+              <a
+                class="text-primary text-xs font-bold uppercase tracking-widest flex items-center"
+                href="#"
+              >
+                Read
+                <span class="material-symbols-outlined text-sm ml-1"
+                  >chevron_right</span
+                >
+              </a>
+            </div>
+          </article>
+          <!-- Side Card 2 -->
+          <article
+            class="md:col-span-4 bg-surface-container-low rounded-xl p-8 flex flex-col justify-between hover:bg-surface-container transition-all duration-300"
+          >
+            <div>
+              <span
+                class="text-tertiary font-label text-[10px] uppercase tracking-widest font-bold"
+                >Editorial</span
+              >
+              <h3 class="font-headline text-xl font-bold mt-4 mb-4">
+                Designing for the Human Condition
+              </h3>
+              <p class="text-on-surface-variant text-sm leading-relaxed mb-6">
+                User interfaces should feel like an extension of the mind, not a
+                barrier to the content.
+              </p>
+            </div>
+            <div
+              class="flex items-center justify-between border-t border-outline-variant/10 pt-6"
+            >
+              <span class="text-xs text-zinc-500">Yesterday</span>
+              <a
+                class="text-primary text-xs font-bold uppercase tracking-widest flex items-center"
+                href="#"
+              >
+                Read
+                <span class="material-symbols-outlined text-sm ml-1"
+                  >chevron_right</span
+                >
+              </a>
+            </div>
+          </article>
+          <!-- Small Grid Items -->
+          <div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <article
+              class="bg-surface-container-low rounded-xl overflow-hidden hover:bg-surface-container transition-all duration-300"
+            >
+              <div class="h-40 bg-zinc-800">
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="Code snippets in a dark-themed editor"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0nL5IaELCeSD36F7K5YFilsbIWux09QuPgYVzdd34vcbf_QrALlXuWNofL0SlG9BIjJQ4tYF6QhbZrgOtFSAlvn1r9omZBA6rvZhrvIP1Wv-gX7GK1tb9tQfWGFJnW2_i-upfEA1w6-opYDXLtGipIfaJgGzDPNoMyvj3xe09HHR1cn6sEhaj_pa7d8hYVun7cMKlhaiPSZsy2nEeEYXIKA-L0Vp5OnbRjA6brTafGsaDsbCxRhNPCAchd_pvpc1-hKWuEbbivQ"
+                />
+              </div>
+              <div class="p-6">
+                <h4 class="font-headline font-bold mb-2">Clean Grid Logic</h4>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                  Understanding spatial distribution in editorial layouts.
+                </p>
+              </div>
+            </article>
+            <article
+              class="bg-surface-container-low rounded-xl overflow-hidden hover:bg-surface-container transition-all duration-300"
+            >
+              <div class="h-40 bg-zinc-800">
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="Abstract flow of color and light"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqnhLK8jmYtUkeroPwOx1lA0VRw-xRp8PVlXmQLU1xnOM06iXOfLYKv4wnzYRF3-qVUabQU_jv7XsdYif2keFR0jrowppSN4vULmoFcttpjX0J22bWSYqbFQKdrNL8j_Q7oGgvni4yyW2wmFfoEcQ1KNIhF_8l4rx_mEKDsTnpDyt_YhWE71xx1eOgZ05Ss4Fg5r8-M7A_NNqVr_8_s5qxC6GHsQLviuQ-KyXDarkOHI4AD507mesK8d6TXvHrc9l18Wyt6TB_6Q"
+                />
+              </div>
+              <div class="p-6">
+                <h4 class="font-headline font-bold mb-2">Motion &amp; Flow</h4>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                  The physics of digital interactions and user navigation.
+                </p>
+              </div>
+            </article>
+          </div>
+        </div>
+        <!-- Pagination/Load More -->
+        <div class="mt-20 flex flex-col items-center">
+          <button class="group flex flex-col items-center space-y-4">
+            <span
+              class="text-sm font-label text-zinc-400 uppercase tracking-widest group-hover:text-primary transition-colors"
+              >Load more stories</span
+            >
+            <div
+              class="w-12 h-12 rounded-full border border-outline-variant/20 flex items-center justify-center group-hover:border-primary transition-colors"
+            >
+              <span
+                class="material-symbols-outlined text-zinc-500 group-hover:text-primary animate-bounce"
+                >expand_more</span
+              >
+            </div>
+          </button>
+        </div>
+      </section>
+    </main>
+    <!-- Footer -->
+    <footer class="w-full py-12 px-8 bg-zinc-950">
+      <div
+        class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center border-t border-zinc-800/30 pt-8"
+      >
+        <div
+          class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-500 mb-6 md:mb-0"
+        >
+          © 2024 OpenBlog Editorial. Built for curators.
+        </div>
+        <div class="flex space-x-8">
+          <a
+            class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-500 hover:text-violet-400 transition-colors opacity-80 hover:opacity-100"
+            href="#"
+            >Privacy</a
+          >
+          <a
+            class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-500 hover:text-violet-400 transition-colors opacity-80 hover:opacity-100"
+            href="#"
+            >Terms</a
+          >
+          <a
+            class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-500 hover:text-violet-400 transition-colors opacity-80 hover:opacity-100"
+            href="#"
+            >API</a
+          >
+          <a
+            class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-500 hover:text-violet-400 transition-colors opacity-80 hover:opacity-100"
+            href="#"
+            >Contact</a
+          >
+        </div>
+      </div>
+    </footer>
+    <!-- Bottom Navigation Bar (Mobile only) -->
+    <nav
+      class="md:hidden fixed bottom-0 left-0 w-full glass-panel z-50 border-t border-outline-variant/10"
+    >
+      <div class="flex justify-around items-center py-4">
+        <button class="flex flex-col items-center text-primary">
+          <span class="material-symbols-outlined">home</span>
+          <span class="text-[10px] font-label mt-1">Feed</span>
+        </button>
+        <button class="flex flex-col items-center text-zinc-500">
+          <span class="material-symbols-outlined">explore</span>
+          <span class="text-[10px] font-label mt-1">Explore</span>
+        </button>
+        <button class="flex flex-col items-center text-zinc-500">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="text-[10px] font-label mt-1">Dashboard</span>
+        </button>
+        <button class="flex flex-col items-center text-zinc-500">
+          <span class="material-symbols-outlined">person</span>
+          <span class="text-[10px] font-label mt-1">Profile</span>
+        </button>
+      </div>
+    </nav>
+  </body>
+</html>

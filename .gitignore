@@ -12,6 +12,13 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.vitest-cache/
+.jest-cache/
+*.lcov
 
 # next.js
 /.next/
@@ -39,3 +46,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma
+/src/generated/prisma

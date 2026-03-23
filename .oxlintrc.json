@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "react", "unicorn"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "globals": {
+    "next": "readonly",
+    "React": "readonly"
+  },
+  "ignorePatterns": [
+    ".next/**",
+    "out/**",
+    "build/**",
+    "node_modules/**",
+    "**/__tests__/**",
+    "**/?(*.)+(spec|test).[jt]s?(x)",
+    "src/lib/prisma/**",
+    "jest.config.js",
+    "jest.setup.js",
+    "e2e.config.ts"
+  ],
+  "options": {
+    "typeAware": true,
+    "typeCheck": false
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "warn",
+    "typescript/no-unused-vars": [
+      "warn",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "import/no-unresolved": "error"
+  }
+}

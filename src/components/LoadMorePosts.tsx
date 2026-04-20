@@ -121,7 +121,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
         <div className="flex space-x-2">
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-surface-container-low text-on-surface" : "text-zinc-500 hover:text-zinc-100"}`}
+            className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-surface-container-low text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <span className="material-symbols-outlined text-on-surface">
               grid_view
@@ -129,7 +129,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-surface-container-low text-on-surface" : "text-zinc-500 hover:text-zinc-100"}`}
+            className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-surface-container-low text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <span className="material-symbols-outlined text-on-surface">
               view_list
@@ -157,11 +157,11 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                 <div className="p-8">
                   <div className="flex items-center space-x-4 mb-4">
                     {remainingPosts[0].metadata?.category && (
-                      <span className="px-3 py-1 bg-violet-500/10 text-violet-400 text-[10px] uppercase font-bold tracking-widest rounded-full">
+                      <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] uppercase font-bold tracking-widest rounded-full">
                         {remainingPosts[0].metadata.category}
                       </span>
                     )}
-                    <span className="text-zinc-500 text-xs font-label">
+                    <span className="text-on-surface-variant text-xs font-label">
                       {remainingPosts[0].metadata?.readTime
                         ? `${remainingPosts[0].metadata.readTime} Min Read`
                         : "5 Min Read"}
@@ -175,7 +175,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">
+                      <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
                         {remainingPosts[0].author.image ? (
                           <img
                             className="w-full h-full object-cover"
@@ -183,12 +183,12 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                             alt={remainingPosts[0].author.name || ""}
                           />
                         ) : (
-                          <span className="material-symbols-outlined text-zinc-500 text-lg">
+                          <span className="material-symbols-outlined text-on-surface-variant text-lg">
                             person
                           </span>
                         )}
                       </div>
-                      <span className="text-sm font-medium text-zinc-300">
+                      <span className="text-sm font-medium text-on-surface">
                         {remainingPosts[0].author.name || "Anonymous"}
                       </span>
                     </div>
@@ -213,7 +213,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                 </p>
               </div>
               <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-on-surface-variant">
                   {formatDate(remainingPosts[1].publishedAt)}
                 </span>
                 <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
@@ -241,7 +241,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                 </p>
               </div>
               <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-on-surface-variant">
                   {formatDate(remainingPosts[2].publishedAt)}
                 </span>
                 <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
@@ -356,11 +356,11 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                 </div>
               ) : (
                 <>
-                  <span className="text-sm font-label text-zinc-400 uppercase tracking-widest group-hover:text-primary transition-colors">
+                  <span className="text-sm font-label text-on-surface-variant uppercase tracking-widest group-hover:text-primary transition-colors">
                     Load more stories
                   </span>
                   <div className="w-12 h-12 rounded-full border border-outline-variant/20 flex items-center justify-center group-hover:border-primary transition-colors">
-                    <span className="material-symbols-outlined text-zinc-500 group-hover:text-primary animate-bounce">
+                    <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary animate-bounce">
                       expand_more
                     </span>
                   </div>

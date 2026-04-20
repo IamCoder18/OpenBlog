@@ -138,7 +138,7 @@ export default function AgentProfileSettings({
               {image && (
                 <button
                   onClick={handleRemoveImage}
-                  className="text-xs font-medium text-on-surface-variant hover:text-red-400"
+                  className="text-xs font-medium text-on-surface-variant hover:theme-danger-text"
                 >
                   Remove
                 </button>

@@ -279,32 +279,23 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface">
-      <nav className="fixed top-0 w-full z-50 bg-zinc-950/70 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] shadow-violet-500/5 transition-all duration-300">
+      <nav className="theme-nav fixed top-0 w-full z-50 backdrop-blur-xl transition-all duration-300">
         <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto font-headline tracking-tight antialiased text-sm font-medium">
           <div className="flex items-center gap-8">
             <a
               href="/"
-              className="text-xl font-bold tracking-tighter text-zinc-100"
+              className="text-xl font-bold tracking-tighter text-on-surface"
             >
               {blogName}
             </a>
             <div className="hidden md:flex items-center space-x-6">
-              <a
-                href="/"
-                className="text-zinc-400 hover:text-zinc-100 transition-colors"
-              >
+              <a href="/" className="theme-nav-link transition-colors">
                 Feed
               </a>
-              <a
-                href="/explore"
-                className="text-zinc-400 hover:text-zinc-100 transition-colors"
-              >
+              <a href="/explore" className="theme-nav-link transition-colors">
                 Explore
               </a>
-              <a
-                href="/dashboard"
-                className="text-zinc-400 hover:text-zinc-100 transition-colors"
-              >
+              <a href="/dashboard" className="theme-nav-link transition-colors">
                 Dashboard
               </a>
             </div>
@@ -333,7 +324,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                 }
                 window.location.href = "/";
               }}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors rounded-lg hover:bg-zinc-800/50"
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm theme-nav-link transition-colors rounded-lg hover:bg-surface-container/70"
             >
               <span className="material-symbols-outlined text-lg">logout</span>
               Logout
@@ -703,7 +694,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                 </>
               ) : saved ? (
                 <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
                   <span>All changes saved</span>
                 </>
               ) : error ? (

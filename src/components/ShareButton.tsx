@@ -100,7 +100,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
                 onClick={handleCopy}
                 className={`w-full mt-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
                   copied
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    ? "theme-success-soft theme-success-text border border-current/20"
                     : "editorial-gradient text-on-primary"
                 }`}
               >

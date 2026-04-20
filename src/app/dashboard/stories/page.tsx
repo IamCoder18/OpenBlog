@@ -82,7 +82,7 @@ export default async function StoriesPage({
             <div className="text-[9px] sm:text-[10px] text-on-surface-variant font-label uppercase tracking-wider mb-1">
               Published
             </div>
-            <div className="text-xl sm:text-2xl font-headline font-bold text-emerald-400">
+            <div className="text-xl sm:text-2xl font-headline font-bold theme-success-text">
               {publishedCount.toLocaleString()}
             </div>
           </div>

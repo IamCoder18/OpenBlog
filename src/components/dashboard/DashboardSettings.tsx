@@ -31,11 +31,32 @@ export default function DashboardSettings({
   const [showKeys, setShowKeys] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [activeTheme, setActiveTheme] = useState("default");
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (scope === "site") void fetchTheme();
     if (scope === "site") void fetchUsers();
     void fetchKeys();
   }, [scope]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchTheme = async () => {
+    try {
+      const res = await fetch("/api/settings/theme");
+      if (res.ok) {
+        const data = await res.json();
+        setActiveTheme(data.theme);
+        document.documentElement.setAttribute("data-theme", data.theme);
+        localStorage.setItem("openblog-theme", data.theme);
+      }
+    } catch {
+      const stored = localStorage.getItem("openblog-theme");
+      if (stored) {
+        setActiveTheme(stored);
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -99,6 +120,65 @@ export default function DashboardSettings({
     }
   };
 
+  const handleThemeChange = async (themeId: string) => {
+    setActiveTheme(themeId);
+    document.documentElement.setAttribute("data-theme", themeId);
+    localStorage.setItem("openblog-theme", themeId);
+    setSaved(true);
+
+    try {
+      const res = await fetch("/api/settings/theme", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: themeId }),
+      });
+      if (res.ok) {
+        toast.addToast("success", "Theme updated.");
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.addToast("error", data?.error || "Could not save theme.");
+      }
+    } catch {
+      toast.addToast(
+        "error",
+        "Couldn't reach the server. Theme saved locally."
+      );
+    }
+
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const themes = [
+    {
+      id: "default",
+      name: "Luminal",
+      description:
+        "Deep obsidian with violet accents. The signature editorial aesthetic.",
+      preview: "linear-gradient(135deg, #131315 0%, #201f21 50%, #7c3aed 100%)",
+    },
+    {
+      id: "ocean",
+      name: "Abyssal",
+      description:
+        "Deep ocean blues with cyan highlights. Cool and professional.",
+      preview: "linear-gradient(135deg, #07141f 0%, #102131 50%, #0284c7 100%)",
+    },
+    {
+      id: "forest",
+      name: "Verdant",
+      description:
+        "Rich forest greens with emerald accents. Natural and organic.",
+      preview: "linear-gradient(135deg, #08140c 0%, #122318 50%, #16a34a 100%)",
+    },
+    {
+      id: "ember",
+      name: "Ember",
+      description:
+        "Warm charcoal with rose and amber tones. Bold and expressive.",
+      preview: "linear-gradient(135deg, #160b0b 0%, #241515 50%, #e11d48 100%)",
+    },
+  ];
+
   const roleIcon = (role: string) => {
     if (role === "ADMIN") return "account_circle";
     if (role === "AUTHOR") return "edit_note";
@@ -130,6 +210,60 @@ export default function DashboardSettings({
 
   return (
     <div className="space-y-8">
+      {scope === "site" && (
+        <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-xl">
+                palette
+              </span>
+              Theme Preset
+            </h2>
+            {saved && (
+              <span className="text-xs theme-success-text flex items-center gap-1 font-label">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                Theme updated
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {themes.map(theme => (
+              <button
+                key={theme.id}
+                onClick={() => handleThemeChange(theme.id)}
+                className={`text-left p-5 rounded-xl transition-all duration-300 border ${
+                  activeTheme === theme.id
+                    ? "bg-surface-container border-primary/30 shadow-lg shadow-primary/5"
+                    : "bg-surface-container-low border-outline-variant/5 hover:border-outline-variant/20 hover:bg-surface-container"
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-16 h-16 rounded-xl flex-shrink-0"
+                    style={{ background: theme.preview }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-on-surface font-headline">
+                        {theme.name}
+                      </span>
+                      {activeTheme === theme.id && (
+                        <span className="material-symbols-outlined text-primary text-lg">
+                          check_circle
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      {theme.description}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* User Management (admin only) */}
       {scope === "site" && (
         <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
@@ -235,7 +369,7 @@ export default function DashboardSettings({
               </div>
               <button
                 onClick={() => handleDeleteKey(key.id)}
-                className="p-2 rounded-lg hover:bg-red-500/10 text-on-surface-variant hover:text-red-400 transition-colors flex-shrink-0 self-end sm:self-auto"
+                className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0 self-end sm:self-auto"
               >
                 <span className="material-symbols-outlined text-sm">
                   delete

@@ -43,3 +43,20 @@ export async function getSiteSettings() {
   const settings = await prisma.siteSettings.findFirst();
   return settings;
 }
+
+export async function getTheme(): Promise<string> {
+  const { prisma } = await import("./db");
+  const setting = await prisma.siteSettings.findUnique({
+    where: { key: "theme" },
+  });
+  return setting?.value || "default";
+}
+
+export async function setTheme(theme: string): Promise<void> {
+  const { prisma } = await import("./db");
+  await prisma.siteSettings.upsert({
+    where: { key: "theme" },
+    update: { value: theme },
+    create: { key: "theme", value: theme },
+  });
+}

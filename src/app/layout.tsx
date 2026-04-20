@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope, Inter } from "next/font/google";
-import { config } from "@/lib/config";
+import { config, getTheme } from "@/lib/config";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import ClientProviders from "@/components/ClientProviders";
 import "./globals.css";
@@ -39,14 +39,17 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const theme = await getTheme();
+
   return (
     <html
       lang="en"
+      data-theme={theme}
       className={`${manrope.variable} ${inter.variable} h-full antialiased`}
     >
       <head>

@@ -33,8 +33,8 @@ function getStatusBadge(visibility: string) {
   }
   return {
     label: "Published",
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-400",
+    bg: "theme-success-soft",
+    text: "theme-success-text",
   };
 }
 
@@ -334,7 +334,7 @@ export default function StoriesList({
                           </Link>
                           <button
                             onClick={() => handleDelete(post.slug, post.title)}
-                            className="w-full px-4 py-3 text-left text-sm text-error hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                            className="w-full px-4 py-3 text-left text-sm text-error hover:theme-danger-soft transition-colors flex items-center gap-3"
                           >
                             <span className="material-symbols-outlined text-lg">
                               delete

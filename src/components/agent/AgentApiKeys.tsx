@@ -141,7 +141,7 @@ export default function AgentApiKeys() {
                       {key.name}
                     </span>
                     {isExpired(key.expiresAt) && (
-                      <span className="px-1.5 py-0.5 text-[8px] uppercase tracking-wider rounded-full font-bold bg-red-500/10 text-red-400">
+                      <span className="px-1.5 py-0.5 text-[8px] uppercase tracking-wider rounded-full font-bold theme-danger-soft theme-danger-text">
                         Expired
                       </span>
                     )}
@@ -173,7 +173,7 @@ export default function AgentApiKeys() {
                 </div>
                 <button
                   onClick={() => handleDeleteKey(key.id)}
-                  className="p-2 rounded-lg hover:bg-red-500/10 text-on-surface-variant hover:text-red-400 transition-colors flex-shrink-0 self-end sm:self-auto"
+                  className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0 self-end sm:self-auto"
                 >
                   <span className="material-symbols-outlined text-sm">
                     delete

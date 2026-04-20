@@ -131,8 +131,8 @@ export default async function DashboardPage({
         {/* Published */}
         <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-75">
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg">
-              <span className="material-symbols-outlined text-emerald-400 text-lg">
+            <div className="p-2 theme-success-soft rounded-lg">
+              <span className="material-symbols-outlined theme-success-text text-lg">
                 visibility
               </span>
             </div>
@@ -165,8 +165,8 @@ export default async function DashboardPage({
         {/* Total Views */}
         <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-150">
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="p-2 bg-violet-500/10 rounded-lg">
-              <span className="material-symbols-outlined text-violet-400 text-lg">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <span className="material-symbols-outlined text-primary text-lg">
                 trending_up
               </span>
             </div>

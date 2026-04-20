@@ -32,14 +32,28 @@ export default function SettingsClient() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("openblog-theme");
-    if (stored) {
-      setActiveTheme(stored);
-      document.documentElement.setAttribute("data-theme", stored);
-    }
+    void fetchTheme();
     void fetchUsers();
     void fetchKeys();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchTheme = async () => {
+    try {
+      const res = await fetch("/api/settings/theme");
+      if (res.ok) {
+        const data = await res.json();
+        setActiveTheme(data.theme);
+        document.documentElement.setAttribute("data-theme", data.theme);
+        localStorage.setItem("openblog-theme", data.theme);
+      }
+    } catch {
+      const stored = localStorage.getItem("openblog-theme");
+      if (stored) {
+        setActiveTheme(stored);
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -117,12 +131,31 @@ export default function SettingsClient() {
     }
   };
 
-  const handleThemeChange = (themeId: string) => {
+  const handleThemeChange = async (themeId: string) => {
     setActiveTheme(themeId);
     document.documentElement.setAttribute("data-theme", themeId);
     localStorage.setItem("openblog-theme", themeId);
     setSaved(true);
-    toast.addToast("success", "Theme updated.");
+
+    try {
+      const res = await fetch("/api/settings/theme", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: themeId }),
+      });
+      if (res.ok) {
+        toast.addToast("success", "Theme updated.");
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.addToast("error", data?.error || "Could not save theme.");
+      }
+    } catch {
+      toast.addToast(
+        "error",
+        "Couldn't reach the server. Theme saved locally."
+      );
+    }
+
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -192,8 +225,8 @@ export default function SettingsClient() {
             Theme Preset
           </h2>
           {saved && (
-            <span className="text-xs text-emerald-400 flex items-center gap-1 font-label">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs theme-success-text flex items-center gap-1 font-label">
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
               Theme updated
             </span>
           )}
@@ -354,7 +387,7 @@ export default function SettingsClient() {
               </div>
               <button
                 onClick={() => handleDeleteKey(key.id)}
-                className="p-2 rounded-lg hover:bg-red-500/10 text-on-surface-variant hover:text-red-400 transition-colors"
+                className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">
                   delete

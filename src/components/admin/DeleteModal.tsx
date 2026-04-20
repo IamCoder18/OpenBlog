@@ -17,8 +17,8 @@ export default function DeleteModal({
       />
       <div className="relative bg-surface-container-low rounded-2xl border border-outline-variant/10 shadow-2xl max-w-md w-full p-6 animate-scale-in">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-red-500/10 rounded-lg">
-            <span className="material-symbols-outlined text-red-400">
+          <div className="p-2 theme-danger-soft rounded-lg">
+            <span className="material-symbols-outlined theme-danger-text">
               delete
             </span>
           </div>
@@ -42,7 +42,7 @@ export default function DeleteModal({
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors active:scale-95"
+            className="px-4 py-2 text-sm font-semibold theme-danger-soft theme-danger-text rounded-lg border border-current/15 hover:opacity-90 transition-colors active:scale-95"
           >
             Delete
           </button>

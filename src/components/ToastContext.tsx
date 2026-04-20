@@ -40,15 +40,15 @@ const ICONS: Record<ToastType, string> = {
 
 const STYLES: Record<ToastType, string> = {
   error: "bg-error-container/80 text-on-error-container",
-  success: "bg-emerald-950/80 text-emerald-200",
-  warning: "bg-amber-950/80 text-amber-200",
+  success: "theme-success-soft text-on-surface",
+  warning: "theme-warning-soft text-on-surface",
   info: "bg-primary-container/80 text-on-primary-container",
 };
 
 const ICON_COLORS: Record<ToastType, string> = {
   error: "text-error",
-  success: "text-emerald-400",
-  warning: "text-amber-400",
+  success: "theme-success-text",
+  warning: "theme-warning-text",
   info: "text-primary",
 };
 

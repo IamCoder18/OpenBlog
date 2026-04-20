@@ -34,14 +34,14 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="h-[calc(100vh-64px)] w-64 fixed left-0 top-16 z-40 bg-zinc-900 flex flex-col py-6 space-y-2 font-body text-sm tracking-normal">
-      <div className="text-lg font-semibold text-zinc-100 mb-6 px-4 font-headline">
+    <aside className="h-[calc(100vh-64px)] w-64 fixed left-0 top-16 z-40 bg-surface-container-lowest border-r border-outline-variant/10 flex flex-col py-6 space-y-2 font-body text-sm tracking-normal">
+      <div className="text-lg font-semibold text-on-surface mb-6 px-4 font-headline">
         {name} Admin
       </div>
 
       {/* New Post Button */}
       <div className="px-4 mb-4">
-        <div className="text-xs uppercase tracking-widest text-zinc-500 mb-2 font-label">
+        <div className="text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-label">
           Editorial Suite
         </div>
         <Link
@@ -63,8 +63,8 @@ export default function Sidebar({
               href={item.href}
               className={`flex items-center gap-3 py-3 px-6 transition-all duration-200 ${
                 isActive
-                  ? "bg-violet-500/10 text-violet-300 border-r-2 border-violet-500"
-                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  ? "bg-primary/10 text-primary border-r-2 border-primary-container"
+                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
             >
               <span className="material-symbols-outlined">{item.icon}</span>

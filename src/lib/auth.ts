@@ -29,6 +29,8 @@ export const auth = betterAuth({
     "http://192.168.1.82:3000",
     "http://192.168.1.82:3001",
     "http://192.168.1.82:4000",
+    "http://openblogdev.aaravlabs.com",
+    "https://openblogdev.aaravlabs.com",
   ],
   secret: config.AUTH_SECRET,
   plugins: [nextCookies()],

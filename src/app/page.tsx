@@ -90,7 +90,7 @@ export default async function Home() {
             </div>
             {featuredPost.metadata?.coverImage && (
               <div className="w-full md:w-2/5 aspect-[4/5] relative animate-fade-in-up delay-200">
-                <div className="absolute inset-0 bg-primary/10 rounded-xl transform translate-x-4 translate-y-4 animate-float"></div>
+                <div className="absolute inset-0 theme-success-soft rounded-xl transform translate-x-4 translate-y-4 animate-float"></div>
                 <div className="w-full h-full bg-surface-container rounded-xl shadow-2xl relative z-0 flex items-center justify-center overflow-hidden">
                   <img
                     src={featuredPost.metadata.coverImage}

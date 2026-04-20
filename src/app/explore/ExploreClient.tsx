@@ -175,7 +175,7 @@ export default function ExploreClient({
                 )}
                 <div className="p-6">
                   {post.metadata?.category && (
-                    <span className="inline-block px-3 py-1 bg-violet-500/10 text-violet-400 text-[10px] uppercase font-bold tracking-widest rounded-full mb-3">
+                    <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] uppercase font-bold tracking-widest rounded-full mb-3">
                       {post.metadata.category}
                     </span>
                   )}

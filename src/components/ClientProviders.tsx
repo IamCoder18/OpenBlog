@@ -7,9 +7,7 @@ function ThemeBootstrap() {
   useEffect(() => {
     const stored = localStorage.getItem("openblog-theme");
     const serverTheme = document.documentElement.getAttribute("data-theme");
-    if (stored && stored !== serverTheme) {
-      document.documentElement.setAttribute("data-theme", stored);
-    } else if (serverTheme) {
+    if (serverTheme && stored !== serverTheme) {
       localStorage.setItem("openblog-theme", serverTheme);
     }
   }, []);

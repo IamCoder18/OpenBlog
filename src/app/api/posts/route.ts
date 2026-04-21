@@ -5,10 +5,24 @@ import { renderMarkdown } from "@/lib/markdown";
 import { headers } from "next/headers";
 import { apiHandler } from "@/lib/api-error";
 
+interface FuzzySearchResult {
+  id: string;
+  search_rank: number;
+}
+
 function containsSqlInjection(input: string): boolean {
-  const sqlPatterns =
-    /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b/i;
-  return sqlPatterns.test(input);
+  // Check for dangerous SQL patterns: semicolons, comments, multiple statements
+  const dangerousPatterns = [
+    /;/, // Semicolons for multiple statements
+    /--/, // SQL comments
+    /\/\*.*?\*\//, // Block comments
+    /\bUNION\b/i, // UNION attacks
+    /\bDROP\b/i, // DROP statements
+    /\bALTER\b/i, // ALTER statements
+    /\bCREATE\b/i, // CREATE statements
+    /\bTRUNCATE\b/i, // TRUNCATE statements
+  ];
+  return dangerousPatterns.some(pattern => pattern.test(input));
 }
 
 async function validateApiKey(
@@ -97,63 +111,255 @@ export const GET = apiHandler(async function GET(req: NextRequest) {
     }
   }
 
-  const whereClause: Record<string, unknown> = {};
+  // Resolve effective filters that apply to both search and non-search paths
 
-  if (!isAuthenticated) {
-    whereClause.visibility = "PUBLIC";
-  } else if (
-    visibility &&
-    ["PUBLIC", "PRIVATE", "DRAFT", "UNLISTED"].includes(visibility)
-  ) {
-    whereClause.visibility = visibility;
-  }
-
-  if (search && typeof search === "string" && search.trim().length > 0) {
-    const searchStr = search.trim();
-    whereClause.OR = [
-      { title: { contains: searchStr, mode: "insensitive" } },
-      { slug: { contains: searchStr, mode: "insensitive" } },
-      { metadata: { tags: { has: searchStr } } },
-    ];
-  }
-
-  if (tag && typeof tag === "string" && tag.trim().length > 0) {
-    whereClause.metadata = {
-      tags: { has: tag.trim() },
-    };
-  }
-
-  // Filter by author
+  // Author ID resolution (handles "me")
+  let effectiveAuthorId: string | null = null;
   if (authorIdParam === "me") {
     if (apiKeyUser?.id) {
-      whereClause.authorId = apiKeyUser.id;
+      effectiveAuthorId = apiKeyUser.id;
     } else if (isAuthenticated) {
       try {
         const { auth: authInstance } = await import("@/auth");
         const session = await authInstance.api.getSession({
           headers: headersList,
         });
-        if (session?.user) {
-          whereClause.authorId = session.user.id;
-        }
-      } catch {
-        // ignore
-      }
+        if (session?.user) effectiveAuthorId = session.user.id;
+      } catch {}
     }
   } else if (authorIdParam && authorIdParam !== "me") {
-    whereClause.authorId = authorIdParam;
+    effectiveAuthorId = authorIdParam;
+  }
+
+  // Visibility filter for authenticated users (if provided)
+  const explicitVisibility: string | null =
+    isAuthenticated &&
+    visibility &&
+    ["PUBLIC", "PRIVATE", "DRAFT", "UNLISTED"].includes(visibility)
+      ? visibility
+      : null;
+
+  // Tag filter
+  const explicitTag =
+    tag && typeof tag === "string" && tag.trim().length > 0 ? tag.trim() : null;
+
+  // Helper functions to build search WHERE clause and parameters
+  function buildVisibilityParams(isAuthenticated: boolean): string[] {
+    return isAuthenticated
+      ? ["PUBLIC", "PRIVATE", "UNLISTED", "DRAFT"]
+      : ["PUBLIC"];
+  }
+
+  function buildFilterConditions(
+    params: (string | number)[],
+    validatedVisibility: string | null,
+    validatedTag: string | null,
+    validatedAuthorId: string | null
+  ): string[] {
+    const filterClauses: string[] = [];
+
+    // Add explicit visibility filter if provided
+    if (validatedVisibility) {
+      filterClauses.push(`p.visibility = $${params.length + 1}`);
+      params.push(validatedVisibility);
+    }
+
+    // Add tag filter if provided (use ARRAY syntax with parameter)
+    if (validatedTag) {
+      filterClauses.push(`pm.tags @> ARRAY[$${params.length + 1}]::text[]`);
+      params.push(validatedTag);
+    }
+
+    // Add author filter if provided
+    if (validatedAuthorId) {
+      filterClauses.push(`p."authorId" = $${params.length + 1}`);
+      params.push(validatedAuthorId);
+    }
+
+    return filterClauses;
+  }
+
+  function constructWhereClause(
+    visibilityCondition: string,
+    extraFilter: string,
+    searchIdx: number,
+    thresholdIdx: number
+  ): string {
+    return `${visibilityCondition}${extraFilter} AND (
+      similarity(LOWER(p.title), LOWER($${searchIdx})) > $${thresholdIdx}
+      OR similarity(LOWER(p.slug), LOWER($${searchIdx})) > $${thresholdIdx}
+      OR EXISTS (
+        SELECT 1 FROM unnest(COALESCE(pm.tags, '{}')) as tag
+        WHERE similarity(LOWER(tag), LOWER($${searchIdx})) > $${thresholdIdx}
+      )
+    )`;
+  }
+
+  function buildSearchWhereAndParams(
+    searchStr: string,
+    isAuthenticated: boolean,
+    validatedVisibility: string | null,
+    validatedTag: string | null,
+    validatedAuthorId: string | null,
+    similarityThreshold: number
+  ): {
+    whereCondition: string;
+    params: (string | number)[];
+    searchIdx: number;
+    thresholdIdx: number;
+  } {
+    // Build base visibility params (always parameterized)
+    const visibilityValues = buildVisibilityParams(isAuthenticated);
+
+    // Build filter conditions with parameterized queries - NO string interpolation
+    const params: (string | number)[] = [...visibilityValues];
+    const filterClauses = buildFilterConditions(
+      params,
+      validatedVisibility,
+      validatedTag,
+      validatedAuthorId
+    );
+
+    const extraFilter =
+      filterClauses.length > 0 ? ` AND ${filterClauses.join(" AND ")}` : "";
+
+    // Build dynamic visibility condition based on authentication
+    const visibilityCondition = isAuthenticated
+      ? `p.visibility IN ($1, $2, $3, $4)`
+      : `p.visibility = $1`;
+
+    const searchIdx = params.length + 1;
+    params.push(searchStr);
+    const thresholdIdx = params.length + 1;
+    params.push(similarityThreshold);
+
+    const whereCondition = constructWhereClause(
+      visibilityCondition,
+      extraFilter,
+      searchIdx,
+      thresholdIdx
+    );
+
+    return { whereCondition, params, searchIdx, thresholdIdx };
+  }
+
+  // SEARCH PATH: fuzzy search using pg_trgm similarity
+  if (search && typeof search === "string" && search.trim().length > 0) {
+    const searchStr = search.trim();
+    const similarityThreshold = 0.3;
+
+    // Validate and sanitize filter values for security
+    const validatedVisibility =
+      explicitVisibility === null ||
+      ["PUBLIC", "PRIVATE", "DRAFT", "UNLISTED"].includes(explicitVisibility)
+        ? explicitVisibility
+        : null;
+    const validatedTag =
+      explicitTag && explicitTag.length > 0 && explicitTag.length <= 100
+        ? explicitTag
+        : null;
+    const validatedAuthorId =
+      effectiveAuthorId && /^[a-zA-Z0-9-]+$/.test(effectiveAuthorId)
+        ? effectiveAuthorId
+        : null;
+
+    const {
+      whereCondition,
+      params: baseParams,
+      searchIdx,
+    } = buildSearchWhereAndParams(
+      searchStr,
+      isAuthenticated,
+      validatedVisibility,
+      validatedTag,
+      validatedAuthorId,
+      similarityThreshold
+    );
+
+    // Use $queryRawUnsafe with fully parameterized queries
+    const postsQuery = `
+      SELECT
+        p.id,
+        GREATEST(
+          similarity(LOWER(p.title), LOWER($${searchIdx})),
+          similarity(LOWER(p.slug), LOWER($${searchIdx}))
+        ) as search_rank
+      FROM "Post" p
+      LEFT JOIN "PostMetadata" pm ON p.id = pm."postId"
+      WHERE ${whereCondition}
+      GROUP BY p.id
+      ORDER BY search_rank DESC, p."publishedAt" DESC NULLS LAST, p."createdAt" DESC
+      LIMIT $${baseParams.length + 1} OFFSET $${baseParams.length + 2}
+    `;
+
+    const totalQuery = `
+      SELECT COUNT(DISTINCT p.id)::integer as total
+      FROM "Post" p
+      LEFT JOIN "PostMetadata" pm ON p.id = pm."postId"
+      WHERE ${whereCondition}
+    `;
+
+    // Build parameter arrays - all values properly parameterized
+    const postsParams = [...baseParams, limit, offset];
+    const totalParams = baseParams;
+
+    const rawPosts = await prisma.$queryRawUnsafe<FuzzySearchResult[]>(
+      postsQuery,
+      ...postsParams
+    );
+
+    const totalResult = await prisma.$queryRawUnsafe<{ total: number }[]>(
+      totalQuery,
+      ...totalParams
+    );
+    const total = totalResult[0]?.total ?? 0;
+
+    const matchingIds = rawPosts.map((p: FuzzySearchResult) => p.id);
+    const postsWithIncludes =
+      matchingIds.length > 0
+        ? await prisma.post.findMany({
+            where: { id: { in: matchingIds } },
+            include: {
+              author: { select: { id: true, name: true, image: true } },
+              metadata: true,
+            },
+          })
+        : [];
+
+    const rankMap = new Map(
+      rawPosts.map((p: FuzzySearchResult, idx: number) => [p.id, idx])
+    );
+    postsWithIncludes.sort(
+      (a, b) => (rankMap.get(a.id) ?? 0) - (rankMap.get(b.id) ?? 0)
+    );
+
+    return NextResponse.json(
+      { posts: postsWithIncludes, total, limit, offset },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
+  }
+
+  // NON-SEARCH PATH: standard Prisma query with exact filters
+  const whereClause: Record<string, unknown> = {};
+
+  if (!isAuthenticated) {
+    whereClause.visibility = "PUBLIC";
+  } else if (explicitVisibility) {
+    whereClause.visibility = explicitVisibility;
+  }
+
+  if (explicitTag) {
+    whereClause.metadata = { tags: { has: explicitTag } };
+  }
+
+  if (effectiveAuthorId) {
+    whereClause.authorId = effectiveAuthorId;
   }
 
   const posts = await prisma.post.findMany({
     where: whereClause,
     include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
+      author: { select: { id: true, name: true, image: true } },
       metadata: true,
     },
     orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
@@ -161,22 +367,11 @@ export const GET = apiHandler(async function GET(req: NextRequest) {
     take: limit,
   });
 
-  const total = await prisma.post.count({
-    where: whereClause,
-  });
+  const total = await prisma.post.count({ where: whereClause });
 
   return NextResponse.json(
-    {
-      posts,
-      total,
-      limit,
-      offset,
-    },
-    {
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-      },
-    }
+    { posts, total, limit, offset },
+    { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
   );
 });
 

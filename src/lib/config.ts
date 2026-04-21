@@ -60,3 +60,27 @@ export async function setTheme(theme: string): Promise<void> {
     create: { key: "theme", value: theme },
   });
 }
+
+export async function getFuzzySearchThreshold(): Promise<number> {
+  const { prisma } = await import("./db");
+  const setting = await prisma.siteSettings.findUnique({
+    where: { key: "fuzzy_search_threshold" },
+  });
+  const rawValue = setting?.value;
+  if (!rawValue || typeof rawValue !== "string") {
+    return 0.3;
+  }
+  const value = parseFloat(rawValue);
+  return isNaN(value) ? 0.3 : Math.max(0, Math.min(1, value));
+}
+
+export async function setFuzzySearchThreshold(
+  threshold: number
+): Promise<void> {
+  const { prisma } = await import("./db");
+  await prisma.siteSettings.upsert({
+    where: { key: "fuzzy_search_threshold" },
+    update: { value: threshold.toString() },
+    create: { key: "fuzzy_search_threshold", value: threshold.toString() },
+  });
+}

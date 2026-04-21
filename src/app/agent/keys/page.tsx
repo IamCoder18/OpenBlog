@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { config } from "@/lib/config";
 import AgentApiKeys from "@/components/agent/AgentApiKeys";
-import Footer from "@/components/Footer";
 
 export function generateMetadata() {
   return {
@@ -33,8 +32,6 @@ export default async function AgentKeysPage() {
       </header>
 
       <AgentApiKeys />
-
-      <Footer className="mt-16" />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/config";
 import ViewsChart from "@/components/dashboard/ViewsChart";
-import Footer from "@/components/Footer";
 
 export function generateMetadata() {
   return {
@@ -250,8 +249,6 @@ export default async function DashboardPage({
           )}
         </div>
       </section>
-
-      <Footer className="mt-16" />
     </div>
   );
 }

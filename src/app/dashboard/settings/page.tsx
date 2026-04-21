@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/session";
 import { config } from "@/lib/config";
 import DashboardSettings from "@/components/dashboard/DashboardSettings";
-import Footer from "@/components/Footer";
 
 export function generateMetadata() {
   return {
@@ -45,8 +44,6 @@ export default async function SettingsPage({
       </header>
 
       <DashboardSettings scope={scope} />
-
-      <Footer className="mt-16" />
     </div>
   );
 }

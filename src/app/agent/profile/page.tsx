@@ -2,7 +2,6 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/config";
 import AgentProfileSettings from "@/components/agent/AgentProfileSettings";
-import Footer from "@/components/Footer";
 
 export function generateMetadata() {
   return {
@@ -44,8 +43,6 @@ export default async function AgentProfilePage() {
       </header>
 
       <AgentProfileSettings initialUser={dbUser} />
-
-      <Footer className="mt-16" />
     </div>
   );
 }

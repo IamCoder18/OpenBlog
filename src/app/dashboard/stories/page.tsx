@@ -3,7 +3,6 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/config";
 import DashboardStories from "@/components/dashboard/DashboardStories";
-import Footer from "@/components/Footer";
 
 export function generateMetadata() {
   return {
@@ -98,8 +97,6 @@ export default async function StoriesPage({
       </header>
 
       <DashboardStories scope={scope} />
-
-      <Footer className="mt-16" />
     </div>
   );
 }

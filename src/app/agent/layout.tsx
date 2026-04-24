@@ -15,6 +15,10 @@ export default async function AgentLayout({
     redirect("/auth/login");
   }
 
+  if (user.role === "ADMIN" || user.role === "AUTHOR") {
+    redirect("/dashboard/");
+  }
+
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
     select: { image: true },

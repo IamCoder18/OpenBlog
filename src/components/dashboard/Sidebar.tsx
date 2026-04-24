@@ -39,12 +39,14 @@ export default function Sidebar({
   const personalNav = [
     { href: "/dashboard", icon: "insights", label: "Analytics" },
     { href: "/dashboard/stories", icon: "auto_stories", label: "Stories" },
+    { href: "/dashboard/account", icon: "person", label: "Account" },
     { href: "/dashboard/settings", icon: "tune", label: "Settings" },
   ];
 
   const adminNav = [
     { href: "/dashboard", icon: "analytics", label: "Site Analytics" },
     { href: "/dashboard/stories", icon: "library_books", label: "All Stories" },
+    { href: "/dashboard/account", icon: "person", label: "Account" },
     {
       href: "/dashboard/settings",
       icon: "admin_panel_settings",

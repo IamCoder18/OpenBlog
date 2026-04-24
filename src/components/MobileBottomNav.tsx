@@ -7,12 +7,14 @@ interface MobileBottomNavProps {
   activeTab?: "feed" | "explore" | "dashboard";
   isAdmin?: boolean;
   isAuthenticated?: boolean;
+  userRole?: string;
 }
 
 export default function MobileBottomNav({
   activeTab,
   isAdmin = false,
   isAuthenticated = false,
+  userRole,
 }: MobileBottomNavProps) {
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -77,7 +79,7 @@ export default function MobileBottomNav({
             </span>
           </Link>
 
-          {isAuthenticated && (
+          {isAuthenticated && userRole === "AGENT" && (
             <Link
               href="/agent"
               className="flex flex-col items-center justify-center gap-0.5 px-6 py-2 rounded-lg transition-colors duration-200 text-on-surface-variant active:bg-surface-container"

@@ -81,6 +81,7 @@ export default async function ExplorePage() {
         activeTab="explore"
         isAdmin={isAdmin}
         isAuthenticated={!!user}
+        userRole={user?.role}
       />
     </div>
   );

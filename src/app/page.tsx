@@ -112,6 +112,7 @@ export default async function Home() {
         activeTab="feed"
         isAdmin={isAdmin}
         isAuthenticated={!!user}
+        userRole={user?.role}
       />
     </div>
   );

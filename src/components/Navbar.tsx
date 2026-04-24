@@ -55,7 +55,7 @@ export default async function Navbar({
                 Dashboard
               </Link>
             )}
-            {user && (
+            {user?.role === "AGENT" && (
               <Link
                 href="/agent"
                 className="theme-nav-link transition-colors duration-300"

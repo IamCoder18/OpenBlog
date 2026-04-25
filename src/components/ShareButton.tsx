@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Share2, Link, Copy, CheckCircle } from "lucide-react";
 
 interface ShareButtonProps {
   title: string;
@@ -54,14 +55,14 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
 
   return (
     <div className="relative">
-      <button
-        ref={buttonRef}
-        onClick={() => setOpen(!open)}
-        className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
-        aria-label="Share"
-      >
-        <span className="material-symbols-outlined text-lg">share</span>
-      </button>
+        <button
+          ref={buttonRef}
+          onClick={() => setOpen(!open)}
+          className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
+          aria-label="Share"
+        >
+          <Share2 className="w-5 h-5" />
+        </button>
 
       {open && (
         <>
@@ -73,9 +74,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-primary text-lg">
-                    share
-                  </span>
+                  <Share2 className="w-4 h-4 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-on-surface truncate">
@@ -88,14 +87,14 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
               </div>
 
               <div className="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2.5 border border-outline-variant/10">
-                <span className="material-symbols-outlined text-sm text-on-surface-variant flex-shrink-0">
+                <span className="text-sm text-on-surface-variant flex-shrink-0">
                   link
                 </span>
                 <span className="text-xs text-on-surface-variant truncate flex-1 font-mono">
                   {url}
                 </span>
               </div>
-
+              
               <button
                 onClick={handleCopy}
                 className={`w-full mt-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
@@ -104,9 +103,11 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
                     : "editorial-gradient text-on-primary"
                 }`}
               >
-                <span className="material-symbols-outlined text-base">
-                  {copied ? "check_circle" : "content_copy"}
-                </span>
+                {copied ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
                 {copied ? "Link copied!" : "Copy to clipboard"}
               </button>
             </div>

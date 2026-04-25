@@ -3,6 +3,18 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback, useMemo } from "react";
+import { 
+  BarChart3, 
+  BookOpen, 
+  User, 
+  Settings, 
+  Shield, 
+  Menu, 
+  Plus, 
+  X, 
+  PenLine, 
+  Home 
+} from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 interface SidebarProps {
@@ -37,19 +49,19 @@ export default function Sidebar({
   }, [adminMode, pathname, router, searchParams]);
 
   const personalNav = [
-    { href: "/dashboard", icon: "insights", label: "Analytics" },
-    { href: "/dashboard/stories", icon: "auto_stories", label: "Stories" },
-    { href: "/dashboard/account", icon: "person", label: "Account" },
-    { href: "/dashboard/settings", icon: "tune", label: "Settings" },
+    { href: "/dashboard", icon: BarChart3, label: "Analytics" },
+    { href: "/dashboard/stories", icon: BookOpen, label: "Stories" },
+    { href: "/dashboard/account", icon: User, label: "Account" },
+    { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   ];
 
   const adminNav = [
-    { href: "/dashboard", icon: "analytics", label: "Site Analytics" },
-    { href: "/dashboard/stories", icon: "library_books", label: "All Stories" },
-    { href: "/dashboard/account", icon: "person", label: "Account" },
+    { href: "/dashboard", icon: BarChart3, label: "Site Analytics" },
+    { href: "/dashboard/stories", icon: BookOpen, label: "All Stories" },
+    { href: "/dashboard/account", icon: User, label: "Account" },
     {
       href: "/dashboard/settings",
-      icon: "admin_panel_settings",
+      icon: Shield,
       label: "Admin Settings",
     },
   ];
@@ -72,21 +84,21 @@ export default function Sidebar({
     <>
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-surface-container-low/80 backdrop-blur-xl border-b border-outline-variant/10 flex items-center justify-between px-4">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
-        >
-          <span className="material-symbols-outlined">menu</span>
-        </button>
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
         <span className="font-headline font-bold text-on-surface tracking-tight">
           Dashboard
         </span>
-        <Link
-          href="/dashboard/editor"
-          className="p-2 rounded-lg editorial-gradient text-on-primary"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-        </Link>
+          <Link
+            href="/dashboard/editor"
+            className="p-2 rounded-lg editorial-gradient text-on-primary"
+          >
+            <Plus className="w-5 h-5" />
+          </Link>
       </div>
 
       {/* Mobile overlay */}
@@ -115,7 +127,7 @@ export default function Sidebar({
             onClick={() => setMobileOpen(false)}
             className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
           >
-            <span className="material-symbols-outlined text-lg">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -125,7 +137,7 @@ export default function Sidebar({
             href="/dashboard/editor"
             className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-semibold rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
           >
-            <span className="material-symbols-outlined text-lg">add</span>
+            <Plus className="w-5 h-5" />
             New Post
           </Link>
         </div>
@@ -137,7 +149,9 @@ export default function Sidebar({
             {adminMode ? "Site Management" : "Your Workspace"}
           </div>
 
-          {navItems.map(item => (
+          {navItems.map(item => {
+            const Icon = item.icon;
+            return (
             <Link
               key={item.href}
               href={`${item.href}${modeQS}`}
@@ -148,12 +162,11 @@ export default function Sidebar({
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
             >
-              <span className="material-symbols-outlined text-lg">
-                {item.icon}
-              </span>
+              <Icon className="w-5 h-5" />
               {item.label}
             </Link>
-          ))}
+            );
+          })}
 
           {/* Editor link — preserves mode so sidebar stays in admin/personal */}
           <Link
@@ -165,7 +178,7 @@ export default function Sidebar({
                 : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
             }`}
           >
-            <span className="material-symbols-outlined text-lg">edit</span>
+            <PenLine className="w-5 h-5" />
             Editor
           </Link>
         </nav>
@@ -228,7 +241,7 @@ export default function Sidebar({
               href="/"
               className="flex-1 flex items-center justify-center gap-2 py-2 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
             >
-              <span className="material-symbols-outlined text-sm">home</span>
+              <Home className="w-4 h-4" />
               View Site
             </Link>
             <div className="flex-1">

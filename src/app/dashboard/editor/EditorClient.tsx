@@ -4,6 +4,25 @@ import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DOMPurify from "isomorphic-dompurify";
 import { useToast } from "@/components/ToastContext";
+import {
+  LogOut,
+  ChevronDown,
+  FileEdit,
+  Send,
+  Clock,
+  Bold,
+  Italic,
+  List,
+  Image,
+  Link,
+  Code,
+  Settings,
+  Eye,
+  X,
+  RefreshCw,
+  ChevronUp,
+  ChevronRight,
+} from "lucide-react";
 
 function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
   const router = useRouter();
@@ -326,7 +345,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
               }}
               className="hidden md:flex items-center gap-2 px-4 py-2 text-sm theme-nav-link transition-colors rounded-lg hover:bg-surface-container/70"
             >
-              <span className="material-symbols-outlined text-lg">logout</span>
+              <LogOut className="w-5 h-5" />
               Logout
             </button>
           </div>
@@ -352,35 +371,29 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                 {showPreview ? "Edit" : "Preview"}
               </button>
               <div className="relative">
-                <button
-                  onClick={() => setShowPublishMenu(!showPublishMenu)}
-                  className="editorial-gradient px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-on-primary rounded-lg shadow-lg shadow-primary-container/20 active:scale-95 transition-all flex items-center gap-2"
-                >
-                  <span className="hidden sm:inline">Publishing options</span>
-                  <span className="sm:hidden">Publish</span>
-                  <span className="material-symbols-outlined text-lg">
-                    expand_more
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setShowPublishMenu(!showPublishMenu)}
+                    className="editorial-gradient px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-on-primary rounded-lg shadow-lg shadow-primary-container/20 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <span className="hidden sm:inline">Publishing options</span>
+                    <span className="sm:hidden">Publish</span>
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
 
                 {showPublishMenu && (
                   <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-56 bg-surface-container rounded-xl border border-outline-variant/10 shadow-xl z-50 overflow-hidden animate-scale-in">
-                    <button
-                      onClick={() => handleSave("DRAFT")}
-                      className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
-                    >
-                      <span className="material-symbols-outlined text-lg text-on-surface-variant">
-                        draft
-                      </span>
-                      Save as Draft
-                    </button>
+                      <button
+                        onClick={() => handleSave("DRAFT")}
+                        className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
+                      >
+                        <FileEdit className="w-5 h-5 text-on-surface-variant" />
+                        Save as Draft
+                      </button>
                     <button
                       onClick={() => handleSave("PUBLIC")}
                       className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
                     >
-                      <span className="material-symbols-outlined text-lg text-primary">
-                        publish
-                      </span>
+                      <Send className="w-5 h-5 text-primary" />
                       Publish Now
                     </button>
                     <div className="border-t border-outline-variant/10">
@@ -390,9 +403,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                         }
                         className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
                       >
-                        <span className="material-symbols-outlined text-lg text-tertiary">
-                          schedule
-                        </span>
+                        <Clock className="w-5 h-5 text-tertiary" />
                         Schedule for Later
                       </button>
                       {showSchedulePicker && (
@@ -463,27 +474,21 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                   className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
                   title="Bold"
                 >
-                  <span className="material-symbols-outlined text-lg sm:text-xl">
-                    format_bold
-                  </span>
+                  <Bold className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <button
                   onClick={() => insertMarkdown("*", "*")}
                   className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
                   title="Italic"
                 >
-                  <span className="material-symbols-outlined text-lg sm:text-xl">
-                    format_italic
-                  </span>
+                  <Italic className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <button
                   onClick={() => insertMarkdown("\n- ")}
                   className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
                   title="List"
                 >
-                  <span className="material-symbols-outlined text-lg sm:text-xl">
-                    format_list_bulleted
-                  </span>
+                  <List className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <div className="w-px h-6 bg-outline-variant/20 mx-1 flex-shrink-0" />
                 <button
@@ -491,27 +496,21 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                   className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
                   title="Image"
                 >
-                  <span className="material-symbols-outlined text-lg sm:text-xl">
-                    image
-                  </span>
+                  <Image className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <button
                   onClick={() => insertMarkdown("[", "](url)")}
                   className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
                   title="Link"
                 >
-                  <span className="material-symbols-outlined text-lg sm:text-xl">
-                    link
-                  </span>
+                  <Link className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <button
                   onClick={() => insertMarkdown("`", "`")}
                   className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
                   title="Code"
                 >
-                  <span className="material-symbols-outlined text-lg sm:text-xl">
-                    code
-                  </span>
+                  <Code className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <div className="flex-grow" />
                 <a
@@ -539,9 +538,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
         <aside className="hidden xl:flex flex-col w-80 bg-surface-container-lowest h-[calc(100vh-64px)] fixed right-0 top-16 z-40 p-8 space-y-8 border-l border-outline-variant/5 animate-slide-in-right">
           <div>
             <h3 className="font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-xl">
-                settings_suggest
-              </span>
+              <Settings className="w-5 h-5 text-primary" />
               Post Settings
             </h3>
             <div className="space-y-6">
@@ -550,13 +547,9 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                   onClick={() => setShowSlugEditor(!showSlugEditor)}
                   className="flex items-center gap-1 text-[10px] text-outline hover:text-on-surface-variant transition-colors font-label"
                 >
-                  <span className="material-symbols-outlined text-xs">
-                    link
-                  </span>
+                  <Link className="w-3 h-3" />
                   <span>{slug || "auto-generated"}</span>
-                  <span className="material-symbols-outlined text-[10px]">
-                    {showSlugEditor ? "expand_less" : "expand_more"}
-                  </span>
+                  {showSlugEditor ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
                 {showSlugEditor && (
                   <div className="mt-2 animate-fade-in">
@@ -585,9 +578,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                         onClick={() => removeTag(tag)}
                         className="hover:text-error transition-colors"
                       >
-                        <span className="material-symbols-outlined text-xs">
-                          close
-                        </span>
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   ))}
@@ -602,15 +593,13 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                           e.preventDefault();
                           addTag();
                         }
-                      }}
+                    }}
                     />
                     <button
                       onClick={addTag}
                       className="p-1 text-outline hover:text-primary transition-colors"
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        add_circle
-                      </span>
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -719,19 +708,19 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
           onClick={() => setShowMobileSettings(true)}
           className="w-12 h-12 rounded-full bg-surface-container-highest shadow-xl border border-outline-variant/20 flex items-center justify-center text-primary"
         >
-          <span className="material-symbols-outlined">settings</span>
+          <Settings className="w-5 h-5" />
         </button>
         <button
           onClick={() => setShowPreview(!showPreview)}
           className="w-12 h-12 rounded-full bg-surface-container-highest shadow-xl border border-outline-variant/20 flex items-center justify-center text-primary"
         >
-          <span className="material-symbols-outlined">visibility</span>
+          <Eye className="w-5 h-5" />
         </button>
         <button
           onClick={() => handleSave()}
           className="w-14 h-14 rounded-full editorial-gradient shadow-xl shadow-primary-container/30 flex items-center justify-center text-on-primary"
         >
-          <span className="material-symbols-outlined">send</span>
+          <Send className="w-6 h-6" />
         </button>
       </div>
 
@@ -744,16 +733,14 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
           <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-surface-container-lowest p-6 space-y-8 overflow-y-auto animate-slide-in-right">
             <div className="flex items-center justify-between">
               <h3 className="font-headline font-bold text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-xl">
-                  settings_suggest
-                </span>
+                <Settings className="w-5 h-5 text-primary" />
                 Post Settings
               </h3>
               <button
                 onClick={() => setShowMobileSettings(false)}
                 className="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-6">
@@ -762,13 +749,9 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                   onClick={() => setShowSlugEditor(!showSlugEditor)}
                   className="flex items-center gap-1 text-[10px] text-outline hover:text-on-surface-variant transition-colors font-label"
                 >
-                  <span className="material-symbols-outlined text-xs">
-                    link
-                  </span>
+                  <Link className="w-3 h-3" />
                   <span>{slug || "auto-generated"}</span>
-                  <span className="material-symbols-outlined text-[10px]">
-                    {showSlugEditor ? "expand_less" : "expand_more"}
-                  </span>
+                  {showSlugEditor ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
                 {showSlugEditor && (
                   <div className="mt-2 animate-fade-in">
@@ -797,9 +780,227 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                         onClick={() => removeTag(tag)}
                         className="hover:text-error transition-colors"
                       >
-                        <span className="material-symbols-outlined text-xs">
-                          close
-                        </span>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      className="bg-transparent border-none focus:ring-0 text-xs w-24 text-on-surface placeholder:text-outline"
+                      placeholder="Add tag..."
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addTag();
+                        }
+                    }}
+                    />
+                    <button
+                      onClick={addTag}
+                      className="p-1 text-outline hover:text-primary transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
+                  Visibility
+                </label>
+                <select
+                  value={visibility}
+                  onChange={e => setVisibility(e.target.value)}
+                  className="w-full bg-surface-container-low rounded-xl px-3 py-2.5 text-xs text-on-surface font-medium border border-outline-variant/5 focus:border-primary focus:ring-0 outline-none appearance-none cursor-pointer"
+                >
+                  <option value="PUBLIC">Public</option>
+                  <option value="PRIVATE">Private</option>
+                  <option value="DRAFT">Draft</option>
+                  <option value="UNLISTED">Unlisted</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
+                  SEO Description
+                </label>
+                <textarea
+                  className="w-full bg-surface-container-low rounded-xl px-3 py-2 text-xs text-on-surface border border-outline-variant/5 focus:border-primary focus:ring-0 outline-none resize-none h-20 transition-colors"
+                  placeholder="Brief description for search engines..."
+                  value={seoDescription}
+                  onChange={e => setSeoDescription(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
+                  Cover Image
+                </label>
+                <input
+                  className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
+                  placeholder="Image URL for feed & SEO..."
+                  value={coverImage}
+                  onChange={e => setCoverImage(e.target.value)}
+                />
+                {coverImage && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-outline-variant/10 aspect-video bg-surface-container flex items-center justify-center">
+                    <img
+                      src={coverImage}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/5">
+              <p className="text-[10px] font-bold text-outline uppercase mb-2 font-label">
+                Search Preview
+              </p>
+              <div className="space-y-1">
+                <div className="text-sm text-primary font-medium truncate">
+                  {title || "Your post title"}
+                </div>
+                <div className="text-xs text-on-surface-variant line-clamp-2">
+                  {seoDescription ||
+                    "Add an SEO description to improve search visibility..."}
+                </div>
+                <div className="text-[10px] text-outline">
+                  openblog.com/blog/{slug || "your-slug"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
+                  Topic Tags
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-surface-container-high text-xs rounded-full border border-outline-variant/10 text-primary flex items-center gap-1"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-error transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      className="bg-transparent border-none focus:ring-0 text-xs w-24 text-on-surface placeholder:text-outline"
+                      placeholder="Add tag..."
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addTag();
+                        }
+                    }}
+                    />
+                    <button
+                      onClick={addTag}
+                      className="p-1 text-outline hover:text-primary transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+                {showSlugEditor && (
+                  <div className="mt-2 animate-fade-in">
+                    <input
+                      className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
+                      placeholder="my-post-slug"
+                      value={slug}
+                      onChange={e => setSlug(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
+                  Topic Tags
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-surface-container-high text-xs rounded-full border border-outline-variant/10 text-primary flex items-center gap-1"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-error transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      className="bg-transparent border-none focus:ring-0 text-xs w-24 text-on-surface placeholder:text-outline"
+                      placeholder="Add tag..."
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addTag();
+                        }
+                    }}
+                    />
+                    <button
+                      onClick={addTag}
+                      className="p-1 text-outline hover:text-primary transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+                {showSlugEditor && (
+                  <div className="mt-2 animate-fade-in">
+                    <input
+                      className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
+                      placeholder="my-post-slug"
+                      value={slug}
+                      onChange={e => setSlug(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
+                  Topic Tags
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-surface-container-high text-xs rounded-full border border-outline-variant/10 text-primary flex items-center gap-1"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-error transition-colors"
+                      >
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   ))}
@@ -820,9 +1021,7 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
                       onClick={addTag}
                       className="p-1 text-outline hover:text-primary transition-colors"
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        add_circle
-                      </span>
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -907,9 +1106,7 @@ export default function EditorClient({ blogName }: { blogName?: string } = {}) {
     <Suspense
       fallback={
         <div className="min-h-screen bg-surface flex items-center justify-center">
-          <span className="material-symbols-outlined text-primary text-4xl animate-spin">
-            sync
-          </span>
+          <RefreshCw className="w-10 h-10 text-primary animate-spin" />
         </div>
       }
     >

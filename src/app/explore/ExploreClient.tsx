@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useDebouncedCallback } from "@/lib/hooks";
+import {
+  Search,
+  X,
+  FileText,
+  User,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 interface Post {
   id: string;
@@ -88,9 +96,7 @@ export default function ExploreClient({
     <>
       <div className="max-w-xl mx-auto mb-16">
         <div className="bg-surface-container-low rounded-2xl p-4 flex items-center gap-3 border border-outline-variant/10">
-          <span className="material-symbols-outlined text-on-surface-variant ml-2">
-            search
-          </span>
+          <Search className="w-4 h-4 text-on-surface-variant ml-2" />
           <input
             className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-on-surface-variant/50 outline-none"
             placeholder="Search stories, topics, authors..."
@@ -106,9 +112,7 @@ export default function ExploreClient({
               }}
               className="p-1 hover:bg-surface-container-high rounded transition-colors"
             >
-              <span className="material-symbols-outlined text-sm text-on-surface-variant">
-                close
-              </span>
+              <X className="w-4 h-4 text-on-surface-variant" />
             </button>
           )}
         </div>
@@ -144,9 +148,7 @@ export default function ExploreClient({
           </div>
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">
-              search_off
-            </span>
+            <FileText className="w-12 h-12 text-outline-variant mb-4" />
             <h3 className="font-headline text-xl font-bold text-on-surface mb-2">
               {search ? "No stories found" : "Nothing to explore yet"}
             </h3>
@@ -187,9 +189,7 @@ export default function ExploreClient({
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm text-on-surface-variant">
-                        person
-                      </span>
+                      <User className="w-4 h-4 text-on-surface-variant" />
                     </div>
                     <span className="text-xs text-on-surface-variant">
                       {post.author.name || "Anonymous"}
@@ -213,9 +213,7 @@ export default function ExploreClient({
                 disabled={page === 0}
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-30"
               >
-                <span className="material-symbols-outlined text-sm">
-                  chevron_left
-                </span>
+                <ChevronLeft className="w-4 h-4" />
               </button>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 const pageNum =
@@ -240,9 +238,7 @@ export default function ExploreClient({
                 disabled={page >= totalPages - 1}
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-30"
               >
-                <span className="material-symbols-outlined text-sm">
-                  chevron_right
-                </span>
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>

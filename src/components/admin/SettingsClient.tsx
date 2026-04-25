@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ToastContext";
+import {
+  Settings,
+  Palette,
+  CheckCircle,
+  User,
+  FileEdit,
+  Cog,
+  Key,
+  Trash2,
+} from "lucide-react";
 
 interface ApiKey {
   id: string;
@@ -195,9 +205,7 @@ export default function SettingsClient() {
       {/* Site Configuration */}
       <section className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/5">
         <h2 className="font-headline text-xl font-bold text-on-surface mb-6 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary">
-            settings
-          </span>
+          <Settings className="w-5 h-5 text-primary" />
           Site Configuration
         </h2>
         <div className="space-y-6">
@@ -215,13 +223,10 @@ export default function SettingsClient() {
         </div>
       </section>
 
-      {/* Theme Selection */}
       <section className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/5">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-headline text-xl font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">
-              palette
-            </span>
+            <Palette className="w-5 h-5 text-primary" />
             Theme Preset
           </h2>
           {saved && (
@@ -248,14 +253,12 @@ export default function SettingsClient() {
                   style={{ background: theme.preview }}
                 />
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-bold text-on-surface font-headline">
                       {theme.name}
                     </span>
                     {activeTheme === theme.id && (
-                      <span className="material-symbols-outlined text-primary text-lg">
-                        check_circle
-                      </span>
+                      <CheckCircle className="w-4 h-4 text-primary" />
                     )}
                   </div>
                   <p className="text-xs text-on-surface-variant leading-relaxed">
@@ -268,10 +271,9 @@ export default function SettingsClient() {
         </div>
       </section>
 
-      {/* User Management */}
       <section className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/5">
         <h2 className="font-headline text-xl font-bold text-on-surface mb-6 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary">group</span>
+          <User className="w-5 h-5 text-primary" />
           User Management
         </h2>
         <div className="space-y-3">
@@ -286,17 +288,17 @@ export default function SettingsClient() {
                     user.profile?.role === "ADMIN"
                       ? "bg-primary-container text-on-primary-container"
                       : user.profile?.role === "AUTHOR"
-                        ? "bg-secondary-container text-on-secondary-container"
-                        : "bg-tertiary/10 text-tertiary"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-lg">
-                    {user.profile?.role === "ADMIN"
-                      ? "account_circle"
-                      : user.profile?.role === "AUTHOR"
-                        ? "edit_note"
-                        : "smart_toy"}
-                  </span>
+                      ? "bg-secondary-container text-on-secondary-container"
+                      : "bg-tertiary/10 text-tertiary"
+                }`}
+              >
+                {user.profile?.role === "ADMIN" ? (
+                  <Shield className="w-5 h-5" />
+                ) : user.profile?.role === "AUTHOR" ? (
+                  <PenLine className="w-5 h-5" />
+                ) : (
+                  <Cog className="w-5 h-5" />
+                )}
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-on-surface">
@@ -329,13 +331,10 @@ export default function SettingsClient() {
         </div>
       </section>
 
-      {/* API Key Management */}
       <section className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/5">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-headline text-xl font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-tertiary">
-              vpn_key
-            </span>
+            <Key className="w-5 h-5 text-tertiary" />
             API Keys
           </h2>
           <button
@@ -389,9 +388,7 @@ export default function SettingsClient() {
                 onClick={() => handleDeleteKey(key.id)}
                 className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors"
               >
-                <span className="material-symbols-outlined text-sm">
-                  delete
-                </span>
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))}

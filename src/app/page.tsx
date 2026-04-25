@@ -2,6 +2,7 @@ import LoadMorePosts from "@/components/LoadMorePosts";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import { ArrowRight } from "lucide-react";
 import { stripMarkdown } from "@/lib/strip-markdown";
 import { getSession } from "@/lib/session";
 
@@ -83,9 +84,7 @@ export default async function Home() {
                 className="editorial-gradient text-on-primary px-8 py-4 rounded-lg font-label font-semibold inline-flex items-center group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 active:scale-95 animate-glow-pulse"
               >
                 Read the Full Story
-                <span className="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">
-                  arrow_forward
-                </span>
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
             {featuredPost.metadata?.coverImage && (

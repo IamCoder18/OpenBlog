@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Home, Compass, User, Menu, X, LayoutDashboard, LogOut } from "lucide-react";
 
 interface MobileBottomNavProps {
   activeTab?: "feed" | "explore" | "dashboard";
@@ -59,7 +60,7 @@ export default function MobileBottomNav({
                 : "text-on-surface-variant active:bg-surface-container"
             }`}
           >
-            <span className="material-symbols-outlined text-[24px]">home</span>
+            <Home className="w-6 h-6" />
             <span className="text-[11px] font-label tracking-wide">Feed</span>
           </Link>
 
@@ -71,9 +72,7 @@ export default function MobileBottomNav({
                 : "text-on-surface-variant active:bg-surface-container"
             }`}
           >
-            <span className="material-symbols-outlined text-[24px]">
-              explore
-            </span>
+            <Compass className="w-6 h-6" />
             <span className="text-[11px] font-label tracking-wide">
               Explore
             </span>
@@ -84,9 +83,7 @@ export default function MobileBottomNav({
               href="/agent"
               className="flex flex-col items-center justify-center gap-0.5 px-6 py-2 rounded-lg transition-colors duration-200 text-on-surface-variant active:bg-surface-container"
             >
-              <span className="material-symbols-outlined text-[24px]">
-                person
-              </span>
+              <User className="w-6 h-6" />
               <span className="text-[11px] font-label tracking-wide">
                 Account
               </span>
@@ -103,9 +100,7 @@ export default function MobileBottomNav({
               }`}
               aria-label="Open menu"
             >
-              <span className="material-symbols-outlined text-[24px]">
-                menu
-              </span>
+              <Menu className="w-6 h-6" />
               <span className="text-[11px] font-label tracking-wide">More</span>
             </button>
           )}
@@ -142,9 +137,7 @@ export default function MobileBottomNav({
                 className="p-2 hover:bg-surface-container rounded-lg transition-colors"
                 aria-label="Close menu"
               >
-                <span className="material-symbols-outlined text-on-surface-variant">
-                  close
-                </span>
+                <X className="w-5 h-5 text-on-surface-variant" />
               </button>
             </div>
 
@@ -160,9 +153,7 @@ export default function MobileBottomNav({
                         : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                     }`}
                   >
-                    <span className="material-symbols-outlined text-xl">
-                      dashboard
-                    </span>
+                    <LayoutDashboard className="w-5 h-5" />
                     Dashboard
                   </Link>
                 </li>
@@ -172,9 +163,7 @@ export default function MobileBottomNav({
                       type="submit"
                       className="flex items-center gap-3 w-full text-left py-3 px-4 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-200"
                     >
-                      <span className="material-symbols-outlined text-xl">
-                        logout
-                      </span>
+                      <LogOut className="w-5 h-5" />
                       Logout
                     </button>
                   </form>

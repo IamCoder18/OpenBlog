@@ -400,8 +400,8 @@ describe("LoadMorePosts", () => {
     it("renders article icon in empty state", () => {
       render(<LoadMorePosts initialPosts={[]} />);
 
-      const icon = document.querySelector(".material-symbols-outlined");
-      expect(icon?.textContent).toBe("article");
+      const icon = document.querySelector("svg");
+      expect(icon).toBeInTheDocument();
     });
 
     it("does not render 'Recent Stories' heading when no posts", () => {

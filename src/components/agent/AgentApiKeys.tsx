@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ToastContext";
+import { Key, Trash2 } from "lucide-react";
 
 interface ApiKey {
   id: string;
@@ -86,9 +87,7 @@ export default function AgentApiKeys() {
       <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-tertiary text-xl">
-              vpn_key
-            </span>
+            <Key className="w-5 h-5 text-tertiary" />
             API Keys
           </h2>
           <button
@@ -171,14 +170,12 @@ export default function AgentApiKeys() {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDeleteKey(key.id)}
-                  className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0 self-end sm:self-auto"
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    delete
-                  </span>
-                </button>
+              <button
+                onClick={() => handleDeleteKey(key.id)}
+                className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
               </div>
             ))}
             {apiKeys.length === 0 && (

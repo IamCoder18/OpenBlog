@@ -46,7 +46,7 @@ Before creating or fixing tests, **you must read `TESTING_BEST_PRACTICES.md`**.
 
 # Session Documentation
 
-Document all tasks, decisions, and progress in dedicated session markdown files to maintain a clear audit trail.
+**Always** document all tasks, decisions, and progress in dedicated session markdown files to maintain a clear audit trail.
 
 **File Naming Convention:** `sessions/YYYY-MM-DD_phaseN-description.md`
 

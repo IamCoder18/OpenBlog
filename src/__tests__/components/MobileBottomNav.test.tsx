@@ -38,25 +38,25 @@ describe("MobileBottomNav", () => {
     it("Feed tab has home icon", () => {
       render(<MobileBottomNav />);
 
-      const feedLink = screen.getByText("Feed").closest("a");
-      const icon = feedLink?.querySelector(".material-symbols-outlined");
-      expect(icon).toHaveTextContent("home");
+      const feedLink = screen.getByText("Feed");
+      const icon = feedLink?.querySelector("svg");
+      expect(icon).toBeInTheDocument();
     });
 
     it("Explore tab has explore icon", () => {
       render(<MobileBottomNav />);
 
-      const exploreLink = screen.getByText("Explore").closest("a");
-      const icon = exploreLink?.querySelector(".material-symbols-outlined");
-      expect(icon).toHaveTextContent("explore");
+      const exploreLink = screen.getByText("Explore");
+      const icon = exploreLink?.querySelector("svg");
+      expect(icon).toBeInTheDocument();
     });
 
     it("More button has menu icon", () => {
       render(<MobileBottomNav isAdmin={true} />);
 
       const moreBtn = screen.getByLabelText("Open menu");
-      const icon = moreBtn.querySelector(".material-symbols-outlined");
-      expect(icon).toHaveTextContent("menu");
+      const icon = moreBtn.querySelector("svg");
+      expect(icon).toBeInTheDocument();
     });
   });
 

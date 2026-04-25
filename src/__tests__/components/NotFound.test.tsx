@@ -52,9 +52,8 @@ describe("Root NotFound", () => {
 
     it("renders search_off icon", () => {
       render(<NotFound />);
-      const icon = document.querySelector(".material-symbols-outlined");
+      const icon = document.querySelector("svg");
       expect(icon).toBeInTheDocument();
-      expect(icon).toHaveTextContent("search_off");
     });
   });
 });
@@ -102,11 +101,8 @@ describe("BlogNotFound", () => {
 
     it("renders article icon", () => {
       render(<BlogNotFound />);
-      const icons = document.querySelectorAll(".material-symbols-outlined");
-      const articleIcon = Array.from(icons).find(
-        icon => icon.textContent === "article"
-      );
-      expect(articleIcon).toBeInTheDocument();
+      const icon = document.querySelector("svg");
+      expect(icon).toBeInTheDocument();
     });
   });
 });

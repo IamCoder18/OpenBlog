@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ToastContext";
+import {
+  Calendar,
+  ChevronDown,
+  Check,
+  CalendarRange,
+  RefreshCw,
+} from "lucide-react";
 
 interface ViewsByDay {
   date: string;
@@ -89,17 +96,13 @@ export default function DateRangeSelector() {
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-2 px-3 py-1.5 bg-surface-container rounded-lg border border-outline-variant/10 hover:border-outline-variant/20 transition-colors text-xs"
             >
-              <span className="material-symbols-outlined text-sm text-primary">
-                calendar_today
-              </span>
+              <Calendar className="w-4 h-4 text-primary" />
               <span className="font-medium">
                 {range === "custom" && customFrom
                   ? `${customFrom} - ${customTo}`
                   : RANGE_LABELS[range]}
               </span>
-              <span className="material-symbols-outlined text-sm text-on-surface-variant">
-                expand_more
-              </span>
+              <ChevronDown className="w-4 h-4 text-on-surface-variant" />
             </button>
 
             {showDropdown && (
@@ -117,9 +120,7 @@ export default function DateRangeSelector() {
                     }`}
                   >
                     {range === r && (
-                      <span className="material-symbols-outlined text-base">
-                        check
-                      </span>
+                      <Check className="w-4 h-4" />
                     )}
                     <span className={range === r ? "" : "ml-6"}>
                       {RANGE_LABELS[r]}
@@ -134,9 +135,7 @@ export default function DateRangeSelector() {
                     }}
                     className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-base text-on-surface-variant">
-                      date_range
-                    </span>
+                      <CalendarRange className="w-4 h-4 text-on-surface-variant" />
                     Custom range
                   </button>
                   {showCustom && (
@@ -172,9 +171,7 @@ export default function DateRangeSelector() {
         <div className="relative h-48 w-full flex items-end gap-1 overflow-hidden">
           {loading ? (
             <div className="w-full flex items-center justify-center h-full">
-              <span className="material-symbols-outlined text-primary text-3xl animate-spin">
-                sync
-              </span>
+              <RefreshCw className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : barHeights.length > 0 ? (
             barHeights.map((h, i) => (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { User, Key, Menu, X, Home } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 interface AgentSidebarProps {
@@ -22,13 +23,13 @@ export default function AgentSidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { href: "/agent/profile", icon: "person", label: "Profile" },
+    { href: "/agent/profile", icon: User, label: "Profile" },
   ];
 
   if (userRole === "AGENT") {
     navItems.push({
       href: "/agent/keys",
-      icon: "vpn_key",
+      icon: Key,
       label: "API Keys",
     });
   }
@@ -46,12 +47,12 @@ export default function AgentSidebar({
     <>
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-surface-container-low/80 backdrop-blur-xl border-b border-outline-variant/10 flex items-center justify-between px-4">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
-        >
-          <span className="material-symbols-outlined">menu</span>
-        </button>
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
         <span className="font-headline font-bold text-on-surface tracking-tight">
           Account
         </span>
@@ -84,7 +85,7 @@ export default function AgentSidebar({
             onClick={() => setMobileOpen(false)}
             className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
           >
-            <span className="material-symbols-outlined text-lg">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -94,7 +95,9 @@ export default function AgentSidebar({
             Settings
           </div>
 
-          {navItems.map(item => (
+          {navItems.map(item => {
+            const Icon = item.icon;
+            return (
             <Link
               key={item.href}
               href={item.href}
@@ -105,12 +108,11 @@ export default function AgentSidebar({
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
             >
-              <span className="material-symbols-outlined text-lg">
-                {item.icon}
-              </span>
+              <Icon className="w-5 h-5" />
               {item.label}
             </Link>
-          ))}
+            );
+          })}
         </nav>
 
         {/* User / Logout */}
@@ -146,7 +148,7 @@ export default function AgentSidebar({
               href="/"
               className="flex-1 flex items-center justify-center gap-2 py-2 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
             >
-              <span className="material-symbols-outlined text-sm">home</span>
+              <Home className="w-4 h-4" />
               View Site
             </Link>
             <div className="flex-1">

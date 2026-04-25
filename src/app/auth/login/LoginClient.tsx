@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { RefreshCw } from "lucide-react";
 
 export default function LoginClient({
   signUpEnabled,
@@ -108,9 +109,7 @@ export default function LoginClient({
               className="w-full editorial-gradient text-on-primary py-3 rounded-lg font-semibold transition-all duration-300 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="material-symbols-outlined text-lg animate-spin">
-                  sync
-                </span>
+                <RefreshCw className="w-5 h-5 animate-spin" />
               ) : (
                 "Sign In"
               )}
@@ -138,9 +137,7 @@ export default function LoginClient({
             href="/"
             className="text-on-surface-variant text-xs hover:text-primary transition-colors flex items-center justify-center gap-1"
           >
-            <span className="material-symbols-outlined text-sm">
-              arrow_back
-            </span>
+            <ArrowLeft className="w-4 h-4" />
             Back to blog
           </Link>
         </div>

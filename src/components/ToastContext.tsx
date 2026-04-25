@@ -8,6 +8,7 @@ import {
   useState,
   useRef,
 } from "react";
+import { AlertCircle, CheckCircle, AlertTriangle, Info, X } from "lucide-react";
 
 type ToastType = "error" | "success" | "warning" | "info";
 
@@ -31,11 +32,11 @@ export function useToast() {
   return ctx;
 }
 
-const ICONS: Record<ToastType, string> = {
-  error: "error",
-  success: "check_circle",
-  warning: "warning",
-  info: "info",
+const ICONS: Record<ToastType, React.ComponentType<{ className?: string }>> = {
+  error: AlertCircle,
+  success: CheckCircle,
+  warning: AlertTriangle,
+  info: Info,
 };
 
 const STYLES: Record<ToastType, string> = {
@@ -43,13 +44,6 @@ const STYLES: Record<ToastType, string> = {
   success: "theme-success-soft text-on-surface",
   warning: "theme-warning-soft text-on-surface",
   info: "bg-primary-container/80 text-on-primary-container",
-};
-
-const ICON_COLORS: Record<ToastType, string> = {
-  error: "text-error",
-  success: "theme-success-text",
-  warning: "theme-warning-text",
-  info: "text-primary",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -77,34 +71,31 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({ addToast }), [addToast]);
 
-  return (
-    <ToastContext.Provider value={value}>
-      {children}
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
-        {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl backdrop-blur-xl shadow-ambient animate-slide-in-right ${STYLES[toast.type]}`}
-          >
-            <span
-              className={`material-symbols-outlined text-xl flex-shrink-0 mt-0.5 ${ICON_COLORS[toast.type]}`}
+    return (
+      <ToastContext.Provider value={value}>
+        {children}
+        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+          {toasts.map(toast => {
+            const IconComponent = ICONS[toast.type];
+            return (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl backdrop-blur-xl shadow-ambient animate-slide-in-right ${STYLES[toast.type]}`}
             >
-              {ICONS[toast.type]}
-            </span>
-            <p className="text-sm font-body leading-relaxed flex-1">
-              {toast.message}
-            </p>
-            <button
-              onClick={() => removeToast(toast.id)}
-              className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <span className="material-symbols-outlined text-lg opacity-60">
-                close
-              </span>
-            </button>
-          </div>
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
+              <IconComponent className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <p className="text-sm font-body leading-relaxed flex-1">
+                {toast.message}
+              </p>
+              <button
+                onClick={() => removeToast(toast.id)}
+                className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4 opacity-60" />
+              </button>
+            </div>
+            );
+          })}
+        </div>
+      </ToastContext.Provider>
+    );
 }

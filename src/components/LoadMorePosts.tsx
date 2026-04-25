@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FileText, LayoutGrid, List, User, ChevronRight, RefreshCw, ChevronDown } from "lucide-react";
 import { stripMarkdown } from "@/lib/strip-markdown";
 
 interface Author {
@@ -92,9 +93,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
   if (posts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32">
-        <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">
-          article
-        </span>
+        <FileText className="w-16 h-16 text-outline-variant mb-4" />
         <h2 className="font-headline text-2xl font-bold text-on-surface mb-2">
           No posts yet
         </h2>
@@ -123,17 +122,13 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
             onClick={() => setViewMode("grid")}
             className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-surface-container-low text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
-            <span className="material-symbols-outlined text-on-surface">
-              grid_view
-            </span>
+            <LayoutGrid className="w-5 h-5" />
           </button>
           <button
             onClick={() => setViewMode("list")}
             className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-surface-container-low text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
-            <span className="material-symbols-outlined text-on-surface">
-              view_list
-            </span>
+            <List className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -183,9 +178,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                             alt={remainingPosts[0].author.name || ""}
                           />
                         ) : (
-                          <span className="material-symbols-outlined text-on-surface-variant text-lg">
-                            person
-                          </span>
+                          <User className="w-5 h-5 text-on-surface-variant" />
                         )}
                       </div>
                       <span className="text-sm font-medium text-on-surface">
@@ -212,17 +205,15 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                   {stripMarkdown(remainingPosts[1].bodyMarkdown, 120)}
                 </p>
               </div>
-              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
-                <span className="text-xs text-on-surface-variant">
-                  {formatDate(remainingPosts[1].publishedAt)}
-                </span>
-                <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
-                  Read
-                  <span className="material-symbols-outlined text-sm ml-1">
-                    chevron_right
+                <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+                  <span className="text-xs text-on-surface-variant">
+                    {formatDate(remainingPosts[1].publishedAt)}
                   </span>
-                </span>
-              </div>
+                  <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
+                    Read
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </span>
+                </div>
             </a>
           )}
 
@@ -240,17 +231,15 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                   {stripMarkdown(remainingPosts[2].bodyMarkdown, 120)}
                 </p>
               </div>
-              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
-                <span className="text-xs text-on-surface-variant">
-                  {formatDate(remainingPosts[2].publishedAt)}
-                </span>
-                <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
-                  Read
-                  <span className="material-symbols-outlined text-sm ml-1">
-                    chevron_right
+                <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+                  <span className="text-xs text-on-surface-variant">
+                    {formatDate(remainingPosts[2].publishedAt)}
                   </span>
-                </span>
-              </div>
+                  <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
+                    Read
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </span>
+                </div>
             </a>
           )}
 
@@ -320,9 +309,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                 </p>
               </div>
               <div className="flex items-center flex-shrink-0">
-                <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">
-                  chevron_right
-                </span>
+                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
               </div>
             </a>
           ))}
@@ -350,9 +337,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
             >
               {loading ? (
                 <div className="w-12 h-12 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary animate-spin">
-                    sync
-                  </span>
+                  <RefreshCw className="w-6 h-6 text-primary animate-spin" />
                 </div>
               ) : (
                 <>
@@ -360,9 +345,7 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                     Load more stories
                   </span>
                   <div className="w-12 h-12 rounded-full border border-outline-variant/20 flex items-center justify-center group-hover:border-primary transition-colors">
-                    <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary animate-bounce">
-                      expand_more
-                    </span>
+                    <ChevronDown className="w-5 h-5 text-on-surface-variant group-hover:text-primary animate-bounce" />
                   </div>
                 </>
               )}

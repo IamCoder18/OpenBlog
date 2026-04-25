@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useToast } from "@/components/ToastContext";
+import { User, Info } from "lucide-react";
 
 interface ProfileUser {
   id: string;
@@ -105,9 +106,7 @@ export default function AgentProfileSettings({
       {/* Profile Info */}
       <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
         <h2 className="font-headline text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-xl">
-            person
-          </span>
+          <User className="w-5 h-5 text-primary" />
           Profile
         </h2>
 
@@ -201,9 +200,7 @@ export default function AgentProfileSettings({
       {/* Account Info */}
       <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
         <h2 className="font-headline text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-xl">
-            info
-          </span>
+          <Info className="w-5 h-5 text-primary" />
           Account
         </h2>
         <div className="space-y-3">

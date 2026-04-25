@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { FileText, Eye, Edit3, TrendingUp, ArrowRight, ChevronRight } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/config";
@@ -109,9 +110,7 @@ export default async function DashboardPage({
         <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <span className="material-symbols-outlined text-primary text-lg">
-                article
-              </span>
+              <FileText className="w-5 h-5 text-primary" />
             </div>
             <span className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider font-label">
               Stories
@@ -131,9 +130,7 @@ export default async function DashboardPage({
         <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-75">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 theme-success-soft rounded-lg">
-              <span className="material-symbols-outlined theme-success-text text-lg">
-                visibility
-              </span>
+              <Eye className="w-5 h-5 theme-success-text" />
             </div>
             <span className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider font-label">
               Published
@@ -148,9 +145,7 @@ export default async function DashboardPage({
         <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-100">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 bg-tertiary/10 rounded-lg">
-              <span className="material-symbols-outlined text-tertiary text-lg">
-                edit_note
-              </span>
+              <Edit3 className="w-5 h-5 text-tertiary" />
             </div>
             <span className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider font-label">
               Drafts
@@ -165,9 +160,7 @@ export default async function DashboardPage({
         <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-150">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <span className="material-symbols-outlined text-primary text-lg">
-                trending_up
-              </span>
+              <TrendingUp className="w-5 h-5 text-primary" />
             </div>
             <span className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider font-label">
               {scopeLabel} Views
@@ -195,9 +188,7 @@ export default async function DashboardPage({
             className="text-primary text-xs font-semibold hover:underline flex items-center gap-1 font-label"
           >
             View all
-            <span className="material-symbols-outlined text-sm">
-              arrow_forward
-            </span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -209,9 +200,7 @@ export default async function DashboardPage({
               className="flex items-center gap-4 p-4 bg-surface-container-low hover:bg-surface-container rounded-xl transition-all duration-200 group"
             >
               <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
-                <span className="material-symbols-outlined text-lg text-outline-variant group-hover:text-primary transition-colors">
-                  article
-                </span>
+                <FileText className="w-5 h-5 text-outline-variant group-hover:text-primary transition-colors" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-on-surface truncate">
@@ -231,9 +220,7 @@ export default async function DashboardPage({
                   {post.metadata.tags[0]}
                 </span>
               )}
-              <span className="material-symbols-outlined text-sm text-on-surface-variant group-hover:text-primary transition-colors">
-                chevron_right
-              </span>
+              <ChevronRight className="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" />
             </Link>
           ))}
           {recentPosts.length === 0 && (

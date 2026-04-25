@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BarChart3, BookOpen, Settings, Plus } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import { config } from "@/lib/config";
 
@@ -15,19 +16,19 @@ export default function Sidebar({
   const navItems = [
     {
       id: "analytics" as const,
-      icon: "insights",
+      icon: BarChart3,
       label: "Analytics",
       href: "/dashboard",
     },
     {
       id: "stories" as const,
-      icon: "auto_stories",
+      icon: BookOpen,
       label: "Stories",
       href: "/dashboard/stories",
     },
     {
       id: "settings" as const,
-      icon: "settings_suggest",
+      icon: Settings,
       label: "Settings",
       href: "/dashboard/settings",
     },
@@ -44,19 +45,20 @@ export default function Sidebar({
         <div className="text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-label">
           Editorial Suite
         </div>
-        <Link
-          href="/dashboard/editor"
-          className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-medium rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined text-sm">add</span>
-          New Post
-        </Link>
+          <Link
+            href="/dashboard/editor"
+            className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-medium rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New Post
+          </Link>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1">
         {navItems.map(item => {
           const isActive = activeItem === item.id;
+          const Icon = item.icon;
           return (
             <Link
               key={item.id}
@@ -67,7 +69,7 @@ export default function Sidebar({
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
             >
-              <span className="material-symbols-outlined">{item.icon}</span>
+              <Icon className="w-5 h-5" />
               {item.label}
             </Link>
           );

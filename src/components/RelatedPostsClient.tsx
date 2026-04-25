@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { stripMarkdown } from "@/lib/strip-markdown";
+import { Link2 } from "lucide-react";
 
 interface Author {
   id: string;
@@ -92,9 +93,7 @@ export default function RelatedPostsClient({ slug }: RelatedPostsClientProps) {
           Related Stories
         </h2>
         <div className="bg-surface-container-low rounded-xl p-8 text-center">
-          <span className="material-symbols-outlined text-3xl text-outline-variant mb-3">
-            link_off
-          </span>
+          <Link2 className="w-8 h-8 text-outline-variant mb-3" />
           <p className="text-sm text-on-surface-variant">
             Related stories could not be loaded right now.
           </p>
@@ -145,9 +144,7 @@ export default function RelatedPostsClient({ slug }: RelatedPostsClientProps) {
               </span>
               <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center font-label">
                 Read
-                <span className="material-symbols-outlined text-sm ml-1">
-                  chevron_right
-                </span>
+                <Link2 className="w-4 h-4 ml-1" />
               </span>
             </div>
           </Link>

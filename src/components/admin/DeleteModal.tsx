@@ -1,5 +1,7 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
+
 export default function DeleteModal({
   title,
   onConfirm,
@@ -18,9 +20,7 @@ export default function DeleteModal({
       <div className="relative bg-surface-container-low rounded-2xl border border-outline-variant/10 shadow-2xl max-w-md w-full p-6 animate-scale-in">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 theme-danger-soft rounded-lg">
-            <span className="material-symbols-outlined theme-danger-text">
-              delete
-            </span>
+            <Trash2 className="w-5 h-5 theme-danger-text" />
           </div>
           <h3 className="font-headline text-lg font-bold text-on-surface">
             Delete story

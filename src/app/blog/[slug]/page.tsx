@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DesktopBackLink from "@/components/DesktopBackLink";
 import { getSession } from "@/lib/session";
+import { User, FileEdit } from "lucide-react";
 
 interface Author {
   id: string;
@@ -148,9 +149,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     height={48}
                   />
                 ) : (
-                  <span className="material-symbols-outlined text-on-surface-variant">
-                    person
-                  </span>
+                  <User className="w-5 h-5 text-on-surface-variant" />
                 )}
               </div>
               <div>
@@ -172,9 +171,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   href={`/dashboard/editor?slug=${post.slug}`}
                   className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
                 >
-                  <span className="material-symbols-outlined text-lg">
-                    edit
-                  </span>
+                  <FileEdit className="w-4 h-4" />
                 </Link>
               )}
               <ShareButton title={post.title} slug={post.slug} />

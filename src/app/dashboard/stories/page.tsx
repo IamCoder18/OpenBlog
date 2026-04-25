@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/config";
@@ -62,7 +63,7 @@ export default async function StoriesPage({
             href="/dashboard/editor"
             className="editorial-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all active:scale-95 flex-shrink-0"
           >
-            <span className="material-symbols-outlined text-lg">add</span>
+            <Plus className="w-5 h-5" />
             New Post
           </Link>
         </div>

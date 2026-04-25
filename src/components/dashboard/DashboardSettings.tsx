@@ -2,6 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ToastContext";
+import {
+  Settings,
+  CheckCircle,
+  Users,
+  Shield,
+  PenLine,
+  Cog,
+  Key,
+  Trash2,
+  Search,
+  Map,
+  Rss,
+} from "lucide-react";
 
 interface ApiKey {
   id: string;
@@ -179,12 +192,6 @@ export default function DashboardSettings({
     },
   ];
 
-  const roleIcon = (role: string) => {
-    if (role === "ADMIN") return "account_circle";
-    if (role === "AUTHOR") return "edit_note";
-    return "smart_toy";
-  };
-
   const roleColor = (role: string) => {
     if (role === "ADMIN")
       return {
@@ -214,9 +221,7 @@ export default function DashboardSettings({
         <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-xl">
-                palette
-              </span>
+              <Settings className="w-5 h-5 text-primary" />
               Theme Preset
             </h2>
             {saved && (
@@ -248,9 +253,7 @@ export default function DashboardSettings({
                         {theme.name}
                       </span>
                       {activeTheme === theme.id && (
-                        <span className="material-symbols-outlined text-primary text-lg">
-                          check_circle
-                        </span>
+                        <CheckCircle className="w-4 h-4 text-primary" />
                       )}
                     </div>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
@@ -268,9 +271,7 @@ export default function DashboardSettings({
       {scope === "site" && (
         <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
           <h2 className="font-headline text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-xl">
-              group
-            </span>
+            <Users className="w-5 h-5 text-primary" />
             Users
           </h2>
           <div className="space-y-2">
@@ -285,11 +286,13 @@ export default function DashboardSettings({
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${colors.avatarBg}`}
                     >
-                      <span
-                        className={`material-symbols-outlined text-lg ${colors.avatarText}`}
-                      >
-                        {roleIcon(user.profile?.role ?? "")}
-                      </span>
+                      {user.profile?.role === "ADMIN" ? (
+                        <Shield className="w-4 h-4" />
+                      ) : user.profile?.role === "AUTHOR" ? (
+                        <PenLine className="w-4 h-4" />
+                      ) : (
+                        <Cog className="w-4 h-4" />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-on-surface truncate">
@@ -321,9 +324,7 @@ export default function DashboardSettings({
       <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-tertiary text-xl">
-              vpn_key
-            </span>
+            <Key className="w-5 h-5 text-tertiary" />
             API Keys
           </h2>
           <button
@@ -371,9 +372,7 @@ export default function DashboardSettings({
                 onClick={() => handleDeleteKey(key.id)}
                 className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0 self-end sm:self-auto"
               >
-                <span className="material-symbols-outlined text-sm">
-                  delete
-                </span>
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))}
@@ -388,9 +387,7 @@ export default function DashboardSettings({
       {/* SEO & Discovery */}
       <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
         <h2 className="font-headline text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-xl">
-            search
-          </span>
+          <Search className="w-5 h-5 text-primary" />
           SEO & Discovery
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -401,9 +398,7 @@ export default function DashboardSettings({
             className="p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors group"
           >
             <div className="flex items-center gap-3 mb-2">
-              <span className="material-symbols-outlined text-primary text-lg">
-                map
-              </span>
+              <Map className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold text-on-surface">
                 Sitemap
               </span>
@@ -419,9 +414,7 @@ export default function DashboardSettings({
             className="p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors group"
           >
             <div className="flex items-center gap-3 mb-2">
-              <span className="material-symbols-outlined text-tertiary text-lg">
-                rss_feed
-              </span>
+              <Rss className="w-4 h-4 text-tertiary" />
               <span className="text-sm font-semibold text-on-surface">
                 RSS Feed
               </span>

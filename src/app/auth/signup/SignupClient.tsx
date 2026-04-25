@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, RefreshCw, Cog, PenLine } from "lucide-react";
 
 export default function SignupClient() {
   const router = useRouter();
@@ -143,69 +144,65 @@ export default function SignupClient() {
                 Account Type
               </label>
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole("AGENT")}
-                  className={`p-4 rounded-xl border text-left transition-all duration-200 ${
-                    role === "AGENT"
-                      ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
-                      : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span
-                      className={`material-symbols-outlined text-lg ${
-                        role === "AGENT"
-                          ? "text-primary"
-                          : "text-on-surface-variant"
+                  <button
+                    type="button"
+                    onClick={() => setRole("AGENT")}
+                    className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                      role === "AGENT"
+                        ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
+                        : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30 hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span
+                        className={`text-sm font-bold ${
+                          role === "AGENT" ? "text-primary" : "text-on-surface"
+                        }`}
+                      >
+                        Agent
+                      </span>
+                      {role === "AGENT" && (
+                        <Cog className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                    <p
+                      className={`text-xs leading-relaxed ${
+                        role === "AGENT" ? "text-primary/70" : "text-on-surface-variant"
                       }`}
                     >
-                      smart_toy
-                    </span>
-                    <span
-                      className={`text-sm font-semibold ${
-                        role === "AGENT" ? "text-primary" : "text-on-surface"
-                      }`}
-                    >
-                      Agent
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                    API access for integrations and automation.
-                  </p>
-                </button>
+                      API access for integrations and automation.
+                    </p>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setRole("AUTHOR")}
-                  className={`p-4 rounded-xl border text-left transition-all duration-200 ${
-                    role === "AUTHOR"
-                      ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
-                      : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span
-                      className={`material-symbols-outlined text-lg ${
-                        role === "AUTHOR"
-                          ? "text-primary"
-                          : "text-on-surface-variant"
+                  <button
+                    type="button"
+                    onClick={() => setRole("AUTHOR")}
+                    className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                      role === "AUTHOR"
+                        ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
+                        : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30 hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span
+                        className={`text-sm font-bold ${
+                          role === "AUTHOR" ? "text-primary" : "text-on-surface"
+                        }`}
+                      >
+                        Author
+                      </span>
+                      {role === "AUTHOR" && (
+                        <PenLine className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                    <p
+                      className={`text-xs leading-relaxed ${
+                        role === "AUTHOR" ? "text-primary/70" : "text-on-surface-variant"
                       }`}
                     >
-                      edit_note
-                    </span>
-                    <span
-                      className={`text-sm font-semibold ${
-                        role === "AUTHOR" ? "text-primary" : "text-on-surface"
-                      }`}
-                    >
-                      Author
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                    Write and publish blog posts.
-                  </p>
-                </button>
+                      Write and publish blog posts.
+                    </p>
+                  </button>
               </div>
             </div>
 
@@ -215,9 +212,7 @@ export default function SignupClient() {
               className="w-full editorial-gradient text-on-primary py-3 rounded-lg font-semibold transition-all duration-300 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="material-symbols-outlined text-lg animate-spin">
-                  sync
-                </span>
+                <RefreshCw className="w-5 h-5 animate-spin" />
               ) : (
                 "Create Account"
               )}
@@ -237,15 +232,12 @@ export default function SignupClient() {
           </div>
         </div>
 
-        {/* Back link */}
         <div className="text-center mt-8">
           <Link
             href="/"
             className="text-on-surface-variant text-xs hover:text-primary transition-colors flex items-center justify-center gap-1"
           >
-            <span className="material-symbols-outlined text-sm">
-              arrow_back
-            </span>
+            <ArrowLeft className="w-4 h-4" />
             Back to blog
           </Link>
         </div>

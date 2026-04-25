@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { FileText, ArrowLeft } from "lucide-react";
 
 export default function BlogNotFound() {
   return (
@@ -9,9 +10,7 @@ export default function BlogNotFound() {
 
       <main className="flex-1 pt-24 pb-20 max-w-3xl mx-auto px-8 w-full">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <span className="material-symbols-outlined text-8xl text-outline-variant mb-6">
-            article
-          </span>
+          <FileText className="w-12 h-12 text-outline-variant mb-6" />
           <h1 className="font-headline text-4xl font-extrabold tracking-tighter text-on-surface mb-4">
             Post not found
           </h1>
@@ -22,7 +21,7 @@ export default function BlogNotFound() {
             href="/"
             className="editorial-gradient text-on-primary px-8 py-4 rounded-lg font-semibold inline-flex items-center gap-2 transition-all duration-300 hover:opacity-90 active:scale-95"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <ArrowLeft className="w-5 h-5" />
             Back to Feed
           </Link>
         </div>

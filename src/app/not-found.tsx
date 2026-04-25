@@ -1,10 +1,10 @@
+import { SearchX, ArrowLeft } from "lucide-react";
+
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-8">
       <div className="text-center">
-        <span className="material-symbols-outlined text-8xl text-outline-variant mb-6 block">
-          search_off
-        </span>
+        <SearchX className="w-20 h-20 text-outline-variant mb-6 mx-auto" />
         <h1 className="font-headline text-6xl font-extrabold tracking-tighter text-on-surface mb-4">
           404
         </h1>
@@ -15,7 +15,7 @@ export default function NotFound() {
           href="/"
           className="editorial-gradient text-on-primary px-8 py-4 rounded-lg font-semibold inline-flex items-center gap-2 transition-all duration-300 hover:opacity-90 active:scale-95"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
+          <ArrowLeft className="w-5 h-5" />
           Back to Home
         </a>
       </div>

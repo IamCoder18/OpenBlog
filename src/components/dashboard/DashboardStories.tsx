@@ -5,6 +5,18 @@ import Link from "next/link";
 import { useToast } from "@/components/ToastContext";
 import { useDebouncedCallback } from "@/lib/hooks";
 import DeleteModal from "@/components/admin/DeleteModal";
+import {
+  Search,
+  X,
+  FileText,
+  Plus,
+  FileEdit,
+  MoreVertical,
+  Eye,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 interface Post {
   id: string;
@@ -166,9 +178,7 @@ export default function DashboardStories({
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-lg">
-            search
-          </span>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-5 h-5" />
           <input
             type="text"
             placeholder="Search stories..."
@@ -184,9 +194,7 @@ export default function DashboardStories({
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-surface-container-high rounded transition-colors"
             >
-              <span className="material-symbols-outlined text-on-surface-variant text-lg">
-                close
-              </span>
+              <X className="w-4 h-4 text-on-surface-variant" />
             </button>
           )}
         </div>
@@ -235,9 +243,7 @@ export default function DashboardStories({
           ))
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 bg-surface-container-low rounded-2xl">
-            <span className="material-symbols-outlined text-5xl text-outline-variant mb-4">
-              article
-            </span>
+            <FileText className="w-12 h-12 text-outline-variant mb-4" />
             <h3 className="font-headline text-lg font-bold text-on-surface mb-2">
               {search ? "No results found" : "No stories found"}
             </h3>
@@ -252,7 +258,7 @@ export default function DashboardStories({
               href="/dashboard/editor"
               className="editorial-gradient text-on-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 text-sm"
             >
-              <span className="material-symbols-outlined text-lg">add</span>
+              <Plus className="w-4 h-4" />
               New Post
             </Link>
           </div>
@@ -276,9 +282,7 @@ export default function DashboardStories({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="material-symbols-outlined text-xl text-outline-variant">
-                        article
-                      </span>
+                      <FileText className="w-8 h-8 text-outline-variant" />
                     )}
                   </div>
 
@@ -313,9 +317,7 @@ export default function DashboardStories({
                       href={`/dashboard/editor?slug=${post.slug}`}
                       className="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant transition-colors"
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        edit
-                      </span>
+                      <FileEdit className="w-4 h-4" />
                     </Link>
                     <div className="relative" data-menu-container>
                       <button
@@ -324,9 +326,7 @@ export default function DashboardStories({
                         }
                         className="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant transition-colors"
                       >
-                        <span className="material-symbols-outlined text-sm">
-                          more_vert
-                        </span>
+                        <MoreVertical className="w-4 h-4" />
                       </button>
                       {openMenuId === post.id && (
                         <div className="absolute right-0 top-full mt-1 w-44 bg-surface-container rounded-xl overflow-hidden z-50 animate-scale-in shadow-xl shadow-black/20">
@@ -335,9 +335,7 @@ export default function DashboardStories({
                             className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
                             onClick={() => setOpenMenuId(null)}
                           >
-                            <span className="material-symbols-outlined text-lg text-on-surface-variant">
-                              visibility
-                            </span>
+                            <Eye className="w-4 h-4" />
                             View
                           </Link>
                           <Link
@@ -345,18 +343,14 @@ export default function DashboardStories({
                             className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
                             onClick={() => setOpenMenuId(null)}
                           >
-                            <span className="material-symbols-outlined text-lg text-on-surface-variant">
-                              edit
-                            </span>
+                            <FileEdit className="w-4 h-4" />
                             Edit
                           </Link>
                           <button
                             onClick={() => handleDelete(post.slug, post.title)}
                             className="w-full px-4 py-2.5 text-left text-sm text-error hover:theme-danger-soft transition-colors flex items-center gap-3"
                           >
-                            <span className="material-symbols-outlined text-lg">
-                              delete
-                            </span>
+                            <Trash2 className="w-4 h-4" />
                             Delete
                           </button>
                         </div>
@@ -383,9 +377,7 @@ export default function DashboardStories({
               disabled={page === 0}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-30"
             >
-              <span className="material-symbols-outlined text-sm">
-                chevron_left
-              </span>
+              <ChevronLeft className="w-4 h-4" />
             </button>
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
               const pageNum =
@@ -410,9 +402,7 @@ export default function DashboardStories({
               disabled={page >= totalPages - 1}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-30"
             >
-              <span className="material-symbols-outlined text-sm">
-                chevron_right
-              </span>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>

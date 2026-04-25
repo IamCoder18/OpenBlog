@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ToastContext";
+import { RefreshCw, BarChart3 } from "lucide-react";
 
 interface ViewsByDay {
   date: string;
@@ -124,9 +125,7 @@ export default function ViewsChart({ postId }: { postId?: string }) {
       <div className="relative h-40 w-full flex items-end gap-[3px] overflow-hidden">
         {loading ? (
           <div className="w-full flex items-center justify-center h-full">
-            <span className="material-symbols-outlined text-primary text-3xl animate-spin">
-              sync
-            </span>
+            <RefreshCw className="w-10 h-10 text-primary animate-spin" />
           </div>
         ) : barHeights.length > 0 ? (
           barHeights.map((h, i) => (
@@ -152,9 +151,7 @@ export default function ViewsChart({ postId }: { postId?: string }) {
           ))
         ) : (
           <div className="w-full flex flex-col items-center justify-center text-on-surface-variant h-full gap-2">
-            <span className="material-symbols-outlined text-3xl text-outline-variant">
-              bar_chart
-            </span>
+            <BarChart3 className="w-10 h-10 text-outline-variant" />
             <span className="text-xs">No views in this period</span>
           </div>
         )}

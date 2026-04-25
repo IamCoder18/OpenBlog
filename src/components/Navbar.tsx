@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import MobileBackButton from "./MobileBackButton";
 import { config } from "@/lib/config";
@@ -71,9 +72,7 @@ export default async function Navbar({
               href={backHref}
               className="hidden md:flex items-center gap-2 px-4 py-2 text-sm theme-nav-link transition-colors rounded-lg hover:bg-surface-container/70"
             >
-              <span className="material-symbols-outlined text-lg">
-                arrow_back
-              </span>
+              <ArrowLeft className="w-5 h-5" />
               {backLabel}
             </Link>
           )}

@@ -411,6 +411,7 @@ export default function DashboardStories({
       {deleteTarget && (
         <DeleteModal
           title={deleteTarget.title}
+          loading={deleting !== null}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
         />

@@ -14,6 +14,7 @@ import {
   Search,
   Map,
   Rss,
+  RefreshCw,
 } from "lucide-react";
 
 interface ApiKey {
@@ -46,6 +47,10 @@ export default function DashboardSettings({
   const [creating, setCreating] = useState(false);
   const [activeTheme, setActiveTheme] = useState("default");
   const [saved, setSaved] = useState(false);
+  const [themeLoading, setThemeLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [keysLoading, setKeysLoading] = useState(false);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (scope === "site") void fetchTheme();
@@ -54,6 +59,7 @@ export default function DashboardSettings({
   }, [scope]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTheme = async () => {
+    setThemeLoading(true);
     try {
       const res = await fetch("/api/settings/theme");
       if (res.ok) {
@@ -68,10 +74,13 @@ export default function DashboardSettings({
         setActiveTheme(stored);
         document.documentElement.setAttribute("data-theme", stored);
       }
+    } finally {
+      setThemeLoading(false);
     }
   };
 
   const fetchUsers = async () => {
+    setUsersLoading(true);
     try {
       const res = await fetch("/api/users");
       if (res.ok) {
@@ -82,10 +91,13 @@ export default function DashboardSettings({
       }
     } catch {
       toast.addToast("error", "Couldn't connect to load users.");
+    } finally {
+      setUsersLoading(false);
     }
   };
 
   const fetchKeys = async () => {
+    setKeysLoading(true);
     try {
       const res = await fetch("/api/keys");
       if (res.ok) {
@@ -94,6 +106,8 @@ export default function DashboardSettings({
       }
     } catch {
       toast.addToast("error", "Couldn't load API keys.");
+    } finally {
+      setKeysLoading(false);
     }
   };
 
@@ -122,6 +136,7 @@ export default function DashboardSettings({
   };
 
   const handleDeleteKey = async (id: string) => {
+    setDeletingKeyId(id);
     try {
       const res = await fetch(`/api/keys/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -130,10 +145,13 @@ export default function DashboardSettings({
       }
     } catch {
       toast.addToast("error", "Couldn't reach the server.");
+    } finally {
+      setDeletingKeyId(null);
     }
   };
 
   const handleThemeChange = async (themeId: string) => {
+    setThemeLoading(true);
     setActiveTheme(themeId);
     document.documentElement.setAttribute("data-theme", themeId);
     localStorage.setItem("openblog-theme", themeId);
@@ -156,6 +174,8 @@ export default function DashboardSettings({
         "error",
         "Couldn't reach the server. Theme saved locally."
       );
+    } finally {
+      setThemeLoading(false);
     }
 
     setTimeout(() => setSaved(false), 2000);
@@ -223,6 +243,9 @@ export default function DashboardSettings({
             <h2 className="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
               <Settings className="w-5 h-5 text-primary" />
               Theme Preset
+              {themeLoading && (
+                <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+              )}
             </h2>
             {saved && (
               <span className="text-xs theme-success-text flex items-center gap-1 font-label">
@@ -273,50 +296,73 @@ export default function DashboardSettings({
           <h2 className="font-headline text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             Users
+            {usersLoading && (
+              <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+            )}
           </h2>
-          <div className="space-y-2">
-            {users.map(user => {
-              const colors = roleColor(user.profile?.role ?? "");
-              return (
+          {usersLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
                 <div
-                  key={user.id}
+                  key={i}
                   className="flex items-center justify-between p-4 bg-surface-container rounded-xl"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${colors.avatarBg}`}
-                    >
-                      {user.profile?.role === "ADMIN" ? (
-                        <Shield className="w-4 h-4" />
-                      ) : user.profile?.role === "AUTHOR" ? (
-                        <PenLine className="w-4 h-4" />
-                      ) : (
-                        <Cog className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-on-surface truncate">
-                        {user.name}
-                      </div>
-                      <div className="text-[11px] text-on-surface-variant truncate">
-                        {user.email} &middot; {user._count.posts} posts
-                      </div>
+                    <div className="w-9 h-9 rounded-full bg-surface-container-high animate-pulse flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-4 w-24 bg-surface-container-high rounded animate-pulse mb-2" />
+                      <div className="h-3 w-32 bg-surface-container-high rounded animate-pulse" />
                     </div>
                   </div>
-                  <span
-                    className={`px-2.5 py-1 text-[9px] uppercase tracking-wider rounded-full font-bold flex-shrink-0 ${colors.bg} ${colors.text}`}
-                  >
-                    {user.profile?.role || "UNKNOWN"}
-                  </span>
+                  <div className="h-5 w-16 bg-surface-container-high rounded-full animate-pulse flex-shrink-0" />
                 </div>
-              );
-            })}
-            {users.length === 0 && (
-              <p className="text-on-surface-variant text-sm text-center py-6">
-                No users found.
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {users.map(user => {
+                const colors = roleColor(user.profile?.role ?? "");
+                return (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-4 bg-surface-container rounded-xl"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${colors.avatarBg}`}
+                      >
+                        {user.profile?.role === "ADMIN" ? (
+                          <Shield className="w-4 h-4" />
+                        ) : user.profile?.role === "AUTHOR" ? (
+                          <PenLine className="w-4 h-4" />
+                        ) : (
+                          <Cog className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-on-surface truncate">
+                          {user.name}
+                        </div>
+                        <div className="text-[11px] text-on-surface-variant truncate">
+                          {user.email} &middot; {user._count.posts} posts
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 text-[9px] uppercase tracking-wider rounded-full font-bold flex-shrink-0 ${colors.bg} ${colors.text}`}
+                    >
+                      {user.profile?.role || "UNKNOWN"}
+                    </span>
+                  </div>
+                );
+              })}
+              {users.length === 0 && (
+                <p className="text-on-surface-variant text-sm text-center py-6">
+                  No users found.
+                </p>
+              )}
+            </div>
+          )}
         </section>
       )}
 
@@ -326,6 +372,9 @@ export default function DashboardSettings({
           <h2 className="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
             <Key className="w-5 h-5 text-tertiary" />
             API Keys
+            {keysLoading && (
+              <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+            )}
           </h2>
           <button
             onClick={() => setShowKeys(!showKeys)}
@@ -346,42 +395,71 @@ export default function DashboardSettings({
           <button
             onClick={handleCreateKey}
             disabled={creating || !newKeyName.trim()}
-            className="editorial-gradient text-on-primary px-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all active:scale-95 flex-shrink-0"
+            className="editorial-gradient text-on-primary px-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all active:scale-95 flex-shrink-0 flex items-center justify-center gap-2"
           >
-            {creating ? "..." : "Create"}
+            {creating ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create"
+            )}
           </button>
         </div>
 
-        <div className="space-y-2">
-          {apiKeys.map(key => (
-            <div
-              key={key.id}
-              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-surface-container rounded-xl"
-            >
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-on-surface">
-                  {key.name}
-                </div>
-                <div className="text-xs text-on-surface-variant font-mono break-all">
-                  {showKeys
-                    ? key.key
-                    : `${key.key.slice(0, 8)}...${key.key.slice(-4)}`}
-                </div>
-              </div>
-              <button
-                onClick={() => handleDeleteKey(key.id)}
-                className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0 self-end sm:self-auto"
+        {keysLoading ? (
+          <div className="space-y-2">
+            {[1, 2].map(i => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-3 bg-surface-container rounded-xl"
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          {apiKeys.length === 0 && (
-            <p className="text-on-surface-variant text-xs text-center py-4">
-              No API keys yet.
-            </p>
-          )}
-        </div>
+                <div className="flex-1">
+                  <div className="h-4 w-24 bg-surface-container-high rounded animate-pulse mb-2" />
+                  <div className="h-3 w-48 bg-surface-container-high rounded animate-pulse" />
+                </div>
+                <div className="w-8 h-8 bg-surface-container-high rounded-lg animate-pulse flex-shrink-0 ml-2" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {apiKeys.map(key => (
+              <div
+                key={key.id}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-surface-container rounded-xl"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-on-surface">
+                    {key.name}
+                  </div>
+                  <div className="text-xs text-on-surface-variant font-mono break-all">
+                    {showKeys
+                      ? key.key
+                      : `${key.key.slice(0, 8)}...${key.key.slice(-4)}`}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeleteKey(key.id)}
+                  disabled={deletingKeyId === key.id}
+                  className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0 self-end sm:self-auto disabled:opacity-50"
+                >
+                  {deletingKeyId === key.id ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            ))}
+            {apiKeys.length === 0 && (
+              <p className="text-on-surface-variant text-xs text-center py-4">
+                No API keys yet.
+              </p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* SEO & Discovery */}

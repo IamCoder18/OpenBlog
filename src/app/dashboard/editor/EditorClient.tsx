@@ -50,12 +50,14 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
   const [scheduleDate, setScheduleDate] = useState("");
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
 
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedContent = useRef("");
 
   useEffect(() => {
     if (editSlug) {
+      setInitialLoading(true);
       fetch(`/api/posts/${editSlug}`)
         .then(res => {
           if (!res.ok) throw new Error("Failed to load post");
@@ -87,6 +89,9 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
             "Could not load the post. It may have been removed."
           );
           router.push("/dashboard/stories");
+        })
+        .finally(() => {
+          setInitialLoading(false);
         });
     }
   }, [editSlug]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -295,6 +300,28 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
       );
     }, 0);
   };
+
+  if (editSlug && initialLoading) {
+    return (
+      <>
+      <nav className="theme-nav fixed top-0 w-full z-50 backdrop-blur-xl transition-all duration-300">
+        <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto font-headline tracking-tight antialiased text-sm font-medium">
+          <div className="flex items-center gap-8">
+            <a href="/" className="text-xl font-bold tracking-tighter text-on-surface">
+              {blogName}
+            </a>
+          </div>
+        </div>
+      </nav>
+      <main className="pt-24 min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <RefreshCw className="w-10 h-10 text-primary animate-spin mx-auto" />
+          <p className="text-sm text-on-surface-variant">Loading post...</p>
+        </div>
+      </main>
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface text-on-surface">
@@ -718,9 +745,14 @@ function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
         </button>
         <button
           onClick={() => handleSave()}
-          className="w-14 h-14 rounded-full editorial-gradient shadow-xl shadow-primary-container/30 flex items-center justify-center text-on-primary"
+          disabled={saving}
+          className="w-14 h-14 rounded-full editorial-gradient shadow-xl shadow-primary-container/30 flex items-center justify-center text-on-primary disabled:opacity-70"
         >
-          <Send className="w-6 h-6" />
+          {saving ? (
+            <RefreshCw className="w-6 h-6 animate-spin" />
+          ) : (
+            <Send className="w-6 h-6" />
+          )}
         </button>
       </div>
 

@@ -1,21 +1,23 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
 
 export default function DeleteModal({
   title,
   onConfirm,
   onCancel,
+  loading = false,
 }: {
   title: string;
   onConfirm: () => void;
   onCancel: () => void;
+  loading?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onCancel}
+        onClick={!loading ? onCancel : undefined}
       />
       <div className="relative bg-surface-container-low rounded-2xl border border-outline-variant/10 shadow-2xl max-w-md w-full p-6 animate-scale-in">
         <div className="flex items-center gap-3 mb-4">
@@ -36,15 +38,24 @@ export default function DeleteModal({
         <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-on-surface rounded-lg border border-outline-variant/20 hover:bg-surface-container transition-colors"
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-on-surface rounded-lg border border-outline-variant/20 hover:bg-surface-container transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-semibold theme-danger-soft theme-danger-text rounded-lg border border-current/15 hover:opacity-90 transition-colors active:scale-95"
+            disabled={loading}
+            className="px-4 py-2 text-sm font-semibold theme-danger-soft theme-danger-text rounded-lg border border-current/15 hover:opacity-90 transition-colors active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
-            Delete
+            {loading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </button>
         </div>
       </div>

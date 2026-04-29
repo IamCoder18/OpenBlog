@@ -52,7 +52,7 @@ async function getInitialPosts() {
 export default async function ExplorePage() {
   const { posts, total } = await getInitialPosts();
   const { user } = await getSession();
-  const isAdmin = user?.role === "ADMIN" || user?.role === "AUTHOR";
+  const canAccessDashboard = user?.role === "ADMIN" || user?.role === "AUTHOR";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-surface">
@@ -79,8 +79,7 @@ export default async function ExplorePage() {
       <Footer />
       <MobileBottomNav
         activeTab="explore"
-        isAdmin={isAdmin}
-        isAuthenticated={!!user}
+        canAccessDashboard={canAccessDashboard}
         userRole={user?.role}
       />
     </div>

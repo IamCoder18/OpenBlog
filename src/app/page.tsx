@@ -110,8 +110,7 @@ export default async function Home() {
       <Footer />
       <MobileBottomNav
         activeTab="feed"
-        isAdmin={user?.role === "ADMIN" || user?.role === "AUTHOR"}
-        isAuthenticated={!!user}
+        canAccessDashboard={user?.role === "ADMIN" || user?.role === "AUTHOR"}
         userRole={user?.role}
       />
     </div>

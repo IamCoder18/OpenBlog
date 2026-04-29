@@ -16,7 +16,7 @@
     "test:e2e": "playwright test --config=e2e.config.ts",
     "test:full": "./scripts/test-full.sh",
     "build:test": "next build",
-    "start:test": "E2E_TESTING=true BASE_URL=http://localhost:3001 DISABLE_RATE_LIMITING=true next start -p 3001",
+    "start:test": "E2E_TESTING=true NEXT_PUBLIC_BASE_URL=http://localhost:3001 DISABLE_RATE_LIMITING=true next start -p 3001",
     prisma: "prisma",
     "prisma-test": "prisma",
     "db:reset": "(docker ps -q -f name=openblog-db | grep . || docker compose up -d postgres) && pnpm run prisma -- migrate reset --force",

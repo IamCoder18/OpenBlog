@@ -1,9 +1,11 @@
 export const config = {
   get BLOG_NAME() {
-    return process.env.NEXT_PUBLIC_BLOG_NAME || process.env.BLOG_NAME || "OpenBlog";
+    return (
+      process.env.NEXT_PUBLIC_BLOG_NAME || process.env.BLOG_NAME || "OpenBlog"
+    );
   },
   get BASE_URL() {
-    return process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || "http://localhost:3000";
+    return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   },
   get PORT() {
     return parseInt(process.env.PORT || "3000", 10);

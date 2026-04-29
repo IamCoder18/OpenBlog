@@ -39,7 +39,7 @@ interface Post {
 async function getPost(slug: string): Promise<Post | null> {
   try {
     const res = await fetch(
-      `${process.env.BASE_URL || "http://localhost:3001"}/api/posts/${slug}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/api/posts/${slug}`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;

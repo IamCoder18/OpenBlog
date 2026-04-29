@@ -17,7 +17,7 @@ describe("config", () => {
     vi.clearAllMocks();
     originalEnv = { ...process.env };
     delete process.env.BLOG_NAME;
-    delete process.env.BASE_URL;
+    delete process.env.NEXT_PUBLIC_BASE_URL;
     delete process.env.PORT;
     delete process.env.DATABASE_URL;
     delete process.env.AUTH_SECRET;
@@ -62,7 +62,7 @@ describe("config", () => {
     });
 
     it("should return custom BASE_URL", () => {
-      process.env.BASE_URL = "https://example.com";
+      process.env.NEXT_PUBLIC_BASE_URL = "https://example.com";
       expect(config.BASE_URL).toBe("https://example.com");
     });
 

@@ -45,7 +45,7 @@ export function apiHandler<T extends unknown[]>(
         if (code === "P2002") {
           const target =
             meta && typeof meta === "object" && "target" in meta
-              ? (meta as { target: string[] }).target?.[0] ?? "field"
+              ? ((meta as { target: string[] }).target?.[0] ?? "field")
               : "field";
           return NextResponse.json(
             {

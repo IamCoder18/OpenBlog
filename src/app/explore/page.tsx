@@ -39,7 +39,7 @@ interface Metadata {
 async function getInitialPosts() {
   try {
     const res = await fetch(
-      `${process.env.BASE_URL || "http://localhost:3001"}/api/posts?limit=10`,
+      `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/api/posts?limit=10`,
       { cache: "no-store" }
     );
     if (!res.ok) return { posts: [], total: 0 };

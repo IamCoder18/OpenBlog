@@ -281,7 +281,7 @@ test.describe("Public Flow Tests", () => {
     expect(text).toContain("item");
   });
 
-  test("Posts are ordered by publishedAt descending", async ({ request }) => {
+  test("Posts are ordered by publishedAt ascending", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/api/posts?limit=10`);
     const data = await response.json();
 
@@ -289,7 +289,7 @@ test.describe("Public Flow Tests", () => {
       for (let i = 0; i < data.posts.length - 1; i++) {
         const current = new Date(data.posts[i].publishedAt || 0);
         const next = new Date(data.posts[i + 1].publishedAt || 0);
-        expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
+        expect(current.getTime()).toBeLessThanOrEqual(next.getTime());
       }
     }
   });

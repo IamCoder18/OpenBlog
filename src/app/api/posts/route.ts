@@ -347,7 +347,7 @@ export const GET = apiHandler(async function GET(req: NextRequest) {
       author: { select: { id: true, name: true, image: true } },
       metadata: true,
     },
-    orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ publishedAt: "asc" }, { createdAt: "asc" }],
     skip: offset,
     take: limit,
   });

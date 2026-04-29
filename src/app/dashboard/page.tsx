@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, Eye, Edit3, TrendingUp, ArrowRight, ChevronRight } from "lucide-react";
+import {
+  FileText,
+  Eye,
+  Edit3,
+  TrendingUp,
+  ArrowRight,
+  ChevronRight,
+} from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/config";

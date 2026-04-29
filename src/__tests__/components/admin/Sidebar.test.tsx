@@ -57,41 +57,41 @@ describe("Sidebar", () => {
   });
 
   describe("Active item styling", () => {
-    it("active analytics has violet styling", () => {
+    it("active analytics has primary styling", () => {
       render(<Sidebar activeItem="analytics" />);
 
       const analyticsLink = screen.getByText("Analytics").closest("a");
-      expect(analyticsLink).toHaveClass("bg-violet-500/10");
-      expect(analyticsLink).toHaveClass("text-violet-300");
-      expect(analyticsLink).toHaveClass("border-violet-500");
+      expect(analyticsLink).toHaveClass("bg-primary/10");
+      expect(analyticsLink).toHaveClass("text-primary");
+      expect(analyticsLink).toHaveClass("border-primary-container");
     });
 
-    it("active stories has violet styling", () => {
+    it("active stories has primary styling", () => {
       render(<Sidebar activeItem="stories" />);
 
       const storiesLink = screen.getByText("Stories").closest("a");
-      expect(storiesLink).toHaveClass("bg-violet-500/10");
-      expect(storiesLink).toHaveClass("text-violet-300");
-      expect(storiesLink).toHaveClass("border-violet-500");
+      expect(storiesLink).toHaveClass("bg-primary/10");
+      expect(storiesLink).toHaveClass("text-primary");
+      expect(storiesLink).toHaveClass("border-primary-container");
     });
 
-    it("active settings has violet styling", () => {
+    it("active settings has primary styling", () => {
       render(<Sidebar activeItem="settings" />);
 
       const settingsLink = screen.getByText("Settings").closest("a");
-      expect(settingsLink).toHaveClass("bg-violet-500/10");
-      expect(settingsLink).toHaveClass("text-violet-300");
-      expect(settingsLink).toHaveClass("border-violet-500");
+      expect(settingsLink).toHaveClass("bg-primary/10");
+      expect(settingsLink).toHaveClass("text-primary");
+      expect(settingsLink).toHaveClass("border-primary-container");
     });
 
-    it("inactive items have zinc-400 text", () => {
+    it("inactive items have on-surface-variant text", () => {
       render(<Sidebar activeItem="analytics" />);
 
       const storiesLink = screen.getByText("Stories").closest("a");
       const settingsLink = screen.getByText("Settings").closest("a");
 
-      expect(storiesLink).toHaveClass("text-zinc-400");
-      expect(settingsLink).toHaveClass("text-zinc-400");
+      expect(storiesLink).toHaveClass("text-on-surface-variant");
+      expect(settingsLink).toHaveClass("text-on-surface-variant");
     });
   });
 

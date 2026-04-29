@@ -99,8 +99,8 @@ test.describe("Blog Feed Page (/)", () => {
     if (response.ok()) {
       const data = await response.json();
       if (data.posts.length > 0) {
-        await expect(page.locator("text=grid_view")).toBeVisible();
-        await expect(page.locator("text=view_list")).toBeVisible();
+        await expect(page.getByTestId("grid-toggle")).toBeVisible();
+        await expect(page.getByTestId("list-toggle")).toBeVisible();
       }
     }
   });

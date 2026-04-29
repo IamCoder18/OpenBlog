@@ -57,7 +57,7 @@ export default async function ExplorePage() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-surface">
       <QueryToast />
-      <Navbar activeLink="explore" />
+      <Navbar activeLink="explore" user={user} />
 
       <main className="flex-1 pt-24 pb-24 max-w-7xl mx-auto px-8 w-full">
         <header className="mb-16 text-center">

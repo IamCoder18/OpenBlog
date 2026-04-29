@@ -119,7 +119,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-surface text-on-surface">
-      <Navbar />
+      <Navbar user={user} />
 
       <main className="flex-1 pt-24 pb-20 max-w-3xl mx-auto px-8 w-full">
         {/* Back Link (desktop only, dynamic based on referrer) */}

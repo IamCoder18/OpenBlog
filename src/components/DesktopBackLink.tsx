@@ -28,13 +28,13 @@ export default function DesktopBackLink() {
 
   if (!label) return null;
 
-    return (
-      <Link
-        href="/"
-        className="hidden md:inline-flex items-center gap-2 px-0 py-2 text-primary text-sm font-medium mb-8 font-label hover:opacity-80 transition-opacity"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        {label}
-      </Link>
-    );
+  return (
+    <Link
+      href="/"
+      className="hidden md:inline-flex items-center gap-2 px-0 py-2 text-primary text-sm font-medium mb-8 font-label hover:opacity-80 transition-opacity"
+    >
+      <ArrowLeft className="w-5 h-5" />
+      {label}
+    </Link>
+  );
 }

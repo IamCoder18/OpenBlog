@@ -2,7 +2,7 @@
 set -e
 
 PORT=3001
-DB_PORT=5433
+export DB_PORT=5433
 CLEANED_UP=0
 COMPOSE_FILE="docker-compose.test.yaml"
 
@@ -76,7 +76,7 @@ pnpm --silent run test:integration --reporter=agent
 
 export BASE_URL="http://localhost:3001"
 DATABASE_URL="postgresql://postgres:postgres@localhost:$DB_PORT/openblog_test" pnpm --silent run build:test > /dev/null 2>&1
-DISABLE_RATE_LIMITING=true E2E_TESTING=true pnpm --silent exec next start -p 3001 > /dev/null 2>&1 &
+SIGN_UP_ENABLED=true DISABLE_RATE_LIMITING=true E2E_TESTING=true pnpm --silent exec next start -p 3001 > /dev/null 2>&1 &
 SERVER_PID=$!
 
 TIMEOUT=60

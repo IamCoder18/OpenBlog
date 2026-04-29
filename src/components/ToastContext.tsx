@@ -71,13 +71,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({ addToast }), [addToast]);
 
-    return (
-      <ToastContext.Provider value={value}>
-        {children}
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
-          {toasts.map(toast => {
-            const IconComponent = ICONS[toast.type];
-            return (
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+        {toasts.map(toast => {
+          const IconComponent = ICONS[toast.type];
+          return (
             <div
               key={toast.id}
               className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl backdrop-blur-xl shadow-ambient animate-slide-in-right ${STYLES[toast.type]}`}
@@ -93,9 +93,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 <X className="w-4 h-4 opacity-60" />
               </button>
             </div>
-            );
-          })}
-        </div>
-      </ToastContext.Provider>
-    );
+          );
+        })}
+      </div>
+    </ToastContext.Provider>
+  );
 }

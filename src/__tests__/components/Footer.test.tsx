@@ -36,11 +36,11 @@ describe("Footer", () => {
   });
 
   describe("Styling", () => {
-    it("has bg-zinc-950 class", () => {
+    it("has bg-surface-container-lowest class", () => {
       render(<Footer />);
 
       const footer = screen.getByRole("contentinfo");
-      expect(footer).toHaveClass("bg-zinc-950");
+      expect(footer).toHaveClass("bg-surface-container-lowest");
     });
 
     it("applies custom className", () => {

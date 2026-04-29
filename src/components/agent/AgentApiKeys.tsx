@@ -170,12 +170,12 @@ export default function AgentApiKeys() {
                     )}
                   </div>
                 </div>
-              <button
-                onClick={() => handleDeleteKey(key.id)}
-                className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => handleDeleteKey(key.id)}
+                  className="p-2 rounded-lg theme-danger-soft text-on-surface-variant hover:theme-danger-text transition-colors flex-shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
             {apiKeys.length === 0 && (

@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import MobileBackButton from "./MobileBackButton";
 import { config } from "@/lib/config";
-import { getSession } from "@/lib/session";
 
 interface NavbarProps {
   activeLink?: "feed" | "explore" | "dashboard";
@@ -11,17 +10,22 @@ interface NavbarProps {
   backHref?: string;
   backLabel?: string;
   blogName?: string;
+  user?: {
+    id: string;
+    name: string;
+    role: "ADMIN" | "AUTHOR" | "AGENT" | "GUEST";
+  } | null;
 }
 
-export default async function Navbar({
+export default function Navbar({
   activeLink = "feed",
   showBack,
   backHref = "/",
   backLabel = "Back to Feed",
   blogName,
+  user,
 }: NavbarProps) {
   const name = blogName || config.BLOG_NAME;
-  const { user } = await getSession();
   const canAccessDashboard = user?.role === "ADMIN" || user?.role === "AUTHOR";
 
   return (

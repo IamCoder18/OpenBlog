@@ -3,6 +3,8 @@ export function stripMarkdown(text: string, maxLength = 150): string {
 
   return (
     text
+      // Remove code blocks first (before other processing)
+      .replace(/```[\s\S]*?```/g, "")
       // Remove images
       .replace(/!\[([^\]]*)\]\([^)]*\)/g, "")
       // Remove links but keep text
@@ -15,8 +17,6 @@ export function stripMarkdown(text: string, maxLength = 150): string {
       .replace(/~~(.*?)~~/g, "$1")
       // Remove inline code
       .replace(/`([^`]*)`/g, "$1")
-      // Remove code blocks
-      .replace(/```[\s\S]*?```/g, "")
       // Remove blockquotes
       .replace(/^>\s+/gm, "")
       // Remove horizontal rules

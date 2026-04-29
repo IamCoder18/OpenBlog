@@ -213,7 +213,8 @@ describe("SignupPage", () => {
       });
       fireEvent.submit(screen.getByText("Create Account").closest("form")!);
 
-      expect(screen.getByText("sync")).toBeInTheDocument();
+      const spinner = document.querySelector(".animate-spin");
+      expect(spinner).toBeInTheDocument();
     });
 
     it("calls router.push('/dashboard') on successful signup", async () => {

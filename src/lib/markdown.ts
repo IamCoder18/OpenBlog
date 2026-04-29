@@ -146,7 +146,9 @@ export async function renderMarkdown(
     breaks: true,
   })) as string;
 
-  const sanitized = DOMPurify.sanitize(parsed, {
+  // Strip HTML comments before sanitization to prevent comment injection
+  const strippedComments = parsed.replace(/<!--[\s\S]*?-->/g, "");
+  const sanitized = DOMPurify.sanitize(strippedComments, {
     USE_PROFILES: { html: true },
     ADD_ATTR: ["style", "tabindex"],
   });

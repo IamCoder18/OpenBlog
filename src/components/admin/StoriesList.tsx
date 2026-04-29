@@ -230,8 +230,8 @@ export default function StoriesList({
             <RefreshCw className="w-5 h-5 animate-spin" />
           </div>
         ) : loadError ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <CloudOff className="w-8 h-8 text-error mb-4" />
+          <div className="flex flex-col items-center justify-center py-20">
+            <CloudOff className="w-8 h-8 text-error mb-4" />
           </div>
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center py-20">
@@ -240,13 +240,13 @@ export default function StoriesList({
               Couldn&apos;t load stories
             </h3>
             <p className="text-on-surface-variant text-sm mb-6">{loadError}</p>
-              <button
-                onClick={fetchPosts}
-                className="editorial-gradient text-on-primary px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Try again
-              </button>
+            <button
+              onClick={fetchPosts}
+              className="editorial-gradient text-on-primary px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try again
+            </button>
           </div>
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
@@ -262,7 +262,7 @@ export default function StoriesList({
               className="editorial-gradient text-on-primary px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-                New Post
+              New Post
             </Link>
           </div>
         ) : (
@@ -310,7 +310,7 @@ export default function StoriesList({
                         }
                         className="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant transition-colors"
                       >
-                      <MoreVertical className="w-4 h-4" />
+                        <MoreVertical className="w-4 h-4" />
                       </button>
                       {openMenuId === post.id && (
                         <div className="absolute right-0 top-full mt-1 w-44 bg-surface-container rounded-xl border border-outline-variant/10 shadow-xl z-50 overflow-hidden animate-scale-in">
@@ -330,7 +330,7 @@ export default function StoriesList({
                             <FileEdit className="w-4 h-4" />
                             Edit
                           </Link>
-                            <button
+                          <button
                             onClick={() => handleDelete(post.slug, post.title)}
                             className="w-full px-4 py-3 text-left text-sm text-error hover:theme-danger-soft transition-colors flex items-center gap-3"
                           >

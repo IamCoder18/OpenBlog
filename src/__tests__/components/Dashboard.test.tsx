@@ -138,13 +138,6 @@ describe("Dashboard Page", () => {
     const link = screen.getByText("View all").closest("a");
     expect(link).toHaveAttribute("href", "/dashboard/stories");
   });
-
-  it("renders Footer", async () => {
-    const ui = await DashboardPage({ searchParams: Promise.resolve({}) });
-    render(<ToastProvider>{ui}</ToastProvider>);
-    const year = new Date().getFullYear();
-    expect(screen.getByText(`© ${year} OpenBlog`)).toBeInTheDocument();
-  });
 });
 
 describe("Stories Page", () => {

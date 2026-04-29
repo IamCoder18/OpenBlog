@@ -223,7 +223,7 @@ describe("EditorClient", () => {
 
       const tagInput = screen.getByPlaceholderText("Add tag...");
       fireEvent.change(tagInput, { target: { value: "react" } });
-      fireEvent.click(screen.getByText("add_circle").closest("button")!);
+      fireEvent.keyDown(tagInput, { key: "Enter" });
 
       expect(screen.getByText("react")).toBeInTheDocument();
     });
@@ -233,12 +233,13 @@ describe("EditorClient", () => {
 
       const tagInput = screen.getByPlaceholderText("Add tag...");
       fireEvent.change(tagInput, { target: { value: "react" } });
-      fireEvent.click(screen.getByText("add_circle").closest("button")!);
+      fireEvent.keyDown(tagInput, { key: "Enter" });
 
-      expect(screen.getByText("react")).toBeInTheDocument();
+      const tagSpan = screen.getByText("react");
+      expect(tagSpan).toBeInTheDocument();
 
-      const removeButtons = screen.getAllByText("close");
-      fireEvent.click(removeButtons[0]);
+      const removeButton = tagSpan.querySelector("button");
+      if (removeButton) fireEvent.click(removeButton);
 
       expect(screen.queryByText("react")).not.toBeInTheDocument();
     });

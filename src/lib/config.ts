@@ -1,47 +1,32 @@
-import "dotenv/config";
-
-function getConfig() {
-  return {
-    BLOG_NAME: process.env.BLOG_NAME || "OpenBlog",
-    BASE_URL: process.env.BASE_URL || "http://localhost:3000",
-    PORT: parseInt(process.env.PORT || "3000", 10),
-    DATABASE_URL: process.env.DATABASE_URL || "",
-    AUTH_SECRET: process.env.AUTH_SECRET || "",
-    NODE_ENV: process.env.NODE_ENV || "development",
-    SIGN_UP_ENABLED: process.env.SIGN_UP_ENABLED === "true",
-  };
-}
-
 export const config = {
   get BLOG_NAME() {
-    return getConfig().BLOG_NAME;
+    return process.env.NEXT_PUBLIC_BLOG_NAME || process.env.BLOG_NAME || "OpenBlog";
   },
   get BASE_URL() {
-    return getConfig().BASE_URL;
+    return process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || "http://localhost:3000";
   },
   get PORT() {
-    return getConfig().PORT;
+    return parseInt(process.env.PORT || "3000", 10);
   },
   get DATABASE_URL() {
-    return getConfig().DATABASE_URL;
+    return process.env.DATABASE_URL || "";
   },
   get AUTH_SECRET() {
-    return getConfig().AUTH_SECRET;
+    return process.env.AUTH_SECRET || "";
   },
   get NODE_ENV() {
-    return getConfig().NODE_ENV;
+    return process.env.NODE_ENV || "development";
   },
   get SIGN_UP_ENABLED() {
-    return getConfig().SIGN_UP_ENABLED;
+    return process.env.SIGN_UP_ENABLED === "true";
   },
 };
 
-export type Config = ReturnType<typeof getConfig>;
+export type Config = typeof config;
 
 export async function getSiteSettings() {
   const { prisma } = await import("./db");
-  const settings = await prisma.siteSettings.findFirst();
-  return settings;
+  return await prisma.siteSettings.findFirst();
 }
 
 export async function getTheme(): Promise<string> {
@@ -67,9 +52,7 @@ export async function getFuzzySearchThreshold(): Promise<number> {
     where: { key: "fuzzy_search_threshold" },
   });
   const rawValue = setting?.value;
-  if (!rawValue || typeof rawValue !== "string") {
-    return 0.3;
-  }
+  if (!rawValue || typeof rawValue !== "string") return 0.3;
   const value = parseFloat(rawValue);
   return isNaN(value) ? 0.3 : Math.max(0, Math.min(1, value));
 }

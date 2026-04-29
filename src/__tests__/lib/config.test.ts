@@ -122,6 +122,28 @@ describe("config", () => {
     });
   });
 
+  describe("config.SIGN_UP_ENABLED", () => {
+    it("should return false by default (env var not set)", () => {
+      delete process.env.SIGN_UP_ENABLED;
+      expect(config.SIGN_UP_ENABLED).toBe(false);
+    });
+
+    it("should return true when SIGN_UP_ENABLED is 'true'", () => {
+      process.env.SIGN_UP_ENABLED = "true";
+      expect(config.SIGN_UP_ENABLED).toBe(true);
+    });
+
+    it("should return false when SIGN_UP_ENABLED is 'false'", () => {
+      process.env.SIGN_UP_ENABLED = "false";
+      expect(config.SIGN_UP_ENABLED).toBe(false);
+    });
+
+    it("should return false for non-'true' values", () => {
+      process.env.SIGN_UP_ENABLED = "1";
+      expect(config.SIGN_UP_ENABLED).toBe(false);
+    });
+  });
+
   describe("getSiteSettings", () => {
     it("should return null when no settings exist", async () => {
       vi.mocked(prisma.siteSettings.findFirst).mockResolvedValueOnce(null);

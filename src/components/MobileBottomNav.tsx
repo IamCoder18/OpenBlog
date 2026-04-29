@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Home, Compass, User, Menu, X, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  Home,
+  Compass,
+  User,
+  Menu,
+  X,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 
 interface MobileBottomNavProps {
   activeTab?: "feed" | "explore" | "dashboard";

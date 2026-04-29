@@ -144,65 +144,69 @@ export default function SignupClient() {
                 Account Type
               </label>
               <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setRole("AGENT")}
-                    className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                <button
+                  type="button"
+                  onClick={() => setRole("AGENT")}
+                  className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                    role === "AGENT"
+                      ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
+                      : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30 hover:bg-surface-container-high"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span
+                      className={`text-sm font-bold ${
+                        role === "AGENT" ? "text-primary" : "text-on-surface"
+                      }`}
+                    >
+                      Agent
+                    </span>
+                    {role === "AGENT" && (
+                      <Cog className="w-4 h-4 text-primary" />
+                    )}
+                  </div>
+                  <p
+                    className={`text-xs leading-relaxed ${
                       role === "AGENT"
-                        ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
-                        : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30 hover:bg-surface-container-high"
+                        ? "text-primary/70"
+                        : "text-on-surface-variant"
                     }`}
                   >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span
-                        className={`text-sm font-bold ${
-                          role === "AGENT" ? "text-primary" : "text-on-surface"
-                        }`}
-                      >
-                        Agent
-                      </span>
-                      {role === "AGENT" && (
-                        <Cog className="w-4 h-4 text-primary" />
-                      )}
-                    </div>
-                    <p
-                      className={`text-xs leading-relaxed ${
-                        role === "AGENT" ? "text-primary/70" : "text-on-surface-variant"
-                      }`}
-                    >
-                      API access for integrations and automation.
-                    </p>
-                  </button>
+                    API access for integrations and automation.
+                  </p>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setRole("AUTHOR")}
-                    className={`p-4 rounded-xl border text-left transition-all duration-200 ${
-                      role === "AUTHOR"
-                        ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
-                        : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30 hover:bg-surface-container-high"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span
-                        className={`text-sm font-bold ${
-                          role === "AUTHOR" ? "text-primary" : "text-on-surface"
-                        }`}
-                      >
-                        Author
-                      </span>
-                      {role === "AUTHOR" && (
-                        <PenLine className="w-4 h-4 text-primary" />
-                      )}
-                    </div>
-                    <p
-                      className={`text-xs leading-relaxed ${
-                        role === "AUTHOR" ? "text-primary/70" : "text-on-surface-variant"
+                <button
+                  type="button"
+                  onClick={() => setRole("AUTHOR")}
+                  className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                    role === "AUTHOR"
+                      ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(210,187,255,0.1)]"
+                      : "border-outline-variant/10 bg-surface-container hover:border-outline-variant/30 hover:bg-surface-container-high"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span
+                      className={`text-sm font-bold ${
+                        role === "AUTHOR" ? "text-primary" : "text-on-surface"
                       }`}
                     >
-                      Write and publish blog posts.
-                    </p>
-                  </button>
+                      Author
+                    </span>
+                    {role === "AUTHOR" && (
+                      <PenLine className="w-4 h-4 text-primary" />
+                    )}
+                  </div>
+                  <p
+                    className={`text-xs leading-relaxed ${
+                      role === "AUTHOR"
+                        ? "text-primary/70"
+                        : "text-on-surface-variant"
+                    }`}
+                  >
+                    Write and publish blog posts.
+                  </p>
+                </button>
               </div>
             </div>
 

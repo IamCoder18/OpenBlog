@@ -164,6 +164,9 @@ CREATE UNIQUE INDEX "PostMetadata_postId_key" ON "PostMetadata"("postId");
 -- CreateIndex
 CREATE UNIQUE INDEX "SiteSettings_key_key" ON "SiteSettings"("key");
 
+-- Enable pg_trgm extension for fuzzy text search (must be before trigram indexes)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- CreateIndex
 CREATE INDEX "Post_title_trgm_idx" ON "Post" USING GIN ("title" gin_trgm_ops);
 
@@ -181,9 +184,6 @@ CREATE INDEX "PageView_postId_idx" ON "PageView"("postId");
 
 -- CreateIndex
 CREATE INDEX "PageView_createdAt_idx" ON "PageView"("createdAt");
-
--- Enable pg_trgm extension for fuzzy text search
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- AddForeignKey
 ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

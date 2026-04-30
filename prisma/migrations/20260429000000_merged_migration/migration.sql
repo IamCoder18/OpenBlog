@@ -4,6 +4,9 @@ CREATE TYPE "Role" AS ENUM ('ADMIN', 'AGENT', 'AUTHOR', 'GUEST');
 -- CreateEnum
 CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE', 'UNLISTED', 'DRAFT');
 
+-- Enable pg_trgm extension for fuzzy text search (must be before any indexes using gin_trgm_ops)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -163,9 +166,6 @@ CREATE UNIQUE INDEX "PostMetadata_postId_key" ON "PostMetadata"("postId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SiteSettings_key_key" ON "SiteSettings"("key");
-
--- Enable pg_trgm extension for fuzzy text search (must be before trigram indexes)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- CreateIndex
 CREATE INDEX "Post_title_trgm_idx" ON "Post" USING GIN ("title" gin_trgm_ops);

@@ -16,7 +16,7 @@ describe("config", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     originalEnv = { ...process.env };
-    delete process.env.BLOG_NAME;
+    delete process.env.NEXT_PUBLIC_BLOG_NAME;
     delete process.env.NEXT_PUBLIC_BASE_URL;
     delete process.env.PORT;
     delete process.env.DATABASE_URL;
@@ -57,7 +57,7 @@ describe("config", () => {
 
   describe("config object getters - custom values from env vars", () => {
     it("should return custom BLOG_NAME", () => {
-      process.env.BLOG_NAME = "My Custom Blog";
+      process.env.NEXT_PUBLIC_BLOG_NAME = "My Custom Blog";
       expect(config.BLOG_NAME).toBe("My Custom Blog");
     });
 
@@ -97,9 +97,9 @@ describe("config", () => {
 
   describe("config object getters behavior", () => {
     it("should read fresh env values each time getter is accessed", () => {
-      process.env.BLOG_NAME = "First";
+      process.env.NEXT_PUBLIC_BLOG_NAME = "First";
       const first = config.BLOG_NAME;
-      process.env.BLOG_NAME = "Second";
+      process.env.NEXT_PUBLIC_BLOG_NAME = "Second";
       const second = config.BLOG_NAME;
       expect(first).toBe("First");
       expect(second).toBe("Second");
@@ -137,7 +137,7 @@ describe("config", () => {
       process.env.SIGN_UP_ENABLED = "false";
       expect(config.SIGN_UP_ENABLED).toBe(false);
     });
-
+ 
     it("should return false for non-'true' values", () => {
       process.env.SIGN_UP_ENABLED = "1";
       expect(config.SIGN_UP_ENABLED).toBe(false);

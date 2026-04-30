@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('ADMIN', 'AGENT');
+CREATE TYPE "Role" AS ENUM ('ADMIN', 'AGENT', 'AUTHOR', 'GUEST');
 
 -- CreateEnum
-CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE', 'UNLISTED');
+CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE', 'UNLISTED', 'DRAFT');
+
+-- Enable pg_trgm extension for fuzzy text search (must be before any indexes using gin_trgm_ops)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -105,6 +108,7 @@ CREATE TABLE "Post" (
 CREATE TABLE "PostMetadata" (
     "id" TEXT NOT NULL,
     "seoDescription" TEXT,
+    "coverImage" TEXT,
     "tags" TEXT[],
     "postId" TEXT NOT NULL,
 
@@ -118,6 +122,19 @@ CREATE TABLE "SiteSettings" (
     "value" TEXT NOT NULL,
 
     CONSTRAINT "SiteSettings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PageView" (
+    "id" TEXT NOT NULL,
+    "path" TEXT NOT NULL,
+    "referrer" TEXT,
+    "userAgent" TEXT,
+    "ipHash" TEXT,
+    "postId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PageView_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -150,6 +167,24 @@ CREATE UNIQUE INDEX "PostMetadata_postId_key" ON "PostMetadata"("postId");
 -- CreateIndex
 CREATE UNIQUE INDEX "SiteSettings_key_key" ON "SiteSettings"("key");
 
+-- CreateIndex
+CREATE INDEX "Post_title_trgm_idx" ON "Post" USING GIN ("title" gin_trgm_ops);
+
+-- CreateIndex
+CREATE INDEX "Post_slug_trgm_idx" ON "Post" USING GIN ("slug" gin_trgm_ops);
+
+-- CreateIndex
+CREATE INDEX "PostMetadata_tags_gin_idx" ON "PostMetadata" USING GIN ("tags");
+
+-- CreateIndex
+CREATE INDEX "PageView_path_idx" ON "PageView"("path");
+
+-- CreateIndex
+CREATE INDEX "PageView_postId_idx" ON "PageView"("postId");
+
+-- CreateIndex
+CREATE INDEX "PageView_createdAt_idx" ON "PageView"("createdAt");
+
 -- AddForeignKey
 ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -167,3 +202,6 @@ ALTER TABLE "Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") 
 
 -- AddForeignKey
 ALTER TABLE "PostMetadata" ADD CONSTRAINT "PostMetadata_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PageView" ADD CONSTRAINT "PageView_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE SET NULL ON UPDATE CASCADE;

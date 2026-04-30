@@ -112,6 +112,9 @@ model Post {
   author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   metadata  PostMetadata?
   pageViews PageView[]
+
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, name: "Post_title_trgm_idx")
+  @@index([slug(ops: raw("gin_trgm_ops"))], type: Gin, name: "Post_slug_trgm_idx")
 }
 
 enum Visibility {
@@ -129,6 +132,8 @@ model PostMetadata {
   postId         String   @unique
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([tags], type: Gin, name: "PostMetadata_tags_gin_idx")
 }
 
 model SiteSettings {

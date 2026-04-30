@@ -39,7 +39,7 @@ interface Metadata {
 async function getInitialPosts() {
   try {
     const res = await fetch(
-      `${process.env.BASE_URL || "http://localhost:3001"}/api/posts?limit=10`,
+      `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/api/posts?limit=10`,
       { cache: "no-store" }
     );
     if (!res.ok) return { posts: [], total: 0 };
@@ -52,12 +52,12 @@ async function getInitialPosts() {
 export default async function ExplorePage() {
   const { posts, total } = await getInitialPosts();
   const { user } = await getSession();
-  const isAdmin = user?.role === "ADMIN" || user?.role === "AUTHOR";
+  const canAccessDashboard = user?.role === "ADMIN" || user?.role === "AUTHOR";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-surface">
       <QueryToast />
-      <Navbar activeLink="explore" />
+      <Navbar activeLink="explore" user={user} />
 
       <main className="flex-1 pt-24 pb-24 max-w-7xl mx-auto px-8 w-full">
         <header className="mb-16 text-center">
@@ -79,8 +79,7 @@ export default async function ExplorePage() {
       <Footer />
       <MobileBottomNav
         activeTab="explore"
-        isAdmin={isAdmin}
-        isAuthenticated={!!user}
+        canAccessDashboard={canAccessDashboard}
         userRole={user?.role}
       />
     </div>

@@ -138,7 +138,8 @@ describe("LoginPage", () => {
       });
       fireEvent.submit(screen.getByText("Sign In").closest("form")!);
 
-      expect(screen.getByText("sync")).toBeInTheDocument();
+      const spinner = document.querySelector(".animate-spin");
+      expect(spinner).toBeInTheDocument();
     });
 
     it("calls router.push('/dashboard') on successful login", async () => {

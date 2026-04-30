@@ -178,7 +178,7 @@ export default function DashboardStories({
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-5 h-5" />
           <input
             type="text"
             placeholder="Search stories..."

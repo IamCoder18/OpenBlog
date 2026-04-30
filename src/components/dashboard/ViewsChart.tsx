@@ -65,7 +65,10 @@ export default function ViewsChart({ postId }: { postId?: string }) {
     : 0;
 
   return (
-    <div className="bg-surface-container-low rounded-2xl p-6 lg:p-8">
+    <div
+      data-testid="views-chart"
+      className="bg-surface-container-low rounded-2xl p-6 lg:p-8"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>

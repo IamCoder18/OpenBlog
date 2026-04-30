@@ -1,11 +1,12 @@
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 
 export interface SessionUser {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: "ADMIN" | "AUTHOR" | "AGENT" | "GUEST";
 }
 
 export async function getSession(): Promise<{
@@ -13,7 +14,6 @@ export async function getSession(): Promise<{
   session: { id: string } | null;
 }> {
   try {
-    const { headers } = await import("next/headers");
     const headersList = await headers();
     const session = await auth.api.getSession({
       headers: headersList,

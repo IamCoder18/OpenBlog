@@ -5,6 +5,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import { ArrowRight } from "lucide-react";
 import { stripMarkdown } from "@/lib/strip-markdown";
 import { getSession } from "@/lib/session";
+import { config } from "@/lib/config";
 
 interface Author {
   id: string;
@@ -39,10 +40,9 @@ interface PostsResponse {
 
 async function getPosts() {
   try {
-    const res = await fetch(
-      `${process.env.BASE_URL || "http://localhost:3001"}/api/posts?limit=10`,
-      { cache: "no-store" }
-    );
+    const res = await fetch(`${config.BASE_URL}/api/posts?limit=10`, {
+      cache: "no-store",
+    });
     if (!res.ok) return { posts: [], total: 0 };
     return (await res.json()) as PostsResponse;
   } catch {
@@ -54,11 +54,10 @@ export default async function Home() {
   const { posts } = await getPosts();
   const featuredPost = posts[0];
   const { user } = await getSession();
-  const isAdmin = user?.role === "ADMIN" || user?.role === "AUTHOR";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-surface">
-      <Navbar activeLink="feed" />
+      <Navbar activeLink="feed" user={user} />
 
       <main className="flex-1 pt-24 pb-24 max-w-7xl mx-auto px-8 w-full">
         {/* Hero Featured Section - Editorial Asymmetry */}
@@ -102,6 +101,8 @@ export default async function Home() {
           </header>
         )}
 
+        {/* View Toggle is rendered inside LoadMorePosts */}
+
         {/* Dynamic Feed Section */}
         <LoadMorePosts initialPosts={posts} />
       </main>
@@ -109,8 +110,7 @@ export default async function Home() {
       <Footer />
       <MobileBottomNav
         activeTab="feed"
-        isAdmin={isAdmin}
-        isAuthenticated={!!user}
+        canAccessDashboard={user?.role === "ADMIN" || user?.role === "AUTHOR"}
         userRole={user?.role}
       />
     </div>

@@ -667,7 +667,6 @@ describe("LoadMorePosts", () => {
 
       const spinner = document.querySelector(".animate-spin");
       expect(spinner).toBeInTheDocument();
-      expect(spinner?.textContent).toBe("sync");
 
       resolveFetch!();
     });

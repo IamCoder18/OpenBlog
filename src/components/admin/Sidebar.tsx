@@ -45,13 +45,13 @@ export default function Sidebar({
         <div className="text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-label">
           Editorial Suite
         </div>
-          <Link
-            href="/dashboard/editor"
-            className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-medium rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            New Post
-          </Link>
+        <Link
+          href="/dashboard/editor"
+          className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-medium rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          New Post
+        </Link>
       </div>
 
       {/* Navigation */}

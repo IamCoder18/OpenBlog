@@ -39,7 +39,7 @@ interface Post {
 async function getPost(slug: string): Promise<Post | null> {
   try {
     const res = await fetch(
-      `${process.env.BASE_URL || "http://localhost:3001"}/api/posts/${slug}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/api/posts/${slug}`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -119,7 +119,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-surface text-on-surface">
-      <Navbar />
+      <Navbar user={user} />
 
       <main className="flex-1 pt-24 pb-20 max-w-3xl mx-auto px-8 w-full">
         {/* Back Link (desktop only, dynamic based on referrer) */}

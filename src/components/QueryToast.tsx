@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ToastContext";
 
 const ERROR_MESSAGES: Record<string, string> = {
+  UNAUTHORIZED: "You are not authorized to access this page.",
+  FORBIDDEN: "You don't have permission to access this resource.",
   dashboard_unauthorized: "You don't have permission to access the dashboard.",
 };
 
@@ -26,8 +28,10 @@ function QueryToastInner() {
 
 export default function QueryToast() {
   return (
-    <Suspense fallback={null}>
-      <QueryToastInner />
-    </Suspense>
+    <div data-testid="query-toast">
+      <Suspense fallback={null}>
+        <QueryToastInner />
+      </Suspense>
+    </div>
   );
 }

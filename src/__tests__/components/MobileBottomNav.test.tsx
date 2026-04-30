@@ -38,7 +38,7 @@ describe("MobileBottomNav", () => {
     it("Feed tab has home icon", () => {
       render(<MobileBottomNav />);
 
-      const feedLink = screen.getByText("Feed");
+      const feedLink = screen.getByText("Feed").closest("a");
       const icon = feedLink?.querySelector("svg");
       expect(icon).toBeInTheDocument();
     });
@@ -46,7 +46,7 @@ describe("MobileBottomNav", () => {
     it("Explore tab has explore icon", () => {
       render(<MobileBottomNav />);
 
-      const exploreLink = screen.getByText("Explore");
+      const exploreLink = screen.getByText("Explore").closest("a");
       const icon = exploreLink?.querySelector("svg");
       expect(icon).toBeInTheDocument();
     });

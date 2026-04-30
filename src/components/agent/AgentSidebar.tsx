@@ -22,9 +22,7 @@ export default function AgentSidebar({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = [
-    { href: "/agent/profile", icon: User, label: "Profile" },
-  ];
+  const navItems = [{ href: "/agent/profile", icon: User, label: "Profile" }];
 
   if (userRole === "AGENT") {
     navItems.push({
@@ -47,12 +45,12 @@ export default function AgentSidebar({
     <>
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-surface-container-low/80 backdrop-blur-xl border-b border-outline-variant/10 flex items-center justify-between px-4">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
         <span className="font-headline font-bold text-on-surface tracking-tight">
           Account
         </span>
@@ -98,19 +96,19 @@ export default function AgentSidebar({
           {navItems.map(item => {
             const Icon = item.icon;
             return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                isActive(item.href)
-                  ? "bg-primary/10 text-primary"
-                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              {item.label}
-            </Link>
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive(item.href)
+                    ? "bg-primary/10 text-primary"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {item.label}
+              </Link>
             );
           })}
         </nav>

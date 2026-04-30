@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE_URL = process.env.BASE_URL || "http://localhost:3001";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
 
 test.describe("Blog Feed Page (/)", () => {
   test.beforeEach(async ({ page }) => {
@@ -99,8 +99,8 @@ test.describe("Blog Feed Page (/)", () => {
     if (response.ok()) {
       const data = await response.json();
       if (data.posts.length > 0) {
-        await expect(page.locator("text=grid_view")).toBeVisible();
-        await expect(page.locator("text=view_list")).toBeVisible();
+        await expect(page.getByTestId("grid-toggle")).toBeVisible();
+        await expect(page.getByTestId("list-toggle")).toBeVisible();
       }
     }
   });

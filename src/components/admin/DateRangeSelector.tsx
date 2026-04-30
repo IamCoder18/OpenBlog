@@ -119,9 +119,7 @@ export default function DateRangeSelector() {
                       range === r ? "text-primary" : "text-on-surface"
                     }`}
                   >
-                    {range === r && (
-                      <Check className="w-4 h-4" />
-                    )}
+                    {range === r && <Check className="w-4 h-4" />}
                     <span className={range === r ? "" : "ml-6"}>
                       {RANGE_LABELS[r]}
                     </span>
@@ -135,7 +133,7 @@ export default function DateRangeSelector() {
                     }}
                     className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-2"
                   >
-                      <CalendarRange className="w-4 h-4 text-on-surface-variant" />
+                    <CalendarRange className="w-4 h-4 text-on-surface-variant" />
                     Custom range
                   </button>
                   {showCustom && (

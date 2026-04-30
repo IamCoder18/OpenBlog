@@ -10,21 +10,6 @@ interface FuzzySearchResult {
   search_rank: number;
 }
 
-function containsSqlInjection(input: string): boolean {
-  // Check for dangerous SQL patterns: semicolons, comments, multiple statements
-  const dangerousPatterns = [
-    /;/, // Semicolons for multiple statements
-    /--/, // SQL comments
-    /\/\*.*?\*\//, // Block comments
-    /\bUNION\b/i, // UNION attacks
-    /\bDROP\b/i, // DROP statements
-    /\bALTER\b/i, // ALTER statements
-    /\bCREATE\b/i, // CREATE statements
-    /\bTRUNCATE\b/i, // TRUNCATE statements
-  ];
-  return dangerousPatterns.some(pattern => pattern.test(input));
-}
-
 async function validateApiKey(
   headersVal: Headers
 ): Promise<{ id: string; name: string | null; image: string | null } | null> {
@@ -453,27 +438,6 @@ export const POST = apiHandler(async function POST(req: NextRequest) {
   if (sanitizedTitle.trim().length === 0) {
     return NextResponse.json(
       { error: "Title cannot be only whitespace" },
-      { status: 400 }
-    );
-  }
-
-  if (containsSqlInjection(sanitizedTitle)) {
-    return NextResponse.json(
-      { error: "Title contains invalid characters or SQL keywords" },
-      { status: 400 }
-    );
-  }
-
-  if (containsSqlInjection(sanitizedSlug)) {
-    return NextResponse.json(
-      { error: "Slug contains invalid characters or SQL keywords" },
-      { status: 400 }
-    );
-  }
-
-  if (containsSqlInjection(sanitizedBodyMarkdown)) {
-    return NextResponse.json(
-      { error: "Body contains invalid characters or SQL keywords" },
       { status: 400 }
     );
   }

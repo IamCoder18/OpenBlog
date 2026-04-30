@@ -17,7 +17,7 @@ describe("config", () => {
     vi.clearAllMocks();
     originalEnv = { ...process.env };
     delete process.env.BLOG_NAME;
-    delete process.env.BASE_URL;
+    delete process.env.NEXT_PUBLIC_BASE_URL;
     delete process.env.PORT;
     delete process.env.DATABASE_URL;
     delete process.env.AUTH_SECRET;
@@ -62,7 +62,7 @@ describe("config", () => {
     });
 
     it("should return custom BASE_URL", () => {
-      process.env.BASE_URL = "https://example.com";
+      process.env.NEXT_PUBLIC_BASE_URL = "https://example.com";
       expect(config.BASE_URL).toBe("https://example.com");
     });
 
@@ -119,6 +119,28 @@ describe("config", () => {
     it("should handle empty string PORT gracefully", () => {
       process.env.PORT = "";
       expect(config.PORT).toBe(3000);
+    });
+  });
+
+  describe("config.SIGN_UP_ENABLED", () => {
+    it("should return false by default (env var not set)", () => {
+      delete process.env.SIGN_UP_ENABLED;
+      expect(config.SIGN_UP_ENABLED).toBe(false);
+    });
+
+    it("should return true when SIGN_UP_ENABLED is 'true'", () => {
+      process.env.SIGN_UP_ENABLED = "true";
+      expect(config.SIGN_UP_ENABLED).toBe(true);
+    });
+
+    it("should return false when SIGN_UP_ENABLED is 'false'", () => {
+      process.env.SIGN_UP_ENABLED = "false";
+      expect(config.SIGN_UP_ENABLED).toBe(false);
+    });
+
+    it("should return false for non-'true' values", () => {
+      process.env.SIGN_UP_ENABLED = "1";
+      expect(config.SIGN_UP_ENABLED).toBe(false);
     });
   });
 

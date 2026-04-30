@@ -19,11 +19,11 @@ export default defineConfig({
     },
   },
   use: {
-    baseURL: process.env.BASE_URL || "http://localhost:3001",
+    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     extraHTTPHeaders: {
-      Origin: process.env.BASE_URL || "http://localhost:3001",
+      Origin: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001",
     },
   },
   projects: [

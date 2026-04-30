@@ -69,20 +69,20 @@ const { mockedPrisma } = vi.hoisted(() => {
         let results = mockPosts.filter(p => p.visibility === "PUBLIC");
 
         const orderBy = options?.orderBy;
-        const hasPublishedDesc =
-          orderBy?.publishedAt === "desc" ||
+        const hasPublishedAsc =
+          orderBy?.publishedAt === "asc" ||
           (Array.isArray(orderBy) &&
-            orderBy.some((o: any) => o.publishedAt === "desc"));
+            orderBy.some((o: any) => o.publishedAt === "asc"));
 
-        if (hasPublishedDesc) {
+        if (hasPublishedAsc) {
           results.sort((a, b) => {
             const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
             const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-            if (dateB - dateA !== 0) return dateB - dateA;
-            // Secondary sort by createdAt desc for determinism
+            if (dateA - dateB !== 0) return dateA - dateB;
+            // Secondary sort by createdAt asc for determinism
             const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return createdB - createdA;
+            return createdA - createdB;
           });
         }
 
@@ -346,7 +346,7 @@ describe("GET /api/posts", () => {
       expect(data.posts[0].visibility).toBe("PUBLIC");
     });
 
-    it("should return posts ordered by publishedAt descending", async () => {
+    it("should return posts ordered by publishedAt ascending", async () => {
       const { createUser, createPost } = await import("../utils/test-utils");
       const user = await createUser();
 
@@ -368,8 +368,8 @@ describe("GET /api/posts", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.posts[0].id).toBe(post2.id);
-      expect(data.posts[1].id).toBe(post1.id);
+      expect(data.posts[0].id).toBe(post1.id);
+      expect(data.posts[1].id).toBe(post2.id);
     });
 
     it("should include author information", async () => {

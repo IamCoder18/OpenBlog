@@ -273,7 +273,7 @@ body {
   border-right: 2px solid var(--color-primary);
 }
 
- /* Typography Defaults */
+/* Typography Defaults */
 h1,
 h2,
 h3,
@@ -776,4 +776,3 @@ h6 {
     transform: none;
   }
 }
-

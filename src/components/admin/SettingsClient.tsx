@@ -7,7 +7,8 @@ import {
   Palette,
   CheckCircle,
   User,
-  FileEdit,
+  Shield,
+  PenLine,
   Cog,
   Key,
   Trash2,
@@ -253,7 +254,7 @@ export default function SettingsClient() {
                   style={{ background: theme.preview }}
                 />
                 <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-bold text-on-surface font-headline">
                       {theme.name}
                     </span>
@@ -288,17 +289,17 @@ export default function SettingsClient() {
                     user.profile?.role === "ADMIN"
                       ? "bg-primary-container text-on-primary-container"
                       : user.profile?.role === "AUTHOR"
-                      ? "bg-secondary-container text-on-secondary-container"
-                      : "bg-tertiary/10 text-tertiary"
-                }`}
-              >
-                {user.profile?.role === "ADMIN" ? (
-                  <Shield className="w-5 h-5" />
-                ) : user.profile?.role === "AUTHOR" ? (
-                  <PenLine className="w-5 h-5" />
-                ) : (
-                  <Cog className="w-5 h-5" />
-                )}
+                        ? "bg-secondary-container text-on-secondary-container"
+                        : "bg-tertiary/10 text-tertiary"
+                  }`}
+                >
+                  {user.profile?.role === "ADMIN" ? (
+                    <Shield className="w-5 h-5" />
+                  ) : user.profile?.role === "AUTHOR" ? (
+                    <PenLine className="w-5 h-5" />
+                  ) : (
+                    <Cog className="w-5 h-5" />
+                  )}
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-on-surface">

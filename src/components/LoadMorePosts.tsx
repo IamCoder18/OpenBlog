@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, LayoutGrid, List, User, ChevronRight, RefreshCw, ChevronDown } from "lucide-react";
+import {
+  FileText,
+  LayoutGrid,
+  List,
+  User,
+  ChevronRight,
+  RefreshCw,
+  ChevronDown,
+} from "lucide-react";
 import { stripMarkdown } from "@/lib/strip-markdown";
 
 interface Author {
@@ -121,12 +129,14 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
           <button
             onClick={() => setViewMode("grid")}
             className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-surface-container-low text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
+            data-testid="grid-toggle"
           >
             <LayoutGrid className="w-5 h-5" />
           </button>
           <button
             onClick={() => setViewMode("list")}
             className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-surface-container-low text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
+            data-testid="list-toggle"
           >
             <List className="w-5 h-5" />
           </button>
@@ -205,15 +215,15 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                   {stripMarkdown(remainingPosts[1].bodyMarkdown, 120)}
                 </p>
               </div>
-                <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
-                  <span className="text-xs text-on-surface-variant">
-                    {formatDate(remainingPosts[1].publishedAt)}
-                  </span>
-                  <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
-                    Read
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </span>
-                </div>
+              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+                <span className="text-xs text-on-surface-variant">
+                  {formatDate(remainingPosts[1].publishedAt)}
+                </span>
+                <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
+                  Read
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </span>
+              </div>
             </a>
           )}
 
@@ -231,15 +241,15 @@ export default function LoadMorePosts({ initialPosts }: LoadMorePostsProps) {
                   {stripMarkdown(remainingPosts[2].bodyMarkdown, 120)}
                 </p>
               </div>
-                <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
-                  <span className="text-xs text-on-surface-variant">
-                    {formatDate(remainingPosts[2].publishedAt)}
-                  </span>
-                  <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
-                    Read
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </span>
-                </div>
+              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+                <span className="text-xs text-on-surface-variant">
+                  {formatDate(remainingPosts[2].publishedAt)}
+                </span>
+                <span className="text-primary text-xs font-bold uppercase tracking-widest flex items-center">
+                  Read
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </span>
+              </div>
             </a>
           )}
 

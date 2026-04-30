@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Share2, Link, Copy, CheckCircle } from "lucide-react";
+import { Share2, Copy, CheckCircle } from "lucide-react";
 
 interface ShareButtonProps {
   title: string;
@@ -55,14 +55,14 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
 
   return (
     <div className="relative">
-        <button
-          ref={buttonRef}
-          onClick={() => setOpen(!open)}
-          className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
-          aria-label="Share"
-        >
-          <Share2 className="w-5 h-5" />
-        </button>
+      <button
+        ref={buttonRef}
+        onClick={() => setOpen(!open)}
+        className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
+        aria-label="Share"
+      >
+        <Share2 className="w-5 h-5" />
+      </button>
 
       {open && (
         <>
@@ -94,7 +94,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
                   {url}
                 </span>
               </div>
-              
+
               <button
                 onClick={handleCopy}
                 className={`w-full mt-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${

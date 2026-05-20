@@ -1,0 +1,85 @@
+import Link from "next/link";
+import { BarChart3, BookOpen, Settings, Plus } from "lucide-react";
+import LogoutButton from "@/components/LogoutButton";
+import { config } from "@/lib/config";
+
+interface SidebarProps {
+  blogName?: string;
+  activeItem?: "analytics" | "stories" | "settings" | "editor";
+}
+
+export default function Sidebar({
+  activeItem = "analytics",
+  blogName,
+}: SidebarProps) {
+  const name = blogName || config.BLOG_NAME;
+  const navItems = [
+    {
+      id: "analytics" as const,
+      icon: BarChart3,
+      label: "Analytics",
+      href: "/dashboard",
+    },
+    {
+      id: "stories" as const,
+      icon: BookOpen,
+      label: "Stories",
+      href: "/dashboard/stories",
+    },
+    {
+      id: "settings" as const,
+      icon: Settings,
+      label: "Settings",
+      href: "/dashboard/settings",
+    },
+  ];
+
+  return (
+    <aside className="h-[calc(100vh-64px)] w-64 fixed left-0 top-16 z-40 bg-surface-container-lowest border-r border-outline-variant/10 flex flex-col py-6 space-y-2 font-body text-sm tracking-normal">
+      <div className="text-lg font-semibold text-on-surface mb-6 px-4 font-headline">
+        {name} Admin
+      </div>
+
+      {/* New Post Button */}
+      <div className="px-4 mb-4">
+        <div className="text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-label">
+          Editorial Suite
+        </div>
+        <Link
+          href="/dashboard/editor"
+          className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-medium rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          New Post
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1">
+        {navItems.map(item => {
+          const isActive = activeItem === item.id;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`flex items-center gap-3 py-3 px-6 transition-all duration-200 ${
+                isActive
+                  ? "bg-primary/10 text-primary border-r-2 border-primary-container"
+                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Logout */}
+      <div className="mt-auto px-4">
+        <LogoutButton variant="sidebar" />
+      </div>
+    </aside>
+  );
+}

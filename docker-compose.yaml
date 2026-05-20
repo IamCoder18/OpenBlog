@@ -1,0 +1,46 @@
+# Production Docker Compose for OpenBlog
+# Usage: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: openblog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: openblog
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/openblog?schema=public
+    container_name: openblog-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4581:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/openblog?schema=public
+      BLOG_NAME: OpenBlog
+      BASE_URL: http://192.168.1.82:4581
+      NODE_ENV: production
+      PORT: 3000
+      AUTH_SECRET: ${AUTH_SECRET:-change-me-in-production}
+      SIGN_UP_ENABLED: "false"
+
+volumes:
+  postgres_data:

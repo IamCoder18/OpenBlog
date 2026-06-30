@@ -12,7 +12,7 @@
 # at build time and cannot be changed without rebuilding.
 # ─────────────────────────────────────────────────────────────────────────────
 
-ARG NODE_VERSION=22-alpine
+ARG NODE_VERSION=26-alpine
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 1: fetcher — install deps with BuildKit cache
@@ -21,13 +21,24 @@ FROM node:${NODE_VERSION} AS fetcher
 
 WORKDIR /app
 
-# corepack ships with node:22 but may pick a cached wrong pnpm version
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+# Pin pnpm 9.15.0. Prefer corepack (it's the official Node way to
+# provision pnpm) but fall back to `npm install -g` for Node 26+ Alpine
+# images where corepack was dropped from the image.
+RUN if command -v corepack >/dev/null 2>&1; then \
+      corepack enable && corepack prepare pnpm@9.15.0 --activate; \
+    else \
+      npm install -g pnpm@9.15.0; \
+    fi
 
 COPY package.json5 pnpm-lock.yaml .npmrc ./
 
+# --config.store-dir=/pnpm/store points pnpm at the BuildKit cache mount
+# above. Inlining this (rather than committing it to .npmrc) keeps the
+# setting Docker-only — GH Actions and local dev use pnpm's default
+# store path, which avoids EACCES on /pnpm when running as a
+# non-root user.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile --config.store-dir=/pnpm/store
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 2: builder — generate Prisma client + build Next.js
@@ -36,7 +47,11 @@ FROM node:${NODE_VERSION} AS builder
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN if command -v corepack >/dev/null 2>&1; then \
+      corepack enable && corepack prepare pnpm@9.15.0 --activate; \
+    else \
+      npm install -g pnpm@9.15.0; \
+    fi
 
 COPY --from=fetcher /app/node_modules ./node_modules
 COPY . .
@@ -58,6 +73,9 @@ ENV NODE_ENV=production \
     NEXT_PUBLIC_BASE_URL="http://localhost:3000" \
     NEXT_PUBLIC_BLOG_NAME="OpenBlog"
 
+# prisma generate reads the schema and writes the client; no package
+# install happens, so the store-dir override isn't needed (and would
+# actually break — `--config.*` is pnpm syntax, not Prisma's).
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm exec prisma generate
 
@@ -65,7 +83,7 @@ RUN --mount=type=cache,id=next,target=/app/.next/cache \
     pnpm run build
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm prune --prod
+    pnpm prune --prod --config.store-dir=/pnpm/store
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 3: runner — minimal image with prod-only deps

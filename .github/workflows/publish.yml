@@ -84,16 +84,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node
+      - name: Setup Node 26
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: pnpm
+
+      - name: Activate pnpm via corepack
+        # Using corepack instead of pnpm/action-setup avoids the
+        # self-installer step that runs `pnpm install` against the
+        # runner's home directory. pnpm/action-setup v6 still has the
+        # same failure mode on runners where /pnpm is root-owned.
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

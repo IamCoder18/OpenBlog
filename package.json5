@@ -29,7 +29,6 @@
     "@prisma/client-runtime-utils": "^7.5.0", // --- Database & ORM --- /* [comment possibly relocated by pnpm] */
     "@tailwindcss/typography": "^0.5.19",
     "better-auth": "^1.5.5",
-    "better-sqlite3": "^12.8.0",
     dotenv: "^17.3.1",
     "isomorphic-dompurify": "^3.5.1",
     katex: "^0.16.40",
@@ -47,7 +46,6 @@
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/katex": "^0.16.8",
     "@types/node": "^20",

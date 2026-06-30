@@ -1,0 +1,354 @@
+name: publish
+
+# Builds, pushes, and releases the OpenBlog Docker image.
+#
+# Two trigger paths share the same pipeline:
+#
+#   1. Push a semver tag (`v*.*.*`) → use that tag verbatim
+#        $ git tag v0.1.0 && git push origin v0.1.0
+#
+#   2. workflow_dispatch (manual "Run workflow" from the Actions tab) →
+#      pick the bump type or supply a custom version
+#        - patch  → 0.1.0 → 0.1.1
+#        - minor  → 0.1.0 → 0.2.0
+#        - major  → 0.1.0 → 1.0.0
+#        - none   → re-publish the current version unchanged
+#        - custom → e.g. "1.2.3" or "2.0.0-rc.1" overrides everything
+#
+# Image lands at:
+#   ghcr.io/<owner>/<repo>:<version>
+#   ghcr.io/<owner>/<repo>:<major>.<minor>
+#   ghcr.io/<owner>/<repo>:<major>
+#   ghcr.io/<owner>/<repo>:latest   (only for stable releases; skipped for -rc/-beta)
+#
+# GitHub Release page created at:
+#   https://github.com/<owner>/<repo>/releases/tag/v<version>
+#
+# Multi-arch: linux/amd64, linux/arm64
+# Caching:    GHA cache (layers) + BuildKit cache mounts (pnpm store within build)
+#
+# One-time setup:
+#   - GHCR package visibility: Public (Settings → Packages → openblog → Public)
+#   - Workflow permissions: Read and write (Settings → Actions → General)
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: "Version bump from the latest semver tag"
+        required: true
+        type: choice
+        default: "patch"
+        options:
+          - patch
+          - minor
+          - major
+          - none
+      custom_version:
+        description: >-
+          Custom version (e.g. 1.2.3 or 2.0.0-rc.1). Overrides version_bump.
+          Leave empty to use the bump selector.
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: read
+  attestations: write
+  id-token: write
+
+# Single in-flight run per ref. Prevents the bot's own tag-push from
+# triggering a second concurrent build.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+# Skip re-runs triggered by the bot's own tag push. When workflow_dispatch
+# pushes the git tag (`git push origin v0.2.0`), the resulting push event
+# has actor = "github-actions[bot]". We don't want that second run to
+# rebuild and re-release — the first run already did. Each job carries
+# the same `if` guard:
+#   if: github.actor != 'github-actions[bot]'
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # 0. Fast gate: lint + format + typecheck. Runs on every trigger.
+  # ──────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint, format, typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm check
+        run: pnpm run check
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 1. Resolve the version string. Push tag → use it. Manual → compute.
+  # ──────────────────────────────────────────────────────────────────────────
+  version:
+    name: Resolve version
+    needs: lint
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      version: ${{ steps.compute.outputs.version }}
+      tag: ${{ steps.compute.outputs.tag }}
+      is_prerelease: ${{ steps.compute.outputs.is_prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: compute
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Tag was pushed directly — use it as-is.
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            # workflow_dispatch — apply the chosen bump or custom value.
+            BUMP="${{ inputs.version_bump }}"
+            CUSTOM="${{ inputs.custom_version }}"
+
+            if [ -n "$CUSTOM" ]; then
+              # Strip leading v/V in case the user included it
+              VERSION="${CUSTOM#v}"
+              VERSION="${VERSION#V}"
+            else
+              # Find the latest stable semver tag (excludes pre-releases)
+              LATEST=$(git tag --sort=-version:refname \
+                | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+                | head -n1 || true)
+
+              case "$BUMP" in
+                none)
+                  if [ -z "$LATEST" ]; then
+                    VERSION="0.1.0"
+                  else
+                    VERSION="${LATEST#v}"
+                  fi
+                  ;;
+                patch|minor|major)
+                  if [ -z "$LATEST" ]; then
+                    # No existing tag — start somewhere reasonable.
+                    case "$BUMP" in
+                      major) VERSION="1.0.0" ;;
+                      *)      VERSION="0.1.0" ;;
+                    esac
+                  else
+                    V="${LATEST#v}"
+                    IFS='.' read -r MAJOR MINOR PATCH <<< "$V"
+                    case "$BUMP" in
+                      major) VERSION="$((MAJOR+1)).0.0" ;;
+                      minor) VERSION="${MAJOR}.$((MINOR+1)).0" ;;
+                      patch) VERSION="${MAJOR}.${MINOR}.$((PATCH+1))" ;;
+                    esac
+                  fi
+                  ;;
+                *)
+                  echo "::error::Unknown bump type: $BUMP"
+                  exit 1
+                  ;;
+              esac
+            fi
+          fi
+
+          # Validate
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Computed version '$VERSION' is not valid semver (e.g. 1.2.3 or 2.0.0-rc.1)"
+            exit 1
+          fi
+
+          IS_PRERELEASE="false"
+          if [[ "$VERSION" == *"-"* ]]; then
+            IS_PRERELEASE="true"
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "tag=v$VERSION"
+            echo "is_prerelease=$IS_PRERELEASE"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "::group::Resolved version"
+          echo "  version:      $VERSION"
+          echo "  tag:          v$VERSION"
+          echo "  pre-release:  $IS_PRERELEASE"
+          echo "::endgroup::"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 2. Build & push the multi-arch image.
+  # ──────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build & push image
+    needs: version
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # Tag scheme — `latest` is added automatically by metadata-action
+          # (`flavor: latest=auto`) for stable releases on default branch and
+          # for stable tag pushes. Pre-release tags skip `latest`.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          labels: |
+            org.opencontainers.image.title=OpenBlog
+            org.opencontainers.image.description=Self-hostable AI-agent-friendly blog platform
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 3. Create the GitHub Release. Skipped on PRs (no push happened).
+  # ──────────────────────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [version, build]
+    if: github.actor != 'github-actions[bot]' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # On workflow_dispatch, push the git tag so `softprops/action-gh-release`
+      # can point at it. This re-triggers the workflow once; the second run is
+      # skipped by the `if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'`
+      # guard on the release job AND by the bot-actor check below.
+      - name: Create + push git tag (workflow_dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.version.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Idempotent: only create if not already present.
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git tag -a "$TAG" -m "Release $TAG" "$GITHUB_SHA"
+            git push origin "$TAG"
+            echo "Tag $TAG created and pushed."
+          else
+            echo "Tag $TAG already exists locally — skipping creation."
+          fi
+
+      - name: Resolve previous semver tag for changelog
+        id: tags
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # On workflow_dispatch, GITHUB_REF is the branch (main), so resolve
+          # the tag from the version job output instead.
+          if [ -z "$TAG" ] || [ "$TAG" = "main" ] || ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            TAG="${{ needs.version.outputs.tag }}"
+          fi
+          PREV=$(git tag --sort=-version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | grep -v "^${TAG}$" \
+            | head -n1 || true)
+          {
+            echo "tag=${TAG}"
+            echo "previous=${PREV}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: "OpenBlog ${{ needs.version.outputs.tag }}"
+          generate_release_notes: true
+          prerelease: ${{ needs.version.outputs.is_prerelease == 'true' }}
+          body: |
+            ## Docker image
+
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ needs.version.outputs.tag }}
+            docker pull ghcr.io/${{ github.repository }}:latest
+            ```
+
+            Image digest: `${{ needs.build.outputs.digest }}`
+
+            See [`docs/api.md`](./docs/api.md) for the HTTP API and
+            [`README.md`](./README.md) for installation / deployment.
+
+            ## What's changed
+
+            _Auto-generated from PRs since ${{ steps.tags.outputs.previous || 'the beginning' }}_.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,91 +1,101 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7
 
-# ============================================
-# Stage 1: Dependencies Installation Stage
-# ============================================
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenBlog — production Dockerfile
+# ─────────────────────────────────────────────────────────────────────────────
+# This image builds with ZERO required env vars. Defaults are baked in via
+# `ENV`. Runtime configuration (DATABASE_URL, AUTH_SECRET, BASE_URL, etc.)
+# is injected by the consumer's `docker-compose.yaml` at container start.
+#
+# To customize the baked-in defaults (NEXT_PUBLIC_*), fork the repo and
+# build your own image — these values are inlined into the client bundle
+# at build time and cannot be changed without rebuilding.
+# ─────────────────────────────────────────────────────────────────────────────
 
 ARG NODE_VERSION=22-alpine
 
-FROM node:${NODE_VERSION} AS dependencies
-
-# Install pnpm (supports json5 natively)
-RUN npm install -g pnpm@9
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1: fetcher — install deps with BuildKit cache
+# ─────────────────────────────────────────────────────────────────────────────
+FROM node:${NODE_VERSION} AS fetcher
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json5 pnpm-lock.yaml ./
+# corepack ships with node:22 but may pick a cached wrong pnpm version
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Install all dependencies (including dev for build)
-RUN pnpm install --frozen-lockfile
+COPY package.json5 pnpm-lock.yaml .npmrc ./
 
-# ============================================
-# Stage 2: Build Next.js application in standalone mode
-# ============================================
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2: builder — generate Prisma client + build Next.js
+# ─────────────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION} AS builder
 
-ARG DATABASE_URL
-
-# Install pnpm
-RUN npm install -g pnpm@9
-
 WORKDIR /app
 
-# Copy project dependencies from dependencies stage
-COPY --from=dependencies /app/node_modules ./node_modules
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Copy application source code
+COPY --from=fetcher /app/node_modules ./node_modules
 COPY . .
 
-ENV NODE_ENV=production
-ENV DATABASE_URL=${DATABASE_URL}
+# Bake sensible defaults. `NEXT_PUBLIC_*` are inlined into the client bundle
+# at build time. If you fork this repo, change these to your project's
+# branding before building your own image.
+#
+#   NEXT_PUBLIC_BASE_URL    — used by client fetch helpers and OG fallbacks.
+#                             Override at RUNTIME via BASE_URL (server-only).
+#   NEXT_PUBLIC_BLOG_NAME   — used by <title>, nav, footer. Override at
+#                             RUNTIME via BLOG_NAME; the server uses that
+#                             value but the client keeps this baked default
+#                             unless you rebuild.
+#
+# DATABASE_URL is NOT needed at build time — Prisma 7 reads it from
+# prisma.config.ts which loads it via dotenv at runtime.
+ENV NODE_ENV=production \
+    NEXT_PUBLIC_BASE_URL="http://localhost:3000" \
+    NEXT_PUBLIC_BLOG_NAME="OpenBlog"
 
-# Build Next.js application
-RUN pnpm run build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm exec prisma generate
 
-# ============================================
-# Stage 3: Run Next.js application
-# ============================================
+RUN --mount=type=cache,id=next,target=/app/.next/cache \
+    pnpm run build
 
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm prune --prod
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 3: runner — minimal image with prod-only deps
+# ─────────────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION} AS runner
 
-# Set working directory
 WORKDIR /app
 
-# Set production environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
 
-# Copy production assets
 COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/prisma ./prisma
+COPY --from=builder --chown=node:node /app/src/lib/prisma ./src/lib/prisma
+COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
+
+COPY --from=builder --chown=node:node /app/scripts/entrypoint.sh ./entrypoint.sh
 COPY --from=builder --chown=node:node /app/scripts/create-admin.js ./scripts/create-admin.js
 COPY --from=builder --chown=node:node /app/scripts/promote-admin.js ./scripts/promote-admin.js
 COPY --from=builder --chown=node:node /app/scripts/change-password.js ./scripts/change-password.js
-
-# Create .next directory with correct permissions
-RUN mkdir .next && chown node:node .next
-
-# Copy the standalone output and static files
-# Note: This requires output: 'standalone' in next.config.js
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-COPY --from=builder --chown=node:node /app/src ./src
-COPY --from=builder --chown=node:node /app/node_modules ./node_modules
-
-# Copy prisma directory for migrations
-COPY --from=builder --chown=node:node /app/prisma ./prisma
-
-# Copy and make entrypoint executable
-COPY --from=builder --chown=node:node /app/scripts/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-# Switch to non-root user for security
+RUN mkdir -p .next && chown -R node:node .next
+
 USER node
 
-# Expose port 3000
 EXPOSE 3000
 
-# Start application via entrypoint (runs migrations first)
 CMD ["./entrypoint.sh"]

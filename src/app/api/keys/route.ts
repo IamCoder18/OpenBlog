@@ -21,7 +21,6 @@ export const GET = apiHandler(async function GET() {
     select: {
       id: true,
       name: true,
-      key: true,
       createdAt: true,
       expiresAt: true,
     },

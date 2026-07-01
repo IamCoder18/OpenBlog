@@ -84,20 +84,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Install pnpm BEFORE actions/setup-node. The `cache: pnpm`
+      # option below runs `pnpm --version` to compute the cache key,
+      # so pnpm must already be on PATH — install it via corepack
+      # using the runner's default Node first.
+      - name: Activate pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.9.0 --activate
+
       - name: Setup Node 26
         uses: actions/setup-node@v4
         with:
           node-version: 26
           cache: pnpm
-
-      - name: Activate pnpm via corepack
-        # Using corepack instead of pnpm/action-setup avoids the
-        # self-installer step that runs `pnpm install` against the
-        # runner's home directory. pnpm/action-setup v6 still has the
-        # same failure mode on runners where /pnpm is root-owned.
-        run: |
-          corepack enable
-          corepack prepare pnpm@11.9.0 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

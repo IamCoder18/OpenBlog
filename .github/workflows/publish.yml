@@ -97,7 +97,7 @@ jobs:
         # same failure mode on runners where /pnpm is root-owned.
         run: |
           corepack enable
-          corepack prepare pnpm@9.15.0 --activate
+          corepack prepare pnpm@11.9.0 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

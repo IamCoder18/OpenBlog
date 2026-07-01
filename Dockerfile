@@ -21,16 +21,16 @@ FROM node:${NODE_VERSION} AS fetcher
 
 WORKDIR /app
 
-# Pin pnpm 9.15.0. Prefer corepack (it's the official Node way to
+# Pin pnpm 11.9.0. Prefer corepack (it's the official Node way to
 # provision pnpm) but fall back to `npm install -g` for Node 26+ Alpine
 # images where corepack was dropped from the image.
 RUN if command -v corepack >/dev/null 2>&1; then \
-      corepack enable && corepack prepare pnpm@9.15.0 --activate; \
+      corepack enable && corepack prepare pnpm@11.9.0 --activate; \
     else \
-      npm install -g pnpm@9.15.0; \
+      npm install -g pnpm@11.9.0; \
     fi
 
-COPY package.json5 pnpm-lock.yaml .npmrc ./
+COPY package.json5 pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
 
 # --config.store-dir=/pnpm/store points pnpm at the BuildKit cache mount
 # above. Inlining this (rather than committing it to .npmrc) keeps the
@@ -48,9 +48,9 @@ FROM node:${NODE_VERSION} AS builder
 WORKDIR /app
 
 RUN if command -v corepack >/dev/null 2>&1; then \
-      corepack enable && corepack prepare pnpm@9.15.0 --activate; \
+      corepack enable && corepack prepare pnpm@11.9.0 --activate; \
     else \
-      npm install -g pnpm@9.15.0; \
+      npm install -g pnpm@11.9.0; \
     fi
 
 COPY --from=fetcher /app/node_modules ./node_modules

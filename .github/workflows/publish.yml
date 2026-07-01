@@ -274,13 +274,20 @@ jobs:
           MAJOR_MINOR: ${{ needs.version.outputs.major_minor }}
           MAJOR: ${{ needs.version.outputs.major }}
           IS_PRERELEASE: ${{ needs.version.outputs.is_prerelease }}
+          # Docker requires the repository portion of a tag to be
+          # all-lowercase. `github.repository` preserves the owner/
+          # repo casing as it appears in the URL (e.g.
+          # "IamCoder18/OpenBlog"), so lowercase it for the tag
+          # while keeping the mixed-case value for the OCI source
+          # label (URLs are case-insensitive, so that's fine).
+          REPO_LC: ${{ lower(github.repository) }}
         run: |
           set -euo pipefail
-          TAGS="ghcr.io/${{ github.repository }}:${VERSION}"
-          TAGS="${TAGS},ghcr.io/${{ github.repository }}:${MAJOR_MINOR}"
-          TAGS="${TAGS},ghcr.io/${{ github.repository }}:${MAJOR}"
+          TAGS="ghcr.io/${REPO_LC}:${VERSION}"
+          TAGS="${TAGS},ghcr.io/${REPO_LC}:${MAJOR_MINOR}"
+          TAGS="${TAGS},ghcr.io/${REPO_LC}:${MAJOR}"
           if [ "$IS_PRERELEASE" != "true" ]; then
-            TAGS="${TAGS},ghcr.io/${{ github.repository }}:latest"
+            TAGS="${TAGS},ghcr.io/${REPO_LC}:latest"
           fi
           {
             echo "tags=${TAGS}"
@@ -301,7 +308,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=OpenBlog
             org.opencontainers.image.description=Self-hostable AI-agent-friendly blog platform
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ lower(github.repository) }}
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.version=${{ needs.version.outputs.version }}
           provenance: mode=max
@@ -379,8 +386,8 @@ jobs:
             ## Docker image
 
             ```bash
-            docker pull ghcr.io/${{ github.repository }}:${{ needs.version.outputs.tag }}
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull ghcr.io/${{ lower(github.repository) }}:${{ needs.version.outputs.tag }}
+            docker pull ghcr.io/${{ lower(github.repository) }}:latest
             ```
 
             Image digest: `${{ needs.build.outputs.digest }}`

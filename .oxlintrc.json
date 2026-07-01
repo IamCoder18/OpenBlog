@@ -33,6 +33,6 @@
       "warn",
       { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
     ],
-    "import/no-unresolved": "error"
+    "import/no-cycle": "error"
   }
 }

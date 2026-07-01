@@ -1,6 +1,6 @@
 const { PrismaPg } = require("@prisma/adapter-pg");
 
-const [,, email] = process.argv;
+const [, , email] = process.argv;
 
 if (!email) {
   console.error("Usage: node scripts/promote-admin.js <email>");
@@ -20,7 +20,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   const user = await prisma.user.findUnique({
     where: { email: { mode: "insensitive", equals: email } },
-    include: { profile: true }
+    include: { profile: true },
   });
 
   if (!user) {
@@ -40,13 +40,15 @@ async function main() {
 
   await prisma.userProfile.update({
     where: { userId: user.id },
-    data: { role: "ADMIN" }
+    data: { role: "ADMIN" },
   });
 
   console.log(`Promoted ${email} to ADMIN.`);
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-}).finally(() => prisma.$disconnect());
+main()
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

@@ -1,6 +1,7 @@
 # 2026-06-27 — Docker Setup Audit & Fixes
 
 ## Session Metadata
+
 - **Date:** 2026-06-27
 - **Scope:** Audit and repair Docker build pipeline, especially build-time env handling and build performance.
 
@@ -74,13 +75,13 @@ Fix: `COPY --from=builder /app/src/lib/prisma ./src/lib/prisma` in the runner st
 
 README was the default `create-next-app` boilerplate — completely wrong for this project. Replaced.
 
-| File                | Change                                                                                  |
-|---------------------|-----------------------------------------------------------------------------------------|
-| `README.md`         | Full rewrite. Inline-env quick start (no `cp`, no `echo … >>`), explains `NEXT_PUBLIC_*` vs plain envs, deployment notes with port-override guidance, links to `docs/api.md` / `CONTRIBUTING.md`. |
-| `docs/api.md`       | New. Full API reference: routes, request/response shapes, auth, roles, scripts.         |
-| `CONTRIBUTING.md`   | New stub. Dev setup, code conventions, testing layers, PR/commit conventions.          |
-| `.env.example`      | Reorganized into Required / Optional / Local-dev-only. Removed dead `BOOTSTRAPPED_ADMIN_PASSWORD` and `TEST_BASE_URL`. Simplified to match the inline-env quick start. |
-| `docker-compose.yaml` | Standardized ports to standard defaults (`3000:3000` for app, `5432:5432` for Postgres) with override instructions. Removed `AUTH_SECRET` from build args (see Security pass below). |
+| File                  | Change                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`           | Full rewrite. Inline-env quick start (no `cp`, no `echo … >>`), explains `NEXT_PUBLIC_*` vs plain envs, deployment notes with port-override guidance, links to `docs/api.md` / `CONTRIBUTING.md`. |
+| `docs/api.md`         | New. Full API reference: routes, request/response shapes, auth, roles, scripts.                                                                                                                   |
+| `CONTRIBUTING.md`     | New stub. Dev setup, code conventions, testing layers, PR/commit conventions.                                                                                                                     |
+| `.env.example`        | Reorganized into Required / Optional / Local-dev-only. Removed dead `BOOTSTRAPPED_ADMIN_PASSWORD` and `TEST_BASE_URL`. Simplified to match the inline-env quick start.                            |
+| `docker-compose.yaml` | Standardized ports to standard defaults (`3000:3000` for app, `5432:5432` for Postgres) with override instructions. Removed `AUTH_SECRET` from build args (see Security pass below).              |
 
 ### Post-inconsistencies cleaned up
 
@@ -110,7 +111,7 @@ A local review surfaced 3 CRITICAL items and 9 WARNINGs. All addressed:
    `cp .env.example .env` in the README quick start would have failed on a fresh clone because the file was being excluded.
    - Added `!.env.example` immediately after the `.env*` glob.
    - Committed file ships with the repo.
-3. *(The third CRITICAL — duplicate env keys from `echo >> .env` — was obviated by the README rewrite below.)*
+3. _(The third CRITICAL — duplicate env keys from `echo >> .env` — was obviated by the README rewrite below.)_
 
 ### WARNINGS
 
@@ -125,6 +126,7 @@ A local review surfaced 3 CRITICAL items and 9 WARNINGs. All addressed:
    - Updated getters: now `process.env.BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || "<default>"` (and same for `BLOG_NAME`). Runtime overrides work without rebuild.
 7. **README quick start was 5 steps and used `cp` + `echo >>` (duplicate keys) + `docker compose logs -f` + `open http://...`.**
    Replaced with a 4-step flow:
+
    ```
    cat > .env <<EOF
    AUTH_SECRET="$(openssl rand -base64 32)"
@@ -133,11 +135,13 @@ A local review surfaced 3 CRITICAL items and 9 WARNINGs. All addressed:
    docker compose up -d --build
    docker exec -it openblog-app node scripts/create-admin.js …
    ```
+
    - `cp` removed — `.env` is generated inline.
    - `echo … >> .env` removed — single `cat > .env` heredoc writes the file once with no duplicates.
    - `docker compose logs -f app` step removed (cumulative wait — operators can run it manually if curious).
    - `open http://…` step removed (macOS-only; not portable).
-   - Added an inline note: *"If you're not accessing the app at http://localhost:3000, edit BASE_URL in `.env` before starting."*
+   - Added an inline note: _"If you're not accessing the app at http://localhost:3000, edit BASE_URL in `.env` before starting."_
+
 8. **`docs/api.md` made several false claims about the API.**
    Corrected:
    - `limit` defaults to **10**, no hard upper bound (was: 20, max 100).
@@ -172,16 +176,16 @@ Restructured Docker setup so users can deploy with a single compose file (no rep
 
 ### Changes
 
-| File                       | Change                                                                                  |
-|----------------------------|-----------------------------------------------------------------------------------------|
-| `Dockerfile`               | **Removed all `ARG`s and `ARG`-dependent `ENV`s.** Image now builds with `docker build .` and zero env vars. Bakes defaults: `NEXT_PUBLIC_BASE_URL=http://localhost:3000`, `NEXT_PUBLIC_BLOG_NAME=OpenBlog`. `DATABASE_URL` is no longer needed at build (Prisma 7 reads from `prisma.config.ts`). |
-| `docker-compose.yaml`      | Switched `app` service from `build:` to `image: ${OPENBLOG_IMAGE:-ghcr.io/iamcoder18/openblog:latest}`. Host ports now env-driven: `${APP_HOST_PORT:-3000}:3000` and `${POSTGRES_HOST_PORT:-5432}:5432`. This is the file users download. |
-| `docker-compose.local.yaml`| New. Identical to production compose but uses `build: { context: . }` for local source builds. Tag the local image as `openblog:local` so it doesn't collide with a registry pull. |
-| `.env.example`             | Added `APP_HOST_PORT`, `POSTGRES_HOST_PORT`, `OPENBLOG_IMAGE` sections. Removed the `cp .env.example .env` assumption (now the install script generates `.env` directly). |
-| `scripts/install.sh`       | Two modes now: default pulls the published image; `--local-build` builds from source. Added `--image`, `--port`, `--postgres-port` flags. The compose-file selector no longer requires the script to live in `scripts/` of the repo — it works from any cwd that has a compose file. `--port` now correctly flows through to the container via `APP_HOST_PORT` in `.env`. |
-| `scripts/install.ps1`      | Mirrors the bash changes: image-pull mode, `--Image`, `--Port`, `--PostgresPort`, `--LocalBuild`. |
-| `README.md`                | New "Path A — one-line installer" leading the quick start. Documents the image-pull workflow, `OPENBLOG_IMAGE` pinning, `APP_HOST_PORT`/`POSTGRES_HOST_PORT` overrides, and the local-build path via `docker-compose.local.yaml`. |
-| `CONTRIBUTING.md`          | New "Working with Docker" section explaining the two compose files and when to use each. |
+| File                        | Change                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Dockerfile`                | **Removed all `ARG`s and `ARG`-dependent `ENV`s.** Image now builds with `docker build .` and zero env vars. Bakes defaults: `NEXT_PUBLIC_BASE_URL=http://localhost:3000`, `NEXT_PUBLIC_BLOG_NAME=OpenBlog`. `DATABASE_URL` is no longer needed at build (Prisma 7 reads from `prisma.config.ts`).                                                                        |
+| `docker-compose.yaml`       | Switched `app` service from `build:` to `image: ${OPENBLOG_IMAGE:-ghcr.io/iamcoder18/openblog:latest}`. Host ports now env-driven: `${APP_HOST_PORT:-3000}:3000` and `${POSTGRES_HOST_PORT:-5432}:5432`. This is the file users download.                                                                                                                                 |
+| `docker-compose.local.yaml` | New. Identical to production compose but uses `build: { context: . }` for local source builds. Tag the local image as `openblog:local` so it doesn't collide with a registry pull.                                                                                                                                                                                        |
+| `.env.example`              | Added `APP_HOST_PORT`, `POSTGRES_HOST_PORT`, `OPENBLOG_IMAGE` sections. Removed the `cp .env.example .env` assumption (now the install script generates `.env` directly).                                                                                                                                                                                                 |
+| `scripts/install.sh`        | Two modes now: default pulls the published image; `--local-build` builds from source. Added `--image`, `--port`, `--postgres-port` flags. The compose-file selector no longer requires the script to live in `scripts/` of the repo — it works from any cwd that has a compose file. `--port` now correctly flows through to the container via `APP_HOST_PORT` in `.env`. |
+| `scripts/install.ps1`       | Mirrors the bash changes: image-pull mode, `--Image`, `--Port`, `--PostgresPort`, `--LocalBuild`.                                                                                                                                                                                                                                                                         |
+| `README.md`                 | New "Path A — one-line installer" leading the quick start. Documents the image-pull workflow, `OPENBLOG_IMAGE` pinning, `APP_HOST_PORT`/`POSTGRES_HOST_PORT` overrides, and the local-build path via `docker-compose.local.yaml`.                                                                                                                                         |
+| `CONTRIBUTING.md`           | New "Working with Docker" section explaining the two compose files and when to use each.                                                                                                                                                                                                                                                                                  |
 
 ### Trade-offs documented in the Dockerfile
 
@@ -200,6 +204,7 @@ Scratch folders and `*test` volumes/containers torn down and removed after each 
 ## Handoff
 
 Future improvements (out of scope):
+
 - ~~Multi-arch builds (`--platform=linux/amd64,linux/arm64`).~~ ✓ Done 2026-06-30
 - ~~Push to a registry as part of CI.~~ ✓ Done 2026-06-30
 - Healthcheck on the `app` service.
@@ -211,12 +216,12 @@ Added `.github/workflows/docker-publish.yml` — 132 lines, two jobs (`lint`, `b
 
 ### Triggers
 
-| Event                          | Effect                                                   |
-|--------------------------------|----------------------------------------------------------|
-| Push to `main`                 | Lint, build, push (tags: `latest`, `main`, `sha-<7>`)    |
-| Tag `v*.*.*` (e.g. `v0.1.0`)   | Lint, build, push (tags: `v0.1.0`, `0.1`, `0.1.0`, `latest`) |
-| PR to `main`                   | Lint, build (no push — validates the build works)         |
-| `workflow_dispatch`            | Manual ad-hoc rebuild                                    |
+| Event                        | Effect                                                       |
+| ---------------------------- | ------------------------------------------------------------ |
+| Push to `main`               | Lint, build, push (tags: `latest`, `main`, `sha-<7>`)        |
+| Tag `v*.*.*` (e.g. `v0.1.0`) | Lint, build, push (tags: `v0.1.0`, `0.1`, `0.1.0`, `latest`) |
+| PR to `main`                 | Lint, build (no push — validates the build works)            |
+| `workflow_dispatch`          | Manual ad-hoc rebuild                                        |
 
 ### Jobs
 
@@ -241,9 +246,9 @@ Added `.github/workflows/docker-publish.yml` — 132 lines, two jobs (`lint`, `b
 ```yaml
 permissions:
   contents: read
-  packages: write        # GHCR push
-  attestations: write    # signed SLSA provenance
-  id-token: write        # OIDC for provenance
+  packages: write # GHCR push
+  attestations: write # signed SLSA provenance
+  id-token: write # OIDC for provenance
 ```
 
 ### Cutting a release
@@ -291,20 +296,20 @@ Added `.github/workflows/release.yml` — 132 lines, two jobs (`build`, `release
 
 ```yaml
 permissions:
-  contents: write        # create the release + commit/push if needed
-  pull-requests: read    # for auto-generated notes (PRs since prev tag)
+  contents: write # create the release + commit/push if needed
+  pull-requests: read # for auto-generated notes (PRs since prev tag)
 ```
 
 The `build` job has its own permissions block with `packages: write` and `attestations: write` — GH's permission model lets jobs declare distinct perm sets.
 
 ### Trigger matrix
 
-| Event                          | `docker-publish.yml`        | `release.yml`     |
-|--------------------------------|------------------------------|-------------------|
-| Push to `main`                 | ✓ (lint, build, push)        | –                 |
-| PR to `main`                   | ✓ (lint, build, no push)     | –                 |
-| Tag `v*.*.*`                   | ✓ (lint, build, push)        | ✓ (build, release)|
-| `workflow_dispatch`            | ✓ (manual rebuild)           | –                 |
+| Event               | `docker-publish.yml`     | `release.yml`      |
+| ------------------- | ------------------------ | ------------------ |
+| Push to `main`      | ✓ (lint, build, push)    | –                  |
+| PR to `main`        | ✓ (lint, build, no push) | –                  |
+| Tag `v*.*.*`        | ✓ (lint, build, push)    | ✓ (build, release) |
+| `workflow_dispatch` | ✓ (manual rebuild)       | –                  |
 
 ### Cutting a release
 
@@ -323,11 +328,11 @@ User asked to merge `docker-publish.yml` + `release.yml` into a single `publish.
 
 ### Changes
 
-| File                                 | Change                                              |
-|--------------------------------------|-----------------------------------------------------|
-| `.github/workflows/docker-publish.yml` | Deleted (folded into publish.yml).                  |
-| `.github/workflows/release.yml`        | Deleted (folded into publish.yml).                  |
-| `.github/workflows/publish.yml`        | New, 353 lines. Single combined workflow.          |
+| File                                   | Change                                    |
+| -------------------------------------- | ----------------------------------------- |
+| `.github/workflows/docker-publish.yml` | Deleted (folded into publish.yml).        |
+| `.github/workflows/release.yml`        | Deleted (folded into publish.yml).        |
+| `.github/workflows/publish.yml`        | New, 353 lines. Single combined workflow. |
 
 ### Inputs (workflow_dispatch only)
 
@@ -339,18 +344,18 @@ inputs:
     options: [patch, minor, major, none]
   custom_version:
     type: string
-    description: 'Overrides version_bump. e.g. 1.2.3 or 2.0.0-rc.1'
+    description: "Overrides version_bump. e.g. 1.2.3 or 2.0.0-rc.1"
 ```
 
 ### Trigger matrix
 
-| Event                | Lint | Version | Build | Release |
-|----------------------|------|---------|-------|---------|
-| Push to main         | ✓    | –       | –     | –       |
-| PR to main           | ✓    | –       | ✓ (no push) | –  |
-| Tag v*.*.*           | ✓    | ✓       | ✓     | ✓       |
-| workflow_dispatch    | ✓    | ✓       | ✓     | ✓       |
-| Bot re-trigger (from workflow_dispatch tag push) | ✓ | **skip** | **skip** | **skip** |
+| Event                                            | Lint | Version  | Build       | Release  |
+| ------------------------------------------------ | ---- | -------- | ----------- | -------- |
+| Push to main                                     | ✓    | –        | –           | –        |
+| PR to main                                       | ✓    | –        | ✓ (no push) | –        |
+| Tag v*.*.\*                                      | ✓    | ✓        | ✓           | ✓        |
+| workflow_dispatch                                | ✓    | ✓        | ✓           | ✓        |
+| Bot re-trigger (from workflow_dispatch tag push) | ✓    | **skip** | **skip**    | **skip** |
 
 ### Version computation logic
 
@@ -377,6 +382,7 @@ So the re-trigger sees `lint` run and the other three jobs skip. `latest` is als
 ### Image tag scheme
 
 For any release of `v1.2.3`:
+
 ```
 ghcr.io/<owner>/<repo>:v1.2.3
 ghcr.io/<owner>/<repo>:1.2

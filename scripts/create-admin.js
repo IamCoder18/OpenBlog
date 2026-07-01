@@ -5,24 +5,26 @@ function hashPassword(password) {
   const config = {
     N: 16384,
     r: 16,
-    p: 1
+    p: 1,
   };
 
-  const salt = randomBytes(16).toString('hex');
+  const salt = randomBytes(16).toString("hex");
   const key = scryptSync(password.normalize("NFKC"), salt, 64, {
     N: config.N,
     p: config.p,
     r: config.r,
-    maxmem: 128 * config.N * config.r * 2
+    maxmem: 128 * config.N * config.r * 2,
   });
 
-  return `${salt}:${key.toString('hex')}`;
+  return `${salt}:${key.toString("hex")}`;
 }
 
-const [,, email, name, password] = process.argv;
+const [, , email, name, password] = process.argv;
 
 if (!email) {
-  console.error("Usage: node scripts/create-admin.js <email> [name] [password]");
+  console.error(
+    "Usage: node scripts/create-admin.js <email> [name] [password]"
+  );
   process.exit(1);
 }
 
@@ -47,7 +49,7 @@ async function main() {
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
-    include: { profile: true, accounts: true }
+    include: { profile: true, accounts: true },
   });
 
   if (existingUser) {
@@ -59,26 +61,28 @@ async function main() {
     if (name && existingUser.name !== name) {
       await prisma.user.update({
         where: { id: existingUser.id },
-        data: { name }
+        data: { name },
       });
     }
 
     if (!existingUser.emailVerified) {
       await prisma.user.update({
         where: { id: existingUser.id },
-        data: { emailVerified: true }
+        data: { emailVerified: true },
       });
     }
 
     if (!existingUser.profile) {
       await prisma.userProfile.create({
-        data: { userId: existingUser.id, role: "ADMIN" }
+        data: { userId: existingUser.id, role: "ADMIN" },
       });
-      console.log(`Created missing profile for ${email} and set role to ADMIN.`);
+      console.log(
+        `Created missing profile for ${email} and set role to ADMIN.`
+      );
     } else if (existingUser.profile.role !== "ADMIN") {
       await prisma.userProfile.update({
         where: { userId: existingUser.id },
-        data: { role: "ADMIN" }
+        data: { role: "ADMIN" },
       });
       console.log(`Promoted ${email} to ADMIN.`);
     } else {
@@ -95,19 +99,19 @@ async function main() {
         data: {
           userId: existingUser.id,
           providerId: "credential",
-          password: hashedPassword
-        }
+          password: hashedPassword,
+        },
       });
       console.log(`Added credential account for ${email}.`);
     } else {
       await prisma.account.updateMany({
         where: {
           userId: existingUser.id,
-          providerId: "credential"
+          providerId: "credential",
         },
         data: {
-          password: hashedPassword
-        }
+          password: hashedPassword,
+        },
       });
       console.log(`Updated password for ${email}.`);
     }
@@ -124,29 +128,33 @@ async function main() {
         id: userId,
         email,
         name: resolvedName,
-        emailVerified: true
-      }
+        emailVerified: true,
+      },
     }),
     prisma.userProfile.create({
       data: {
         userId: userId,
-        role: "ADMIN"
-      }
+        role: "ADMIN",
+      },
     }),
     prisma.account.create({
       data: {
         userId: userId,
         providerId: "credential",
         accountId: userId,
-        password: hashedPassword
-      }
-    })
+        password: hashedPassword,
+      },
+    }),
   ]);
 
-  console.log(`Created admin user ${email} ("${resolvedName}") with password set.`);
+  console.log(
+    `Created admin user ${email} ("${resolvedName}") with password set.`
+  );
 }
 
-main().catch(err => {
-  console.error("Error:", err.message);
-  process.exit(1);
-}).finally(() => prisma.$disconnect());
+main()
+  .catch(err => {
+    console.error("Error:", err.message);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

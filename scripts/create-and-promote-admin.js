@@ -1,9 +1,11 @@
 const { PrismaPg } = require("@prisma/adapter-pg");
 
-const [,, email, name] = process.argv;
+const [, , email, name] = process.argv;
 
 if (!email) {
-  console.error("Usage: node scripts/create-and-promote-admin.js <email> [name]");
+  console.error(
+    "Usage: node scripts/create-and-promote-admin.js <email> [name]"
+  );
   process.exit(1);
 }
 
@@ -57,10 +59,14 @@ async function main() {
       data: { userId, role: "ADMIN" },
     }),
   ]);
-  console.log(`Created user ${email} ("${resolvedName}") and promoted to ADMIN.`);
+  console.log(
+    `Created user ${email} ("${resolvedName}") and promoted to ADMIN.`
+  );
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-}).finally(() => prisma.$disconnect());
+main()
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

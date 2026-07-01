@@ -31,7 +31,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
   } catch (error) {
     // Fallback for when database is not available (e.g., during build)
-    console.warn("Database not available for sitemap generation, using fallback");
+    console.warn(
+      "Database not available for sitemap generation, using fallback"
+    );
     const baseUrl = config.BASE_URL;
     return [
       {

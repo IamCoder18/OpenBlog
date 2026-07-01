@@ -8,21 +8,21 @@ function hashPassword(password) {
     N: 16384,
     r: 16,
     p: 1,
-    dkLen: 64
+    dkLen: 64,
   };
-  
-  const salt = randomBytes(16).toString('hex');
+
+  const salt = randomBytes(16).toString("hex");
   const key = scryptSync(password.normalize("NFKC"), salt, {
     N: config.N,
     p: config.p,
     r: config.r,
-    maxmem: 128 * config.N * config.r * 2
+    maxmem: 128 * config.N * config.r * 2,
   });
-  
-  return `${salt}:${key.toString('hex')}`;
+
+  return `${salt}:${key.toString("hex")}`;
 }
 
-const [,, email, password] = process.argv;
+const [, , email, password] = process.argv;
 
 if (!email) {
   console.error("Usage: node scripts/change-password.js <email> <password>");
@@ -47,7 +47,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   const user = await prisma.user.findUnique({
     where: { email: { mode: "insensitive", equals: email } },
-    include: { accounts: true }
+    include: { accounts: true },
   });
 
   if (!user) {
@@ -65,7 +65,7 @@ async function main() {
   if (credentialAccount) {
     await prisma.account.update({
       where: { id: credentialAccount.id },
-      data: { password: hashedPassword }
+      data: { password: hashedPassword },
     });
     console.log(`Password updated for ${email}.`);
   } else {
@@ -73,14 +73,16 @@ async function main() {
       data: {
         userId: user.id,
         providerId: "credential",
-        password: hashedPassword
-      }
+        password: hashedPassword,
+      },
     });
     console.log(`Credential account created and password set for ${email}.`);
   }
 }
 
-main().catch(err => {
-  console.error("Error:", err.message);
-  process.exit(1);
-}).finally(() => prisma.$disconnect());
+main()
+  .catch(err => {
+    console.error("Error:", err.message);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

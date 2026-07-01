@@ -15,9 +15,7 @@ const adapter = connectionString
 
 export const prisma =
   globalForPrisma.prisma ??
-  (adapter
-    ? new PrismaClient({ adapter })
-    : ({} as PrismaClient));
+  (adapter ? new PrismaClient({ adapter }) : ({} as PrismaClient));
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

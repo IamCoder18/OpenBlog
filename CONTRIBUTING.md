@@ -28,10 +28,10 @@ pnpm dev    # http://localhost:4000
 
 Two compose files ship with the repo:
 
-| File                          | Purpose                                                 |
-|-------------------------------|---------------------------------------------------------|
-| `docker-compose.yaml`         | **Production.** Pulls `ghcr.io/iamcoder18/openblog:latest`. No build step. |
-| `docker-compose.local.yaml`   | **Dev.** Builds the image from the local `Dockerfile`. Use when iterating on the codebase. |
+| File                        | Purpose                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------ |
+| `docker-compose.yaml`       | **Production.** Pulls `ghcr.io/iamcoder18/openblog:latest`. No build step.                 |
+| `docker-compose.local.yaml` | **Dev.** Builds the image from the local `Dockerfile`. Use when iterating on the codebase. |
 
 For day-to-day local iteration:
 

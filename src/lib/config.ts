@@ -1,9 +1,7 @@
 export const config = {
   get BLOG_NAME() {
     return (
-      process.env.BLOG_NAME ||
-      process.env.NEXT_PUBLIC_BLOG_NAME ||
-      "OpenBlog"
+      process.env.BLOG_NAME || process.env.NEXT_PUBLIC_BLOG_NAME || "OpenBlog"
     );
   },
   get BASE_URL() {
@@ -46,7 +44,9 @@ export async function getTheme(): Promise<string> {
     return setting?.value || "default";
   } catch (error) {
     // Fallback for when database is not available (e.g., during build)
-    console.warn("Database not available for theme lookup, using default theme");
+    console.warn(
+      "Database not available for theme lookup, using default theme"
+    );
     return "default";
   }
 }
@@ -72,7 +72,9 @@ export async function getFuzzySearchThreshold(): Promise<number> {
     return isNaN(value) ? 0.3 : Math.max(0, Math.min(1, value));
   } catch (error) {
     // Fallback for when database is not available (e.g., during build)
-    console.warn("Database not available for fuzzy search threshold, using default");
+    console.warn(
+      "Database not available for fuzzy search threshold, using default"
+    );
     return 0.3;
   }
 }

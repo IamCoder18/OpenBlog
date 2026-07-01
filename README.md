@@ -44,6 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/IamCoder18/OpenBlog/main/scripts/in
 ```
 
 The installer:
+
 1. Downloads `docker-compose.yaml` into the current directory.
 2. Prompts for `BASE_URL`, `BLOG_NAME`, and admin credentials.
 3. Pulls the published image from `ghcr.io/iamcoder18/openblog:latest`.
@@ -262,10 +263,10 @@ The Dockerfile is three-stage: `fetcher` (cached `pnpm install`) → `builder` (
 
 All configuration is via environment variables. Compose reads `.env` from the project root automatically. Only **two vars are strictly required**:
 
-| Variable      | Why                                                              |
-|---------------|------------------------------------------------------------------|
+| Variable      | Why                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `AUTH_SECRET` | BetterAuth signing key. Generate with `openssl rand -base64 32`. Never reuse between environments. Injected at container start — never baked into the Docker image. |
-| `BASE_URL`    | Public-facing URL the app is served from. Used by BetterAuth's `trustedOrigins` and the sitemap. Set to the URL you actually reach the app from. |
+| `BASE_URL`    | Public-facing URL the app is served from. Used by BetterAuth's `trustedOrigins` and the sitemap. Set to the URL you actually reach the app from.                    |
 
 Full list of vars (with defaults) in [`.env.example`](./.env.example).
 
@@ -273,50 +274,50 @@ Full list of vars (with defaults) in [`.env.example`](./.env.example).
 
 Next.js **inlines `NEXT_PUBLIC_*` environment variables into the client JavaScript bundle at build time** — they become literal string constants in the browser code. Unprefixed vars are only readable on the server (route handlers, server components, `getServerSideProps`-style contexts).
 
-| Form                          | Where it's read                                                                              |
-|-------------------------------|----------------------------------------------------------------------------------------------|
-| `BASE_URL`                    | Server: BetterAuth `trustedOrigins`, sitemap generation, RSS feed URLs                       |
-| `NEXT_PUBLIC_BASE_URL`        | Client: client-side fetch helpers (e.g. `/explore`, `/blog/[slug]`), OpenGraph fallbacks      |
-| `BLOG_NAME`                   | Server: RSS `<title>`, sitemap metadata                                                      |
-| `NEXT_PUBLIC_BLOG_NAME`       | Client: `<title>`, nav, footer, OpenGraph tags                                                |
+| Form                    | Where it's read                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `BASE_URL`              | Server: BetterAuth `trustedOrigins`, sitemap generation, RSS feed URLs                   |
+| `NEXT_PUBLIC_BASE_URL`  | Client: client-side fetch helpers (e.g. `/explore`, `/blog/[slug]`), OpenGraph fallbacks |
+| `BLOG_NAME`             | Server: RSS `<title>`, sitemap metadata                                                  |
+| `NEXT_PUBLIC_BLOG_NAME` | Client: `<title>`, nav, footer, OpenGraph tags                                           |
 
 The compose file passes both forms automatically, so **you only ever set `BASE_URL` and `BLOG_NAME`**. After a build, changing either form requires a new image because `NEXT_PUBLIC_*` is baked into the static bundle. To change `BASE_URL` / `BLOG_NAME` without rebuilding, patch `src/lib/config.ts` to fall back to the unprefixed var at runtime (this is already done in `config.ts` as of the latest version).
 
 ### Optional knobs
 
-| Variable                | Default                     | Purpose                                                                                  |
-|-------------------------|-----------------------------|------------------------------------------------------------------------------------------|
-| `BLOG_NAME`             | `OpenBlog`                  | Display name in titles, nav, footer, RSS.                                                |
-| `NEXT_PUBLIC_BLOG_NAME` | `OpenBlog`                  | Same, inlined for the client.                                                            |
-| `SIGN_UP_ENABLED`       | `false`                     | When `true`, `/auth/signup` is open to the public. Off by default — create users via the admin script. |
-| `DISABLE_RATE_LIMITING` | `false`                     | Disables BetterAuth rate limiting. Used by E2E tests; do not enable in production.       |
-| `DATABASE_URL`          | compose default             | Postgres connection string. Hardcoded in `docker-compose.yaml`; override per environment. |
-| `PORT`                  | `3000`                      | Port the Next.js standalone server listens on inside the container.                      |
-| `NODE_ENV`              | `production`                | Set to `development` only when running `pnpm dev` outside Docker.                        |
+| Variable                | Default         | Purpose                                                                                                |
+| ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------ |
+| `BLOG_NAME`             | `OpenBlog`      | Display name in titles, nav, footer, RSS.                                                              |
+| `NEXT_PUBLIC_BLOG_NAME` | `OpenBlog`      | Same, inlined for the client.                                                                          |
+| `SIGN_UP_ENABLED`       | `false`         | When `true`, `/auth/signup` is open to the public. Off by default — create users via the admin script. |
+| `DISABLE_RATE_LIMITING` | `false`         | Disables BetterAuth rate limiting. Used by E2E tests; do not enable in production.                     |
+| `DATABASE_URL`          | compose default | Postgres connection string. Hardcoded in `docker-compose.yaml`; override per environment.              |
+| `PORT`                  | `3000`          | Port the Next.js standalone server listens on inside the container.                                    |
+| `NODE_ENV`              | `production`    | Set to `development` only when running `pnpm dev` outside Docker.                                      |
 
 ---
 
 ## Common commands
 
-| Command                                                       | What it does                                                       |
-|---------------------------------------------------------------|--------------------------------------------------------------------|
-| `docker compose up -d --build`                                | Build the image and start the stack                                |
-| `docker compose logs -f app`                                  | Tail app logs                                                      |
-| `docker compose down -v`                                      | Tear down stack + delete Postgres volume                           |
-| `pnpm dev`                                                    | Local dev server (port 4000)                                       |
-| `pnpm build`                                                  | Production build (standalone)                                      |
-| `pnpm start`                                                  | Serve the production build                                         |
-| `pnpm check`                                                  | Lint + format check + TypeScript typecheck                         |
-| `pnpm lint:fix`                                               | Auto-fix lint errors                                               |
-| `pnpm format:fix`                                             | Format with oxfmt                                                  |
-| `pnpm test:unit`                                              | Vitest unit tests                                                  |
-| `pnpm test:full`                                              | Unit + integration + E2E (orchestrated)                            |
-| `pnpm prisma migrate dev`                                     | Create + apply a new migration (dev)                               |
-| `pnpm prisma migrate deploy`                                  | Apply pending migrations (prod / entrypoint)                       |
-| `docker exec openblog-app npx prisma migrate deploy`          | Same, from inside the running container                            |
-| `pnpm run promote-admin -- <email>`                           | Promote an existing user to `ADMIN`                                |
-| `docker exec openblog-app node scripts/create-admin.js …`     | Bootstrap a user (creates with `ADMIN` role by default)            |
-| `docker exec openblog-app node scripts/change-password.js …`  | Reset a user's password                                            |
+| Command                                                      | What it does                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------- |
+| `docker compose up -d --build`                               | Build the image and start the stack                     |
+| `docker compose logs -f app`                                 | Tail app logs                                           |
+| `docker compose down -v`                                     | Tear down stack + delete Postgres volume                |
+| `pnpm dev`                                                   | Local dev server (port 4000)                            |
+| `pnpm build`                                                 | Production build (standalone)                           |
+| `pnpm start`                                                 | Serve the production build                              |
+| `pnpm check`                                                 | Lint + format check + TypeScript typecheck              |
+| `pnpm lint:fix`                                              | Auto-fix lint errors                                    |
+| `pnpm format:fix`                                            | Format with oxfmt                                       |
+| `pnpm test:unit`                                             | Vitest unit tests                                       |
+| `pnpm test:full`                                             | Unit + integration + E2E (orchestrated)                 |
+| `pnpm prisma migrate dev`                                    | Create + apply a new migration (dev)                    |
+| `pnpm prisma migrate deploy`                                 | Apply pending migrations (prod / entrypoint)            |
+| `docker exec openblog-app npx prisma migrate deploy`         | Same, from inside the running container                 |
+| `pnpm run promote-admin -- <email>`                          | Promote an existing user to `ADMIN`                     |
+| `docker exec openblog-app node scripts/create-admin.js …`    | Bootstrap a user (creates with `ADMIN` role by default) |
+| `docker exec openblog-app node scripts/change-password.js …` | Reset a user's password                                 |
 
 ---
 
@@ -324,18 +325,18 @@ The compose file passes both forms automatically, so **you only ever set `BASE_U
 
 The full schema is in [`prisma/schema.prisma`](./prisma/schema.prisma). Summary:
 
-| Model          | Purpose                                                                     | Notable fields                                                |
-|----------------|-----------------------------------------------------------------------------|---------------------------------------------------------------|
-| `User`         | Account identity                                                            | `email` (unique), `emailVerified`, `name`                     |
-| `UserProfile`  | 1:1 with User, holds the role                                               | `role`: `ADMIN \| AUTHOR \| AGENT \| GUEST`                   |
-| `Account`      | Provider credentials (BetterAuth)                                           | `providerId`, `password`, `accessToken`, etc.                 |
-| `Session`      | BetterAuth session                                                          | `token`, `expiresAt`, `ipAddress`, `userAgent`                |
-| `Verification` | Email-verification tokens                                                   |                                                               |
-| `ApiKey`       | Long-lived bearer tokens                                                    | `key` (`ob_<64 hex>`), `name`, `expiresAt`                   |
-| `Post`         | A blog post                                                                 | `slug`, `bodyMarkdown`, `visibility`, `publishedAt`, tags via `PostMetadata` |
-| `PostMetadata` | 1:1 with Post                                                               | `seoDescription`, `coverImage`, `tags: String[]`              |
-| `SiteSettings` | Key/value app config (theme, fuzzy-search threshold, etc.)                  | `key`, `value`                                                |
-| `PageView`     | Hash-IP page-view log for analytics                                         | `path`, `referrer`, `userAgent`, `ipHash`, `postId`           |
+| Model          | Purpose                                                    | Notable fields                                                               |
+| -------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `User`         | Account identity                                           | `email` (unique), `emailVerified`, `name`                                    |
+| `UserProfile`  | 1:1 with User, holds the role                              | `role`: `ADMIN \| AUTHOR \| AGENT \| GUEST`                                  |
+| `Account`      | Provider credentials (BetterAuth)                          | `providerId`, `password`, `accessToken`, etc.                                |
+| `Session`      | BetterAuth session                                         | `token`, `expiresAt`, `ipAddress`, `userAgent`                               |
+| `Verification` | Email-verification tokens                                  |                                                                              |
+| `ApiKey`       | Long-lived bearer tokens                                   | `key` (`ob_<64 hex>`), `name`, `expiresAt`                                   |
+| `Post`         | A blog post                                                | `slug`, `bodyMarkdown`, `visibility`, `publishedAt`, tags via `PostMetadata` |
+| `PostMetadata` | 1:1 with Post                                              | `seoDescription`, `coverImage`, `tags: String[]`                             |
+| `SiteSettings` | Key/value app config (theme, fuzzy-search threshold, etc.) | `key`, `value`                                                               |
+| `PageView`     | Hash-IP page-view log for analytics                        | `path`, `referrer`, `userAgent`, `ipHash`, `postId`                          |
 
 Visibility on `Post`:
 
@@ -350,12 +351,12 @@ Visibility on `Post`:
 
 OpenBlog publishes machine-readable discovery surfaces that work without authentication:
 
-| URL                          | Format           | Contents                                                |
-|------------------------------|------------------|---------------------------------------------------------|
-| `GET /sitemap.xml`           | XML              | All `PUBLIC` posts with `<lastmod>` dates.              |
-| `GET /feed.xml`              | RSS 2.0 XML      | 20 most recent `PUBLIC` posts (title, link, pubDate, description). |
-| `GET /blog/<slug>`           | HTML             | Public post view with OpenGraph + Twitter Card meta.    |
-| `GET /api/posts?limit=…`     | JSON             | Public list of posts; auth widens visibility.           |
+| URL                      | Format      | Contents                                                           |
+| ------------------------ | ----------- | ------------------------------------------------------------------ |
+| `GET /sitemap.xml`       | XML         | All `PUBLIC` posts with `<lastmod>` dates.                         |
+| `GET /feed.xml`          | RSS 2.0 XML | 20 most recent `PUBLIC` posts (title, link, pubDate, description). |
+| `GET /blog/<slug>`       | HTML        | Public post view with OpenGraph + Twitter Card meta.               |
+| `GET /api/posts?limit=…` | JSON        | Public list of posts; auth widens visibility.                      |
 
 The sitemap and feed honor `BASE_URL` for absolute URLs, so set `BASE_URL` to your real domain in production.
 
@@ -439,14 +440,14 @@ docker exec -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/openbl
   node scripts/create-admin.js email name password
 ```
 
-| Script                                       | Purpose                                                            |
-|----------------------------------------------|--------------------------------------------------------------------|
-| `create-admin.js`                            | Create a user; default role `ADMIN`. Historical name — it both creates and promotes. |
-| `change-password.js`                         | Reset a user's password to a new value.                            |
-| `promote-admin.js` / `promote-admin.ts`      | Promote an existing user to `ADMIN`. Same script in two formats.    |
-| `create-and-promote-admin.js`                | Idempotent: create if missing, promote if not.                     |
-| `entrypoint.sh`                              | Runs on container start: `npx prisma migrate deploy && node server.js`. |
-| `test-full.sh`                               | Orchestrates the unit + integration + E2E test suite against a Postgres-only compose stack. |
+| Script                                  | Purpose                                                                                     |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `create-admin.js`                       | Create a user; default role `ADMIN`. Historical name — it both creates and promotes.        |
+| `change-password.js`                    | Reset a user's password to a new value.                                                     |
+| `promote-admin.js` / `promote-admin.ts` | Promote an existing user to `ADMIN`. Same script in two formats.                            |
+| `create-and-promote-admin.js`           | Idempotent: create if missing, promote if not.                                              |
+| `entrypoint.sh`                         | Runs on container start: `npx prisma migrate deploy && node server.js`.                     |
+| `test-full.sh`                          | Orchestrates the unit + integration + E2E test suite against a Postgres-only compose stack. |
 
 ---
 
@@ -500,6 +501,7 @@ The workflow uses the tag you pushed verbatim, builds + pushes the image, and cr
 #### Resulting image tags
 
 For any release of `v0.1.0`:
+
 ```
 ghcr.io/iamcoder18/openblog:v0.1.0
 ghcr.io/iamcoder18/openblog:0.1

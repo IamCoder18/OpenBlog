@@ -117,6 +117,8 @@ jobs:
     outputs:
       version: ${{ steps.compute.outputs.version }}
       tag: ${{ steps.compute.outputs.tag }}
+      major_minor: ${{ steps.compute.outputs.major_minor }}
+      major: ${{ steps.compute.outputs.major }}
       is_prerelease: ${{ steps.compute.outputs.is_prerelease }}
     steps:
       - uses: actions/checkout@v4
@@ -185,6 +187,18 @@ jobs:
             exit 1
           fi
 
+          # Extract major / minor for image tags. Use bash regex match
+          # against the start of $VERSION so this works for both stable
+          # (0.1.0) and pre-release (2.0.0-rc.1) versions.
+          if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            MAJOR_MINOR="${MAJOR}.${MINOR}"
+          else
+            echo "::error::Cannot extract major/minor from '$VERSION'"
+            exit 1
+          fi
+
           IS_PRERELEASE="false"
           if [[ "$VERSION" == *"-"* ]]; then
             IS_PRERELEASE="true"
@@ -193,12 +207,16 @@ jobs:
           {
             echo "version=$VERSION"
             echo "tag=v$VERSION"
+            echo "major_minor=$MAJOR_MINOR"
+            echo "major=$MAJOR"
             echo "is_prerelease=$IS_PRERELEASE"
           } >> "$GITHUB_OUTPUT"
 
           echo "::group::Resolved version"
           echo "  version:      $VERSION"
           echo "  tag:          v$VERSION"
+          echo "  major.minor:  $MAJOR_MINOR"
+          echo "  major:        $MAJOR"
           echo "  pre-release:  $IS_PRERELEASE"
           echo "::endgroup::"
 
@@ -238,24 +256,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          # Tag scheme — `latest` is added automatically by metadata-action
-          # (`flavor: latest=auto`) for stable releases on default branch and
-          # for stable tag pushes. Pre-release tags skip `latest`.
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-          labels: |
-            org.opencontainers.image.title=OpenBlog
-            org.opencontainers.image.description=Self-hostable AI-agent-friendly blog platform
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.licenses=MIT
-            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+      # Tags are constructed directly from the version job's outputs instead
+      # of using docker/metadata-action's `type=semver` template. Reason:
+      # metadata-action's semver template requires a tag-push event to extract
+      # {{version}}/{{major}}/{{minor}} from the ref. On workflow_dispatch
+      # the ref is the branch (refs/heads/main), so the template resolves to
+      # empty and build-push-action fails with "tag is needed when pushing
+      # to registry". Computing tags here works for both trigger paths.
+      #
+      # `latest` is added only for stable releases (is_prerelease != 'true').
+      # Pre-release versions (anything with a hyphen, e.g. 2.0.0-rc.1) skip
+      # the `latest` tag.
+      - name: Compute image tags
+        id: tags
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          MAJOR_MINOR: ${{ needs.version.outputs.major_minor }}
+          MAJOR: ${{ needs.version.outputs.major }}
+          IS_PRERELEASE: ${{ needs.version.outputs.is_prerelease }}
+        run: |
+          set -euo pipefail
+          TAGS="ghcr.io/${{ github.repository }}:${VERSION}"
+          TAGS="${TAGS},ghcr.io/${{ github.repository }}:${MAJOR_MINOR}"
+          TAGS="${TAGS},ghcr.io/${{ github.repository }}:${MAJOR}"
+          if [ "$IS_PRERELEASE" != "true" ]; then
+            TAGS="${TAGS},ghcr.io/${{ github.repository }}:latest"
+          fi
+          {
+            echo "tags=${TAGS}"
+            echo "is_prerelease=${IS_PRERELEASE}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Computed tags:"
+          echo "$TAGS" | tr ',' '\n' | sed 's/^/  /'
 
       - name: Build and push
         id: build
@@ -265,8 +297,13 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=OpenBlog
+            org.opencontainers.image.description=Self-hostable AI-agent-friendly blog platform
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
           provenance: mode=max
           sbom: true
           cache-from: type=gha

@@ -238,6 +238,7 @@ jobs:
 
     outputs:
       digest: ${{ steps.build.outputs.digest }}
+      repo_lc: ${{ steps.tags.outputs.repo_lc }}
 
     steps:
       - uses: actions/checkout@v4
@@ -274,15 +275,20 @@ jobs:
           MAJOR_MINOR: ${{ needs.version.outputs.major_minor }}
           MAJOR: ${{ needs.version.outputs.major }}
           IS_PRERELEASE: ${{ needs.version.outputs.is_prerelease }}
-          # Docker requires the repository portion of a tag to be
-          # all-lowercase. `github.repository` preserves the owner/
-          # repo casing as it appears in the URL (e.g.
-          # "IamCoder18/OpenBlog"), so lowercase it for the tag
-          # while keeping the mixed-case value for the OCI source
-          # label (URLs are case-insensitive, so that's fine).
-          REPO_LC: ${{ lower(github.repository) }}
+          GITHUB_REPOSITORY_RAW: ${{ github.repository }}
         run: |
           set -euo pipefail
+          # Docker requires the repository portion of an image tag to be
+          # all-lowercase. github.repository preserves the owner/repo
+          # casing as it appears in the GitHub URL (e.g. "IamCoder18/
+          # OpenBlog"), so we lowercase it before constructing tags.
+          #
+          # Note: GitHub Actions expressions do NOT have a `lower()`
+          # function, so the conversion happens in bash here. The result
+          # is exposed as `repo_lc` for downstream steps and the release
+          # job to reuse (e.g. for the org.opencontainers.image.source
+          # label and the `docker pull` examples in the release body).
+          REPO_LC="$(printf '%s' "$GITHUB_REPOSITORY_RAW" | tr '[:upper:]' '[:lower:]')"
           TAGS="ghcr.io/${REPO_LC}:${VERSION}"
           TAGS="${TAGS},ghcr.io/${REPO_LC}:${MAJOR_MINOR}"
           TAGS="${TAGS},ghcr.io/${REPO_LC}:${MAJOR}"
@@ -291,6 +297,7 @@ jobs:
           fi
           {
             echo "tags=${TAGS}"
+            echo "repo_lc=${REPO_LC}"
             echo "is_prerelease=${IS_PRERELEASE}"
           } >> "$GITHUB_OUTPUT"
           echo "Computed tags:"
@@ -308,7 +315,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=OpenBlog
             org.opencontainers.image.description=Self-hostable AI-agent-friendly blog platform
-            org.opencontainers.image.source=${{ github.server_url }}/${{ lower(github.repository) }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ steps.tags.outputs.repo_lc }}
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.version=${{ needs.version.outputs.version }}
           provenance: mode=max
@@ -386,8 +393,8 @@ jobs:
             ## Docker image
 
             ```bash
-            docker pull ghcr.io/${{ lower(github.repository) }}:${{ needs.version.outputs.tag }}
-            docker pull ghcr.io/${{ lower(github.repository) }}:latest
+            docker pull ghcr.io/${{ needs.build.outputs.repo_lc }}:${{ needs.version.outputs.tag }}
+            docker pull ghcr.io/${{ needs.build.outputs.repo_lc }}:latest
             ```
 
             Image digest: `${{ needs.build.outputs.digest }}`

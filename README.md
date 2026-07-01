@@ -509,7 +509,7 @@ ghcr.io/iamcoder18/openblog:0
 ghcr.io/iamcoder18/openblog:latest   # only for stable releases
 ```
 
-`latest` is auto-managed by `docker/metadata-action` (`flavor: latest=auto`): it's moved by stable releases on default branch and by stable tag pushes. **Pre-release tags** (anything with a hyphen, e.g. `v0.2.0-rc.1`) are automatically marked as pre-release on GitHub and **do not** bump `latest`.
+`latest` is auto-managed by `docker/metadata-action` (`flavor: latest=auto`): it's moved by stable releases triggered via tag push or workflow_dispatch. The workflow does **not** trigger on plain pushes to `main` — only on `v*.*.*` tags and on the manual "Run workflow" button. **Pre-release tags** (anything with a hyphen, e.g. `v0.2.0-rc.1`) are automatically marked as pre-release on GitHub and **do not** bump `latest`.
 
 **First-time setup** (one-time, on the GHCR side):
 

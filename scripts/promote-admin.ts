@@ -1,12 +1,14 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/lib/prisma";
+
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const email = process.argv[2];
+import { PrismaClient } from "../src/lib/prisma";
+
+const [, , email] = process.argv;
 
 if (!email) {
   // eslint-disable-next-line no-console
-  console.error("Usage: pnpm run promote-admin <email>");
+  console.error("Usage: tsx scripts/promote-admin.ts <email>");
   process.exit(1);
 }
 
@@ -20,9 +22,9 @@ if (!connectionString) {
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
+async function main(): Promise<void> {
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: { mode: "insensitive", equals: email } },
     include: { profile: true },
   });
 

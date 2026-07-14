@@ -1,25 +1,30 @@
-const { PrismaPg } = require("@prisma/adapter-pg");
+import "dotenv/config";
+
+import { PrismaPg } from "@prisma/adapter-pg";
+
+import { PrismaClient } from "../src/lib/prisma";
 
 const [, , email, name] = process.argv;
 
 if (!email) {
+  // eslint-disable-next-line no-console
   console.error(
-    "Usage: node scripts/create-and-promote-admin.js <email> [name]"
+    "Usage: tsx scripts/create-and-promote-admin.ts <email> [name]"
   );
   process.exit(1);
 }
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
+  // eslint-disable-next-line no-console
   console.error("DATABASE_URL environment variable is not set");
   process.exit(1);
 }
 
 const adapter = new PrismaPg({ connectionString });
-const { PrismaClient } = require("../src/lib/prisma");
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
+async function main(): Promise<void> {
   const resolvedName = name || email;
 
   const user = await prisma.user.findUnique({
@@ -29,15 +34,18 @@ async function main() {
 
   if (user) {
     if (user.profile?.role === "ADMIN") {
+      // eslint-disable-next-line no-console
       console.log(`${email} is already an ADMIN.`);
       process.exit(0);
     }
 
     if (!user.profile) {
+      // eslint-disable-next-line no-console
       console.error(`User ${email} has no profile. Creating one...`);
       await prisma.userProfile.create({
         data: { userId: user.id, role: "ADMIN" },
       });
+      // eslint-disable-next-line no-console
       console.log(`Created profile and promoted ${email} to ADMIN.`);
       process.exit(0);
     }
@@ -46,6 +54,7 @@ async function main() {
       where: { userId: user.id },
       data: { role: "ADMIN" },
     });
+    // eslint-disable-next-line no-console
     console.log(`Promoted ${email} to ADMIN.`);
     process.exit(0);
   }
@@ -59,6 +68,7 @@ async function main() {
       data: { userId, role: "ADMIN" },
     }),
   ]);
+  // eslint-disable-next-line no-console
   console.log(
     `Created user ${email} ("${resolvedName}") and promoted to ADMIN.`
   );
@@ -66,6 +76,7 @@ async function main() {
 
 main()
   .catch(err => {
+    // eslint-disable-next-line no-console
     console.error(err);
     process.exit(1);
   })

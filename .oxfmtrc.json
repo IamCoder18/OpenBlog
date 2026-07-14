@@ -12,6 +12,13 @@
   "bracketSameLine": false,
   "arrowParens": "avoid",
   "endOfLine": "lf",
+  "ignorePatterns": [
+    "src/lib/prisma/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "node_modules/**"
+  ],
   "importSort": {
     "groups": [
       "side_effect",

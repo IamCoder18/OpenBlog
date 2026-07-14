@@ -1,16 +1,13 @@
-const { PrismaPg } = require("@prisma/adapter-pg");
-const { scryptSync } = require("crypto");
-const { randomBytes } = require("crypto");
+import "dotenv/config";
+import { randomBytes, scryptSync } from "crypto";
+
+import { PrismaPg } from "@prisma/adapter-pg";
+
+import { PrismaClient } from "../src/lib/prisma";
 
 // Password hashing function matching Better Auth's implementation
-function hashPassword(password) {
-  const config = {
-    N: 16384,
-    r: 16,
-    p: 1,
-    dkLen: 64,
-  };
-
+function hashPassword(password: string): string {
+  const config = { N: 16384, r: 16, p: 1, dkLen: 64 };
   const salt = randomBytes(16).toString("hex");
   const key = scryptSync(password.normalize("NFKC"), salt, {
     N: config.N,
@@ -18,46 +15,47 @@ function hashPassword(password) {
     r: config.r,
     maxmem: 128 * config.N * config.r * 2,
   });
-
   return `${salt}:${key.toString("hex")}`;
 }
 
 const [, , email, password] = process.argv;
 
 if (!email) {
-  console.error("Usage: node scripts/change-password.js <email> <password>");
+  // eslint-disable-next-line no-console
+  console.error("Usage: tsx scripts/change-password.ts <email> <password>");
   process.exit(1);
 }
 
 if (!password) {
+  // eslint-disable-next-line no-console
   console.error("Password is required");
   process.exit(1);
 }
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
+  // eslint-disable-next-line no-console
   console.error("DATABASE_URL environment variable is not set");
   process.exit(1);
 }
 
 const adapter = new PrismaPg({ connectionString });
-const { PrismaClient } = require("../src/lib/prisma");
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
+async function main(): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { email: { mode: "insensitive", equals: email } },
     include: { accounts: true },
   });
 
   if (!user) {
+    // eslint-disable-next-line no-console
     console.error(`No user found with email: ${email}`);
     process.exit(1);
   }
 
   const hashedPassword = hashPassword(password);
 
-  // Update or create credential account
   const credentialAccount = user.accounts.find(
     acc => acc.providerId === "credential"
   );
@@ -67,6 +65,7 @@ async function main() {
       where: { id: credentialAccount.id },
       data: { password: hashedPassword },
     });
+    // eslint-disable-next-line no-console
     console.log(`Password updated for ${email}.`);
   } else {
     await prisma.account.create({
@@ -76,13 +75,15 @@ async function main() {
         password: hashedPassword,
       },
     });
+    // eslint-disable-next-line no-console
     console.log(`Credential account created and password set for ${email}.`);
   }
 }
 
 main()
   .catch(err => {
-    console.error("Error:", err.message);
+    // eslint-disable-next-line no-console
+    console.error("Error:", err instanceof Error ? err.message : err);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());

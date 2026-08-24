@@ -1,19 +1,18 @@
 name: publish
 
-# Builds, pushes, and releases the OpenBlog Docker image.
+# Manual release pipeline. Runs only via the Actions → "Run workflow" tab.
 #
-# Two trigger paths share the same pipeline:
-#
-#   1. Push a semver tag (`v*.*.*`) → use that tag verbatim
-#        $ git tag v0.1.0 && git push origin v0.1.0
-#
-#   2. workflow_dispatch (manual "Run workflow" from the Actions tab) →
-#      pick the bump type or supply a custom version
-#        - patch  → 0.1.0 → 0.1.1
-#        - minor  → 0.1.0 → 0.2.0
-#        - major  → 0.1.0 → 1.0.0
-#        - none   → re-publish the current version unchanged
-#        - custom → e.g. "1.2.3" or "2.0.0-rc.1" overrides everything
+# Inputs:
+#   version_bump  patch | minor | major | none
+#                 (default: patch — bumps the latest semver tag by one)
+#   custom_version
+#                 e.g. "1.2.3" or "2.0.0-rc.1". Overrides version_bump.
+#                 Leave empty to use the bump selector.
+#   multi_arch    false (default) → build only linux/amd64
+#                 true             → build linux/amd64 + linux/arm64
+#                 amd64-only is ~3× faster; arm64 is QEMU-emulated on GH
+#                 free runners and dominates build time. Toggle multi-arm
+#                 on occasionally when you're about to ship a release.
 #
 # Image lands at:
 #   ghcr.io/<owner>/<repo>:<version>
@@ -24,7 +23,6 @@ name: publish
 # GitHub Release page created at:
 #   https://github.com/<owner>/<repo>/releases/tag/v<version>
 #
-# Multi-arch: linux/amd64, linux/arm64
 # Caching:    GHA cache (layers) + BuildKit cache mounts (pnpm store within build)
 #
 # One-time setup:
@@ -32,8 +30,6 @@ name: publish
 #   - Workflow permissions: Read and write (Settings → Actions → General)
 
 on:
-  push:
-    tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
       version_bump:
@@ -52,6 +48,11 @@ on:
           Leave empty to use the bump selector.
         required: false
         type: string
+      multi_arch:
+        description: "Build linux/amd64 + linux/arm64. Off = amd64 only (faster)."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -60,18 +61,11 @@ permissions:
   attestations: write
   id-token: write
 
-# Single in-flight run per ref. Prevents the bot's own tag-push from
-# triggering a second concurrent build.
+# Single in-flight run per ref. Manual-trigger workflows aren't expected
+# to overlap, but this keeps a misclick from spawning duplicate builds.
 concurrency:
   group: publish-${{ github.ref }}
   cancel-in-progress: false
-
-# Skip re-runs triggered by the bot's own tag push. When workflow_dispatch
-# pushes the git tag (`git push origin v0.2.0`), the resulting push event
-# has actor = "github-actions[bot]". We don't want that second run to
-# rebuild and re-release — the first run already did. Each job carries
-# the same `if` guard:
-#   if: github.actor != 'github-actions[bot]'
 
 jobs:
   # ──────────────────────────────────────────────────────────────────────────
@@ -106,12 +100,11 @@ jobs:
         run: pnpm run check
 
   # ──────────────────────────────────────────────────────────────────────────
-  # 1. Resolve the version string. Push tag → use it. Manual → compute.
+  # 1. Resolve the version string from the bump selector or custom input.
   # ──────────────────────────────────────────────────────────────────────────
   version:
     name: Resolve version
     needs: lint
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
@@ -130,38 +123,33 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "${{ github.event_name }}" = "push" ]; then
-            # Tag was pushed directly — use it as-is.
-            VERSION="${GITHUB_REF#refs/tags/v}"
+          BUMP="${{ inputs.version_bump }}"
+          CUSTOM="${{ inputs.custom_version }}"
+
+          if [ -n "$CUSTOM" ]; then
+            # Strip leading v/V in case the user included it
+            VERSION="${CUSTOM#v}"
+            VERSION="${VERSION#V}"
           else
-            # workflow_dispatch — apply the chosen bump or custom value.
-            BUMP="${{ inputs.version_bump }}"
-            CUSTOM="${{ inputs.custom_version }}"
+            # Find the latest stable semver tag (excludes pre-releases)
+            LATEST=$(git tag --sort=-version:refname \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | head -n1 || true)
 
-            if [ -n "$CUSTOM" ]; then
-              # Strip leading v/V in case the user included it
-              VERSION="${CUSTOM#v}"
-              VERSION="${VERSION#V}"
-            else
-              # Find the latest stable semver tag (excludes pre-releases)
-              LATEST=$(git tag --sort=-version:refname \
-                | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-                | head -n1 || true)
-
-              case "$BUMP" in
-                none)
-                  if [ -z "$LATEST" ]; then
-                    VERSION="0.1.0"
-                  else
-                    VERSION="${LATEST#v}"
-                  fi
-                  ;;
-                patch|minor|major)
-                  if [ -z "$LATEST" ]; then
-                    # No existing tag — start somewhere reasonable.
-                    case "$BUMP" in
-                      major) VERSION="1.0.0" ;;
-                      *)      VERSION="0.1.0" ;;
+            case "$BUMP" in
+              none)
+                if [ -z "$LATEST" ]; then
+                  VERSION="0.1.0"
+                else
+                  VERSION="${LATEST#v}"
+                fi
+                ;;
+              patch|minor|major)
+                if [ -z "$LATEST" ]; then
+                  # No existing tag — start somewhere reasonable.
+                  case "$BUMP" in
+                    major) VERSION="1.0.0" ;;
+                    *)      VERSION="0.1.0" ;;
                     esac
                   else
                     V="${LATEST#v}"
@@ -179,7 +167,6 @@ jobs:
                   ;;
               esac
             fi
-          fi
 
           # Validate
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
@@ -226,7 +213,6 @@ jobs:
   build:
     name: Build & push image
     needs: version
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -244,13 +230,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
+        if: inputs.multi_arch == 'true'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -263,7 +249,7 @@ jobs:
       # {{version}}/{{major}}/{{minor}} from the ref. On workflow_dispatch
       # the ref is the branch (refs/heads/main), so the template resolves to
       # empty and build-push-action fails with "tag is needed when pushing
-      # to registry". Computing tags here works for both trigger paths.
+      # to registry". Computing tags here works for the manual trigger path.
       #
       # `latest` is added only for stable releases (is_prerelease != 'true').
       # Pre-release versions (anything with a hyphen, e.g. 2.0.0-rc.1) skip
@@ -309,8 +295,10 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          # multi_arch input is set in the manual run dialog. amd64 is always
+          # built; arm64 is added on top of it when multi_arch is true.
+          platforms: ${{ inputs.multi_arch == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          push: true
           tags: ${{ steps.tags.outputs.tags }}
           labels: |
             org.opencontainers.image.title=OpenBlog
@@ -329,8 +317,8 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.postgres
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          platforms: ${{ inputs.multi_arch == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          push: true
           # `:postgres` is a moving alias that always points at the most
           # recent release's image — matches the default in docker-compose.prod.yaml.
           # `postgres-18.6-pg-cron-1.6.7` is the immutable tag for this build.
@@ -348,7 +336,6 @@ jobs:
   release:
     name: Create GitHub Release
     needs: [version, build]
-    if: github.actor != 'github-actions[bot]' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -361,12 +348,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      # On workflow_dispatch, push the git tag so `softprops/action-gh-release`
-      # can point at it. This re-triggers the workflow once; the second run is
-      # skipped by the `if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'`
-      # guard on the release job AND by the bot-actor check below.
-      - name: Create + push git tag (workflow_dispatch only)
-        if: github.event_name == 'workflow_dispatch'
+      # Push the git tag so softprops/action-gh-release has something concrete
+      # to point at, and so the release exists in the git history. Softprops
+      # uses `tag_name` directly from the version job output, but pushing the
+      # tag keeps the local / remote history aligned.
+      - name: Create + push git tag
         shell: bash
         run: |
           set -euo pipefail
@@ -386,12 +372,9 @@ jobs:
         id: tags
         shell: bash
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          # On workflow_dispatch, GITHUB_REF is the branch (main), so resolve
-          # the tag from the version job output instead.
-          if [ -z "$TAG" ] || [ "$TAG" = "main" ] || ! git rev-parse "$TAG" >/dev/null 2>&1; then
-            TAG="${{ needs.version.outputs.tag }}"
-          fi
+          # On workflow_dispatch, GITHUB_REF is the branch (main). Resolve the
+          # newly-created tag from the version job output instead.
+          TAG="${{ needs.version.outputs.tag }}"
           PREV=$(git tag --sort=-version:refname \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | grep -v "^${TAG}$" \

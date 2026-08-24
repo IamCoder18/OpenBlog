@@ -3,7 +3,7 @@
 # OpenBlog Installer
 # ─────────────────────────────────────────────────────────────────────────────
 # One-line install:
-#   curl -fsSL https://openblog.ai/install | bash
+#   curl -fsSL https://openblog.aaravlabs.com/install | bash
 #
 # Downloads `docker-compose.prod.yaml` from the latest GitHub release (or uses
 # an existing copy in the current directory), prompts for the few values that
@@ -177,8 +177,8 @@ usage() {
 OpenBlog Installer
 
 Usage:
-  curl -fsSL https://openblog.ai/install | bash
-  curl -fsSL https://openblog.ai/install | bash -s -- --non-interactive \\
+  curl -fsSL https://openblog.aaravlabs.com/install | bash
+  curl -fsSL https://openblog.aaravlabs.com/install | bash -s -- --non-interactive \\
       ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=secret
 
 Options:

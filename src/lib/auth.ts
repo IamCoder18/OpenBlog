@@ -28,17 +28,9 @@ export const auth = betterAuth({
       maxAge: 5 * 60,
     },
   },
-  trustedOrigins: [
-    config.BASE_URL,
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:4000",
-    "http://192.168.1.82:3000",
-    "http://192.168.1.82:3001",
-    "http://192.168.1.82:4000",
-    "http://openblogdev.aaravlabs.com",
-    "https://openblogdev.aaravlabs.com",
-  ],
+  // Trusted origins track BASE_URL exactly. Set BASE_URL (or
+  // NEXT_PUBLIC_BASE_URL) to the URL the app is served from in this
+  // environment. No LAN IPs or dev hosts baked in — those go stale.
   secret: config.AUTH_SECRET,
   plugins: [nextCookies()],
   ...(process.env.DISABLE_RATE_LIMITING === "true" && {

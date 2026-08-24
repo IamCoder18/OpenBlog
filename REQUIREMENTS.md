@@ -65,7 +65,7 @@ The database must support the following core relations:
 
 - The platform must be fully self-hostable, providing users with total ownership over their data and infrastructure.
 - The platform should be built with the latest version of Next.js.
-- **Docker Compose:** This is the primary and recommended deployment method. The repository must include a production-ready `docker-compose.yaml` that orchestrates the app and the Postgres database.
+- **Docker Compose:** This is the primary and recommended deployment method. The project must ship a production-ready `docker-compose.prod.yaml` (deployed via wget, outside the repo) that orchestrates the app and the Postgres database.
 
 ### 5.2 Dynamic Configuration
 

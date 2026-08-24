@@ -1,3 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenBlog — test database (used by `pnpm run test:*`)
+# ─────────────────────────────────────────────────────────────────────────────
+# Brings up a throwaway Postgres instance for the test suite.
+#
+# ⚠️  EXCEPTION TO THE `openblog` LOCKDOWN: this compose uses
+#     `openblog_test` for the database name. This is INTENDED — the
+#     vitest integration tests, playwright e2e tests, and `scripts/test-*`
+#     shells all hard-code `openblog_test` so a developer can run them
+#     in parallel with a running dev database on `openblog` without
+#     colliding. Do not "normalize" this file's name to `openblog`.
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
   postgres-test:
     build:

@@ -1,0 +1,114 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenBlog — production compose
+# ─────────────────────────────────────────────────────────────────────────────
+# Pulls published images from ghcr.io and runs the full stack. This file
+# is the artifact end users deploy — it is NOT pulled from this git repo;
+# users download it via wget (or have it generated locally by the installer).
+#
+# Direct deployment:
+#   1. wget https://raw.githubusercontent.com/IamCoder18/OpenBlog/main/docker-compose.prod.yaml
+#   2. Replace each `REPLACE_ME_…` placeholder below with a freshly generated
+#      secret:
+#        POSTGRES_PASSWORD  →  openssl rand -hex 32
+#        AUTH_SECRET        →  openssl rand -base64 32
+#      Or just run `./scripts/install.sh` to do the substitution automatically.
+#   3. Edit `BASE_URL` to your real deployment URL.
+#   4. docker compose up -d
+#
+# Image source:
+#   postgres  →  ghcr.io/iamcoder18/openblog:postgres
+#   app       →  ghcr.io/iamcoder18/openblog:latest
+# Pin to a version (e.g. :v0.1.0) for production by editing the `image:` lines.
+#
+# To build from source instead of pulling, use docker-compose.local.yaml.
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# ⚠️  DATABASE NAME IS LOCKED TO `openblog` — DO NOT CHANGE ⚠️
+#
+# The Postgres service, the OpenBlog application, and the pg_cron extension
+# all hard-code the database name `openblog`. Changing any of the lines
+# below that reference it (POSTGRES_DB, cron.database_name, the /openblog
+# path in DATABASE_URL) will cause one or more of the following failures:
+#
+#   • `CREATE EXTENSION pg_cron` refuses with
+#       "can only create extension in database postgres"
+#     when connected to a differently-named database.
+#   • Scheduled-publish migrations (`cron.schedule` calls) target the
+#     wrong catalog and silently no-op.
+#   • First-time Prisma migrations target a DB that doesn't exist.
+#
+# If you genuinely need a different database name, fork the repo, edit
+# Dockerfile.postgres (POSTGRES_DB + cron.database_name CMD flag), edit
+# the same three lines in BOTH compose files, and rebuild — there is no
+# runtime override. This is intentional: it removes a class of subtle
+# bugs at the cost of flexibility.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  postgres:
+    image: ghcr.io/iamcoder18/openblog:postgres
+    container_name: openblog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "REPLACE_ME_run_openssl_rand_hex_32"
+      POSTGRES_DB: openblog
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_cron
+      - -c
+      - cron.database_name=openblog
+      - -c
+      - cron.use_background_workers=on
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: ghcr.io/iamcoder18/openblog:latest
+    container_name: openblog-app
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:REPLACE_ME_run_openssl_rand_hex_32@postgres:5432/openblog?schema=public"
+      BASE_URL: "http://localhost:3000"
+      BLOG_NAME: "OpenBlog"
+      BLOG_DESCRIPTION: ""
+      SITE_LOGO_URL: ""
+      SITE_CONTACT_EMAIL: ""
+      SITE_SOCIAL_URL: ""
+      NODE_ENV: production
+      PORT: 3000
+      AUTH_SECRET: "REPLACE_ME_run_openssl_rand_base64_32"
+      SIGN_UP_ENABLED: "false"
+      SMTP_HOST: ""
+      SMTP_PORT: ""
+      SMTP_SECURE: ""
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM: ""
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres_data:

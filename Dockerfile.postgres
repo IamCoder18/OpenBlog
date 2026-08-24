@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG POSTGRES_VERSION=16.14-bookworm
+ARG POSTGRES_VERSION=18.6-trixie
 ARG PG_CRON_VERSION=1.6.7
 
 FROM postgres:${POSTGRES_VERSION} AS pg-cron-builder
@@ -9,7 +9,7 @@ ARG PG_CRON_VERSION
 ARG PG_CRON_SHA256=d950bc29155f31017567e23a31d268ff672e98276c0e9d062512fb7870351f03
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates curl gcc libc6-dev make postgresql-server-dev-16 \
+    && apt-get install --yes --no-install-recommends ca-certificates curl gcc libc6-dev make postgresql-server-dev-18 \
     && curl --fail --location --silent --show-error \
       "https://github.com/citusdata/pg_cron/archive/refs/tags/v${PG_CRON_VERSION}.tar.gz" \
       --output /tmp/pg_cron.tar.gz \
@@ -23,13 +23,24 @@ FROM postgres:${POSTGRES_VERSION}
 
 ARG PG_CRON_VERSION
 
+# Bake the database name into the image. The Postgres entrypoint script
+# reads $POSTGRES_DB and creates that database on first boot, so bare
+# `docker run` users get an `openblog` DB automatically. This is paired
+# with `cron.database_name=openblog` in the CMD below — both are required
+# for pg_cron to allow `CREATE EXTENSION pg_cron` from the right DB.
+ENV POSTGRES_DB=openblog
+
 LABEL org.opencontainers.image.title="OpenBlog PostgreSQL" \
       org.opencontainers.image.description="PostgreSQL with pg_cron for OpenBlog scheduled publishing" \
       org.opencontainers.image.source="https://github.com/IamCoder18/OpenBlog" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${PG_CRON_VERSION}"
 
-COPY --from=pg-cron-builder /opt/pg_cron/usr/lib/postgresql/16/lib/pg_cron.so /usr/lib/postgresql/16/lib/pg_cron.so
-COPY --from=pg-cron-builder /opt/pg_cron/usr/share/postgresql/16/extension/ /usr/share/postgresql/16/extension/
+COPY --from=pg-cron-builder /opt/pg_cron/usr/lib/postgresql/18/lib/pg_cron.so /usr/lib/postgresql/18/lib/pg_cron.so
+COPY --from=pg-cron-builder /opt/pg_cron/usr/share/postgresql/18/extension/ /usr/share/postgresql/18/extension/
 
-CMD ["postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.use_background_workers=on"]
+# `cron.database_name` is locked to `openblog`. To use a different name,
+# fork the image and rebuild — `CREATE EXTENSION pg_cron` will otherwise
+# refuse to run from any other database. Compose files must NOT override
+# this with a different value.
+CMD ["postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=openblog", "-c", "cron.use_background_workers=on"]

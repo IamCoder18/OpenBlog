@@ -137,28 +137,33 @@ done
 
 # ─── Compose file selection ─────────────────────────────────────────────────
 # The script works in two contexts:
-#   (A) Cloned repo: cwd contains `docker-compose.local.yaml` or similar.
-#   (B) Standalone:  cwd contains `docker-compose.yaml` (image-pull mode).
+#   (A) Cloned repo:        cwd contains `docker-compose.local.yaml` or `Dockerfile`.
+#   (B) Standalone deploy:  cwd contains `docker-compose.prod.yaml` (wget'd).
 # We don't force-cd into any specific project root.
+
+# Per-deployment compose file name. The production file ships as
+# docker-compose.prod.yaml (wget'd). Local dev uses docker-compose.local.yaml.
+PROD_COMPOSE="docker-compose.prod.yaml"
+LOCAL_COMPOSE="docker-compose.local.yaml"
 
 if $LOCAL_BUILD; then
   [[ -f Dockerfile ]] || fail "--local-build requires the source repo (Dockerfile not found in $(pwd))."
-  if [[ -f docker-compose.local.yaml ]]; then
-    COMPOSE_FILE="docker-compose.local.yaml"
-  elif [[ -f docker-compose.yaml ]]; then
-    COMPOSE_FILE="docker-compose.yaml"
+  if [[ -f "$LOCAL_COMPOSE" ]]; then
+    COMPOSE_FILE="$LOCAL_COMPOSE"
+  elif [[ -f "$PROD_COMPOSE" ]]; then
+    COMPOSE_FILE="$PROD_COMPOSE"
   else
-    fail "--local-build needs docker-compose.local.yaml or docker-compose.yaml in $(pwd)."
+    fail "--local-build needs $LOCAL_COMPOSE or $PROD_COMPOSE in $(pwd)."
   fi
 else
-  if [[ -f docker-compose.yaml ]]; then
-    COMPOSE_FILE="docker-compose.yaml"
-  elif [[ -f docker-compose.local.yaml ]]; then
-    warn "docker-compose.yaml not found — falling back to docker-compose.local.yaml."
-    COMPOSE_FILE="docker-compose.local.yaml"
+  if [[ -f "$PROD_COMPOSE" ]]; then
+    COMPOSE_FILE="$PROD_COMPOSE"
+  elif [[ -f "$LOCAL_COMPOSE" ]]; then
+    warn "$PROD_COMPOSE not found — falling back to $LOCAL_COMPOSE."
+    COMPOSE_FILE="$LOCAL_COMPOSE"
     LOCAL_BUILD=true
   else
-    fail "No compose file found in $(pwd). Download docker-compose.yaml from https://github.com/IamCoder18/OpenBlog, or clone the repo."
+    fail "No compose file found in $(pwd). Download $PROD_COMPOSE from https://github.com/IamCoder18/OpenBlog, or clone the repo."
   fi
 fi
 
@@ -187,7 +192,7 @@ printf '\n'
 
 box "What this does"
 info "Verify Docker is installed and the daemon is running"
-info "Generate a ${B}AUTH_SECRET${X} and write ${B}.env${X}"
+info "Generate ${B}AUTH_SECRET${X} and ${B}POSTGRES_PASSWORD${X}; substitute them into ${B}${COMPOSE_FILE}${X}"
 if $LOCAL_BUILD; then
   info "Build the OpenBlog image from source (~3–5 min on first run)"
 else

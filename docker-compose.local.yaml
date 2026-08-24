@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # OpenBlog — local source build compose (developer workflow)
 # ─────────────────────────────────────────────────────────────────────────────
-# Identical to docker-compose.yaml but builds the image from the local
+# Identical to docker-compose.prod.yaml but builds the image from the local
 # Dockerfile instead of pulling from a registry.
 #
 # Use this when you're hacking on the codebase:
@@ -9,6 +9,14 @@
 #
 # To customize baked-in defaults (NEXT_PUBLIC_BLOG_NAME, etc.), edit the
 # `ENV` block in Dockerfile before building.
+#
+# ⚠️  DATABASE NAME IS LOCKED TO `openblog` — DO NOT CHANGE ⚠️
+#
+# The Postgres service, the OpenBlog app, and the pg_cron extension all
+# hard-code the database name `openblog`. See docker-compose.prod.yaml for the
+# long-form explanation. In short: don't change POSTGRES_DB, the
+# cron.database_name flag, or the /openblog path in DATABASE_URL — pg_cron
+# and Prisma migrations won't follow.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:

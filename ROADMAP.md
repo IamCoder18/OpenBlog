@@ -90,7 +90,7 @@ This roadmap defines the logical progression from infrastructure to deployment f
 **Duration:** Production Readiness  
 **Focus:** Containerization, CI/CD, and self-hosting support
 
-- Create production-ready docker-compose.yaml
+- Create production-ready docker-compose.prod.yaml (shipped via wget, not the repo)
 - Configure multi-stage Docker builds
 - Set up environment variable documentation
 - Implement health checks and logging

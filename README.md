@@ -45,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/IamCoder18/OpenBlog/main/scripts/in
 
 The installer:
 
-1. Downloads `docker-compose.yaml` into the current directory.
+1. Downloads `docker-compose.prod.yaml` into the current directory.
 2. Prompts for `BASE_URL`, `BLOG_NAME`, and admin credentials.
 3. Pulls the published image from `ghcr.io/iamcoder18/openblog:latest`.
 4. Brings up Postgres + the app, waits for healthy, runs migrations.
@@ -289,15 +289,15 @@ The compose file passes both forms automatically, so **you only ever set `BASE_U
 
 ### Optional knobs
 
-| Variable                | Default         | Purpose                                                                                                |
-| ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------ |
-| `BLOG_NAME`             | `OpenBlog`      | Display name in titles, nav, footer, RSS.                                                              |
-| `NEXT_PUBLIC_BLOG_NAME` | `OpenBlog`      | Same, inlined for the client.                                                                          |
-| `SIGN_UP_ENABLED`       | `false`         | When `true`, `/auth/signup` is open to the public. Off by default — create users via the admin script. |
-| `DISABLE_RATE_LIMITING` | `false`         | Disables BetterAuth rate limiting. Used by E2E tests; do not enable in production.                     |
-| `DATABASE_URL`          | compose default | Postgres connection string. Hardcoded in `docker-compose.yaml`; override per environment.              |
-| `PORT`                  | `3000`          | Port the Next.js standalone server listens on inside the container.                                    |
-| `NODE_ENV`              | `production`    | Set to `development` only when running `pnpm dev` outside Docker.                                      |
+| Variable                | Default         | Purpose                                                                                                                   |
+| ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `BLOG_NAME`             | `OpenBlog`      | Display name in titles, nav, footer, RSS.                                                                                 |
+| `NEXT_PUBLIC_BLOG_NAME` | `OpenBlog`      | Same, inlined for the client.                                                                                             |
+| `SIGN_UP_ENABLED`       | `false`         | When `true`, `/auth/signup` is open to the public. Off by default — create users via the admin script.                    |
+| `DISABLE_RATE_LIMITING` | `false`         | Disables BetterAuth rate limiting. Used by E2E tests; do not enable in production.                                        |
+| `DATABASE_URL`          | compose default | Postgres connection string. Hardcoded in `docker-compose.prod.yaml`; per-deployment values are baked in by the installer. |
+| `PORT`                  | `3000`          | Port the Next.js standalone server listens on inside the container.                                                       |
+| `NODE_ENV`              | `production`    | Set to `development` only when running `pnpm dev` outside Docker.                                                         |
 
 ---
 
@@ -666,7 +666,7 @@ openblog/
 │   └── api.md               # Full HTTP API reference
 ├── sessions/                # Agent session notes (audit trail)
 ├── Dockerfile               # Three-stage build (fetcher → builder → runner). Builds with zero required args.
-├── docker-compose.yaml      # Production compose: pulls published image from ghcr.io.
+├── docker-compose.prod.yaml # Production compose: pulls published image from ghcr.io. Ships via wget, not the repo.
 ├── docker-compose.local.yaml# Dev compose: builds from local Dockerfile.
 └── docker-compose.test.yaml # Test-only Postgres
 ```

@@ -1,904 +1,871 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import DOMPurify from "isomorphic-dompurify";
-import { useToast } from "@/components/ToastContext";
 import {
-  LogOut,
-  ChevronDown,
-  FileEdit,
-  Send,
-  Clock,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {
   Bold,
-  Italic,
-  List,
-  Image,
-  Link,
   Code,
-  Settings,
   Eye,
-  X,
+  FileEdit,
+  Heading2,
+  Italic,
+  LinkIcon,
+  List,
+  Quote,
   RefreshCw,
-  ChevronUp,
-  Plus,
+  Send,
+  Settings,
+  Pin,
+  Sparkles,
 } from "lucide-react";
+import LatexRenderer from "@/components/LatexRenderer";
+import { useToast } from "@/components/ToastContext";
 
-function EditorContent({ blogName = "OpenBlog" }: { blogName?: string }) {
+type Visibility = "PUBLIC" | "PRIVATE" | "UNLISTED" | "DRAFT";
+interface EditorState {
+  title: string;
+  body: string;
+  slug: string;
+  visibility: Visibility;
+  tags: string[];
+  seoDescription: string;
+  coverImage: string;
+  coverImageAlt: string;
+  scheduledAt: string;
+  isPinned: boolean;
+  isFeatured: boolean;
+}
+const emptyState: EditorState = {
+  title: "",
+  body: "",
+  slug: "",
+  visibility: "DRAFT",
+  tags: [],
+  seoDescription: "",
+  coverImage: "",
+  coverImageAlt: "",
+  scheduledAt: "",
+  isPinned: false,
+  isFeatured: false,
+};
+
+function snapshot(state: EditorState) {
+  return JSON.stringify(state);
+}
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 90);
+}
+
+function EditorContent({ canonicalOrigin }: { canonicalOrigin: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useSearchParams();
   const toast = useToast();
-  const editSlug = searchParams.get("slug");
-
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [slug, setSlug] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [visibility, setVisibility] = useState("PUBLIC");
-  const [seoDescription, setSeoDescription] = useState("");
-  const [coverImage, setCoverImage] = useState("");
+  const requestedSlug = params.get("slug");
+  const [state, setState] = useState<EditorState>(emptyState);
+  const [loaded, setLoaded] = useState(!requestedSlug);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [wordCount, setWordCount] = useState(0);
-  const [showPreview, setShowPreview] = useState(false);
-  const [showSlugEditor, setShowSlugEditor] = useState(false);
-  const [showPublishMenu, setShowPublishMenu] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("Draft not yet saved");
+  const [error, setError] = useState("");
+  const [preview, setPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState("");
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
-  const [showMobileSettings, setShowMobileSettings] = useState(false);
-
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedContent = useRef("");
+  const [previewError, setPreviewError] = useState("");
+  const [mobileSettings, setMobileSettings] = useState(false);
+  const [confirmPublish, setConfirmPublish] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [currentSlug, setCurrentSlug] = useState(requestedSlug);
+  const [originalSlug, setOriginalSlug] = useState(requestedSlug ?? "");
+  const [lastSaved, setLastSaved] = useState(snapshot(emptyState));
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const saveLock = useRef<Promise<void> | null>(null);
+  const isDirty = loaded && snapshot(state) !== lastSaved;
 
   useEffect(() => {
-    if (editSlug) {
-      fetch(`/api/posts/${editSlug}`)
-        .then(res => {
-          if (!res.ok) throw new Error("Failed to load post");
-          return res.json();
-        })
-        .then(data => {
-          setTitle(data.title || "");
-          setBody(data.bodyMarkdown || "");
-          setSlug(data.slug || "");
-          setVisibility(data.visibility || "PUBLIC");
-          if (data.metadata) {
-            setTags(data.metadata.tags || []);
-            setSeoDescription(data.metadata.seoDescription || "");
-            setCoverImage(data.metadata.coverImage || "");
-          }
-          lastSavedContent.current = JSON.stringify({
-            title: data.title || "",
-            body: data.bodyMarkdown || "",
-            slug: data.slug || "",
-            visibility: data.visibility || "PUBLIC",
-            tags: data.metadata?.tags || [],
-            seoDescription: data.metadata?.seoDescription || "",
-            coverImage: data.metadata?.coverImage || "",
-          });
-        })
-        .catch(() => {
-          toast.addToast(
-            "error",
-            "Could not load the post. It may have been removed."
-          );
-          router.push("/dashboard/stories");
-        });
-    }
-  }, [editSlug]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleTitleChange = useCallback(
-    (value: string) => {
-      setTitle(value);
-      if (!editSlug) {
-        setSlug(
-          value
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "")
-        );
+    if (!requestedSlug) {
+      const recovered = localStorage.getItem("openblog-new-draft");
+      if (recovered) {
+        try {
+          const next = {
+            ...emptyState,
+            ...(JSON.parse(recovered) as Partial<EditorState>),
+          };
+          setState(next);
+          setSaveMessage("Recovered from this browser");
+        } catch {
+          localStorage.removeItem("openblog-new-draft");
+        }
       }
-    },
-    [editSlug]
-  );
-
-  useEffect(() => {
-    const words = body.trim().split(/\s+/).filter(Boolean).length;
-    setWordCount(words);
-  }, [body]);
-
-  // Auto-save every 30 seconds
-  useEffect(() => {
-    if (!editSlug) return;
-    if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
-
-    autoSaveTimer.current = setInterval(() => {
-      const currentContent = JSON.stringify({
-        title,
-        body,
-        slug,
-        visibility,
-        tags,
-        seoDescription,
-        coverImage,
-      });
-      if (currentContent === lastSavedContent.current) return;
-      if (!title.trim() || !body.trim()) return;
-
-      void handleSave(undefined, true);
-    }, 30000);
-
-    return () => {
-      if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    title,
-    body,
-    slug,
-    visibility,
-    tags,
-    seoDescription,
-    coverImage,
-    editSlug,
-  ]);
-
-  // Preview rendering
-  useEffect(() => {
-    if (!showPreview || !body.trim()) {
-      setPreviewHtml("");
-      setPreviewLoading(false);
+      setLoaded(true);
       return;
     }
-    setPreviewLoading(true);
-    setPreviewHtml("");
-    const timer = setTimeout(() => {
-      fetch("/api/render-markdown", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown: body }),
-      })
-        .then(res => {
-          if (!res.ok) throw new Error("Preview render failed");
-          return res.json();
-        })
-        .then(data => {
-          if (data.html) {
-            setPreviewHtml(DOMPurify.sanitize(data.html));
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          setPreviewLoading(false);
-        });
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [showPreview, body]); // eslint-disable-line react-hooks/exhaustive-deps
-  const addTag = () => {
-    const tag = tagInput.trim();
-    if (tag && !tags.includes(tag)) {
-      setTags([...tags, tag]);
-    }
-    setTagInput("");
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove));
-  };
-
-  const handleSave = useCallback(
-    async (publishStatus?: string, isAutoSave = false) => {
-      if (!isAutoSave) setSaving(true);
-      setError(null);
-      try {
-        const payload: Record<string, unknown> = {
-          title,
-          slug,
-          bodyMarkdown: body,
-          visibility: publishStatus || visibility,
-          seoDescription,
-          tags,
-          coverImage,
+    const controller = new AbortController();
+    fetch(`/api/posts/${encodeURIComponent(requestedSlug)}`, {
+      signal: controller.signal,
+    })
+      .then(async response => {
+        if (!response.ok)
+          throw new Error(
+            response.status === 403 || response.status === 404
+              ? "This story is unavailable or you do not have access."
+              : "The story could not be loaded."
+          );
+        const post = await response.json();
+        const next: EditorState = {
+          title: post.title ?? "",
+          body: post.bodyMarkdown ?? "",
+          slug: post.slug ?? "",
+          visibility: post.visibility ?? "DRAFT",
+          tags: post.metadata?.tags ?? [],
+          seoDescription: post.metadata?.seoDescription ?? "",
+          coverImage: post.metadata?.coverImage ?? "",
+          coverImageAlt: post.metadata?.coverImageAlt ?? "",
+          scheduledAt: post.scheduledAt
+            ? new Date(post.scheduledAt).toISOString().slice(0, 16)
+            : "",
+          isPinned: post.isPinned === true,
+          isFeatured: post.isFeatured === true,
         };
+        setState(next);
+        setLastSaved(snapshot(next));
+        setCurrentSlug(post.slug);
+        setOriginalSlug(post.slug);
+        setSaveMessage("All changes saved");
+      })
+      .catch(cause => {
+        if ((cause as DOMException).name !== "AbortError")
+          setError((cause as Error).message);
+      })
+      .finally(() => setLoaded(true));
+    return () => controller.abort();
+  }, [requestedSlug]);
 
-        const method = editSlug ? "PUT" : "POST";
-        const url = editSlug ? `/api/posts/${editSlug}` : "/api/posts";
+  useEffect(() => {
+    if (!loaded || currentSlug) return;
+    const timer = window.setTimeout(() => {
+      localStorage.setItem("openblog-new-draft", snapshot(state));
+      setSaveMessage("Saved in this browser");
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [currentSlug, loaded, state]);
 
-        const res = await fetch(url, {
-          method,
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (isDirty) event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isDirty]);
+
+  useEffect(() => {
+    if (
+      !currentSlug ||
+      !isDirty ||
+      saving ||
+      !state.title.trim() ||
+      !state.body.trim()
+    )
+      return;
+    const timer = window.setTimeout(() => void save(undefined, true), 30_000);
+    return () => window.clearTimeout(timer);
+    // save is intentionally represented by its scalar dependencies through state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSlug, isDirty, saving, state]);
+
+  useEffect(() => {
+    if (!preview || !state.body.trim()) {
+      setPreviewHtml("");
+      setPreviewError("");
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setPreviewError("");
+      try {
+        const response = await fetch("/api/render-markdown", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ markdown: state.body }),
+          signal: controller.signal,
         });
-
-        if (res.ok) {
-          setSaved(true);
-          lastSavedContent.current = JSON.stringify({
-            title,
-            body,
-            slug,
-            visibility,
-            tags,
-            seoDescription,
-            coverImage,
-          });
-          setTimeout(() => setSaved(false), 3000);
-          const isPublic = (publishStatus || visibility) === "PUBLIC";
-          if (!editSlug) {
-            const data = await res.json();
-            if (isPublic) {
-              router.push(`/blog/${data.slug}`);
-            } else {
-              router.push(`/dashboard/editor?slug=${data.slug}`);
-            }
-          } else if (isPublic) {
-            router.push(`/blog/${slug}`);
-          }
-        } else {
-          const data = await res.json().catch(() => null);
-          const message = data?.error || `Save failed (${res.status})`;
-          setError(message);
-          toast.addToast("error", message);
-        }
-      } catch {
-        const message =
-          "Couldn't reach the server. Check your connection and try again.";
-        if (!isAutoSave) setError(message);
-        toast.addToast("error", message);
-      } finally {
-        if (!isAutoSave) {
-          setSaving(false);
-          setShowPublishMenu(false);
-        }
+        if (!response.ok) throw new Error();
+        setPreviewHtml((await response.json()).html ?? "");
+      } catch (cause) {
+        if ((cause as DOMException).name !== "AbortError")
+          setPreviewError(
+            "Preview could not be rendered. Your source is safe and remains editable."
+          );
       }
-    },
-    [
-      title,
-      body,
-      slug,
-      visibility,
-      tags,
-      seoDescription,
-      coverImage,
-      editSlug,
-      router,
-      toast,
-    ]
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [preview, state.body]);
+
+  const update = useCallback(
+    <K extends keyof EditorState>(key: K, value: EditorState[K]) =>
+      setState(current => ({ ...current, [key]: value })),
+    []
+  );
+  const wordCount = useMemo(
+    () => (state.body.trim() ? state.body.trim().split(/\s+/).length : 0),
+    [state.body]
   );
 
-  const handleSchedule = async () => {
-    if (!scheduleDate) return;
-    await handleSave("PRIVATE");
-    setShowSchedulePicker(false);
-    setScheduleDate("");
-  };
+  async function performSave(
+    overrides?: Partial<EditorState>,
+    automatic = false
+  ) {
+    const next = { ...state, ...overrides };
+    if (!next.title.trim() || !next.body.trim() || !next.slug.trim()) {
+      if (!automatic)
+        setError("Add a title, story body, and valid URL slug before saving.");
+      return;
+    }
+    if (
+      next.slug !== originalSlug &&
+      currentSlug &&
+      state.visibility === "PUBLIC" &&
+      !window.confirm(
+        "Changing a published URL creates a permanent redirect from the old address. Continue?"
+      )
+    )
+      return;
+    setSaving(true);
+    setError("");
+    setSaveMessage("Saving…");
+    try {
+      const payload = {
+        title: next.title,
+        slug: next.slug,
+        bodyMarkdown: next.body,
+        visibility: next.visibility,
+        tags: next.tags,
+        seoDescription: next.seoDescription,
+        coverImage: next.coverImage || null,
+        coverImageAlt: next.coverImageAlt || null,
+        scheduledAt: next.scheduledAt
+          ? new Date(next.scheduledAt).toISOString()
+          : null,
+        isPinned: next.isPinned,
+        isFeatured: next.isFeatured,
+      };
+      const response = await fetch(
+        currentSlug
+          ? `/api/posts/${encodeURIComponent(currentSlug)}`
+          : "/api/posts",
+        {
+          method: currentSlug ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok)
+        throw new Error(data?.error || `Save failed (${response.status})`);
+      const authoritative: EditorState = {
+        ...next,
+        slug: data.slug,
+        visibility: data.visibility,
+        scheduledAt: data.scheduledAt
+          ? new Date(data.scheduledAt).toISOString().slice(0, 16)
+          : "",
+        tags: data.metadata?.tags ?? next.tags,
+        seoDescription: data.metadata?.seoDescription ?? next.seoDescription,
+        coverImage: data.metadata?.coverImage ?? "",
+        coverImageAlt: data.metadata?.coverImageAlt ?? "",
+        isPinned: data.isPinned === true,
+        isFeatured: data.isFeatured === true,
+      };
+      setState(authoritative);
+      setCurrentSlug(data.slug);
+      setOriginalSlug(data.slug);
+      setLastSaved(snapshot(authoritative));
+      setSaveMessage(
+        data.scheduledAt
+          ? `Scheduled for ${new Date(data.scheduledAt).toLocaleString()}`
+          : "All changes saved"
+      );
+      localStorage.removeItem("openblog-new-draft");
+      if (!currentSlug)
+        router.replace(
+          `/dashboard/editor?slug=${encodeURIComponent(data.slug)}`
+        );
+      if (!automatic)
+        toast.addToast(
+          "success",
+          data.scheduledAt
+            ? "Story scheduled."
+            : authoritative.visibility === "PUBLIC"
+              ? "Story published."
+              : "Draft saved."
+        );
+      if (
+        authoritative.visibility === "PUBLIC" &&
+        overrides?.visibility === "PUBLIC"
+      )
+        router.push(`/blog/${data.slug}`);
+    } catch (cause) {
+      const message =
+        (cause as Error).message ||
+        "Could not save. Check your connection and try again.";
+      setError(message);
+      setSaveMessage("Save failed — changes remain here");
+      if (!automatic) toast.addToast("error", message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  const insertMarkdown = (prefix: string, suffix: string = "") => {
-    const textarea = document.querySelector("textarea") as HTMLTextAreaElement;
+  function save(overrides?: Partial<EditorState>, automatic = false) {
+    if (saveLock.current) return saveLock.current;
+    const operation = performSave(overrides, automatic).finally(() => {
+      saveLock.current = null;
+    });
+    saveLock.current = operation;
+    return operation;
+  }
+
+  function navigateAway(href: string) {
+    if (
+      !isDirty ||
+      window.confirm(
+        "You have unsaved changes. Leave this editor and discard them?"
+      )
+    )
+      router.push(href);
+  }
+  function insert(prefix: string, suffix = "") {
+    const textarea = textareaRef.current;
     if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = body.substring(start, end);
-    const replacement = prefix + selected + suffix;
-
-    setBody(body.substring(0, start) + replacement + body.substring(end));
-
-    setTimeout(() => {
+    const { selectionStart: start, selectionEnd: end } = textarea;
+    const selected = state.body.slice(start, end);
+    update(
+      "body",
+      `${state.body.slice(0, start)}${prefix}${selected}${suffix}${state.body.slice(end)}`
+    );
+    requestAnimationFrame(() => {
       textarea.focus();
       textarea.setSelectionRange(
         start + prefix.length,
         start + prefix.length + selected.length
       );
-    }, 0);
-  };
+    });
+  }
+  function addTag() {
+    const tag = tagInput.trim().toLowerCase();
+    if (
+      tag &&
+      tag.length <= 40 &&
+      state.tags.length < 10 &&
+      !state.tags.includes(tag)
+    )
+      update("tags", [...state.tags, tag]);
+    setTagInput("");
+  }
+
+  if (!loaded)
+    return (
+      <div role="status" className="min-h-[60vh] grid place-items-center">
+        <RefreshCw className="animate-spin" />
+        <span className="sr-only">Loading editor</span>
+      </div>
+    );
+  if (error && requestedSlug && !currentSlug)
+    return (
+      <main id="main-content" className="p-8 pt-24">
+        <div role="alert" className="max-w-xl theme-danger-soft rounded-xl p-6">
+          <h1 className="text-2xl font-bold">Story unavailable</h1>
+          <p className="mt-2">{error}</p>
+          <Link
+            href="/dashboard/stories"
+            className="btn-secondary inline-flex mt-5"
+          >
+            Back to stories
+          </Link>
+        </div>
+      </main>
+    );
+
+  const settings = (
+    <div className="space-y-6">
+      <div>
+        <label
+          htmlFor="story-slug"
+          className="block text-sm font-semibold mb-2"
+        >
+          URL slug
+        </label>
+        <input
+          id="story-slug"
+          value={state.slug}
+          onChange={event => update("slug", slugify(event.target.value))}
+          className="input-field w-full"
+        />
+        <p className="text-xs text-on-surface-variant mt-2">
+          Changing a published URL keeps a permanent redirect.
+        </p>
+      </div>
+      <div>
+        <label
+          htmlFor="story-visibility"
+          className="block text-sm font-semibold mb-2"
+        >
+          Visibility
+        </label>
+        <select
+          id="story-visibility"
+          value={state.visibility}
+          onChange={event =>
+            update("visibility", event.target.value as Visibility)
+          }
+          className="input-field w-full min-h-11"
+        >
+          <option value="DRAFT">Draft — only you and admins</option>
+          <option value="PRIVATE">Private — only you and admins</option>
+          <option value="UNLISTED">Unlisted — anyone with the link</option>
+          <option value="PUBLIC">Public — listed everywhere</option>
+        </select>
+      </div>
+      <div>
+        <label
+          htmlFor="schedule-at"
+          className="block text-sm font-semibold mb-2"
+        >
+          Schedule publication
+        </label>
+        <input
+          id="schedule-at"
+          type="datetime-local"
+          min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+          value={state.scheduledAt}
+          onChange={event => update("scheduledAt", event.target.value)}
+          className="input-field w-full"
+        />
+        <p className="text-xs text-on-surface-variant mt-2">
+          Times use your current timezone. The server stores UTC.
+        </p>
+      </div>
+      <fieldset>
+        <legend className="block text-sm font-semibold mb-2">
+          Homepage priority
+        </legend>
+        <div className="grid gap-3">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 transition-colors has-checked:border-primary has-checked:bg-primary/5">
+            <input
+              type="checkbox"
+              checked={state.isFeatured}
+              onChange={event => update("isFeatured", event.target.checked)}
+              className="mt-0.5 size-5 accent-primary"
+            />
+            <span>
+              <span className="flex items-center gap-2 font-bold">
+                <Sparkles className="size-4 text-primary" /> Featured
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-on-surface-variant">
+                Adds a badge and a 14-day ranking boost on the homepage.
+              </span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 transition-colors has-checked:border-primary has-checked:bg-primary/5">
+            <input
+              type="checkbox"
+              checked={state.isPinned}
+              onChange={event => update("isPinned", event.target.checked)}
+              className="mt-0.5 size-5 accent-primary"
+            />
+            <span>
+              <span className="flex items-center gap-2 font-bold">
+                <Pin className="size-4 text-primary" /> Pinned
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-on-surface-variant">
+                Keeps this story ahead of regular articles in public listings.
+              </span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+      <div>
+        <label
+          htmlFor="story-tags"
+          className="block text-sm font-semibold mb-2"
+        >
+          Topics
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="story-tags"
+            value={tagInput}
+            onChange={event => setTagInput(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addTag();
+              }
+            }}
+            className="input-field min-w-0 flex-1"
+            placeholder="Add a topic"
+          />
+          <button type="button" className="btn-secondary px-3" onClick={addTag}>
+            Add
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {state.tags.map(tag => (
+            <span
+              key={tag}
+              className="bg-surface-container-high rounded-full pl-3 inline-flex items-center"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() =>
+                  update(
+                    "tags",
+                    state.tags.filter(value => value !== tag)
+                  )
+                }
+                aria-label={`Remove ${tag}`}
+                className="min-w-11 min-h-11"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+        <p className="text-xs text-on-surface-variant mt-2">
+          Up to 10 lowercase topics.
+        </p>
+      </div>
+      <div>
+        <label
+          htmlFor="seo-description"
+          className="block text-sm font-semibold mb-2"
+        >
+          Search description
+        </label>
+        <textarea
+          id="seo-description"
+          maxLength={320}
+          value={state.seoDescription}
+          onChange={event => update("seoDescription", event.target.value)}
+          className="input-field w-full min-h-24"
+        />
+        <p className="text-xs text-on-surface-variant mt-1">
+          {state.seoDescription.length}/320 · Aim for 120–160 characters.
+        </p>
+      </div>
+      <div>
+        <label
+          htmlFor="cover-image"
+          className="block text-sm font-semibold mb-2"
+        >
+          Cover image URL
+        </label>
+        <input
+          id="cover-image"
+          type="url"
+          value={state.coverImage}
+          onChange={event => update("coverImage", event.target.value)}
+          className="input-field w-full"
+        />
+        <label
+          htmlFor="cover-alt"
+          className="block text-sm font-semibold mt-3 mb-2"
+        >
+          Cover image description
+        </label>
+        <input
+          id="cover-alt"
+          value={state.coverImageAlt}
+          onChange={event => update("coverImageAlt", event.target.value)}
+          className="input-field w-full"
+          placeholder="Describe meaningful visual content"
+        />
+      </div>
+      <div className="bg-surface-container rounded-xl p-4">
+        <p className="text-xs font-semibold">Search preview</p>
+        <p className="text-primary mt-2 truncate">
+          {state.title || "Your story title"}
+        </p>
+        <p className="text-sm text-on-surface-variant line-clamp-2">
+          {state.seoDescription ||
+            "Add a concise description for search and sharing."}
+        </p>
+        <p className="text-xs text-on-surface-variant mt-2 truncate">
+          {canonicalOrigin}/blog/{state.slug || "story-slug"}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <nav className="theme-nav fixed top-0 w-full z-50 backdrop-blur-xl transition-all duration-300">
-        <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto font-headline tracking-tight antialiased text-sm font-medium">
-          <div className="flex items-center gap-8">
-            <a
-              href="/"
-              className="text-xl font-bold tracking-tighter text-on-surface"
-            >
-              {blogName}
-            </a>
-            <div className="hidden md:flex items-center space-x-6">
-              <a href="/" className="theme-nav-link transition-colors">
-                Feed
-              </a>
-              <a href="/explore" className="theme-nav-link transition-colors">
-                Explore
-              </a>
-              <a href="/dashboard" className="theme-nav-link transition-colors">
-                Dashboard
-              </a>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
+    <main
+      id="main-content"
+      className="pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-28"
+    >
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
             <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/auth/sign-out", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({}),
-                    credentials: "include",
-                  });
-                  if (!res.ok) {
-                    document.cookie =
-                      "better-auth.session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                    document.cookie =
-                      "better-auth.session_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  }
-                } catch {
-                  document.cookie =
-                    "better-auth.session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie =
-                    "better-auth.session_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                }
-                window.location.href = "/";
-              }}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm theme-nav-link transition-colors rounded-lg hover:bg-surface-container/70"
+              type="button"
+              onClick={() => navigateAway("/dashboard/stories")}
+              className="min-h-11 text-sm font-semibold text-on-surface-variant hover:text-primary"
             >
-              <LogOut className="w-5 h-5" />
-              Logout
+              ← Back to stories
+            </button>
+            <h1 className="text-3xl font-extrabold tracking-[-0.045em] sm:text-4xl">
+              {currentSlug ? "Refine your story" : "Start a new story"}
+            </h1>
+            <p role="status" className="text-sm text-on-surface-variant mt-1">
+              {saveMessage} · {wordCount} words
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPreview(value => !value)}
+              className="btn-secondary inline-flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" />
+              {preview ? "Edit" : "Preview"}
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() =>
+                void save({ visibility: "DRAFT", scheduledAt: "" })
+              }
+              className="btn-secondary inline-flex items-center gap-2"
+            >
+              <FileEdit className="w-4 h-4" />
+              Save draft
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() =>
+                state.scheduledAt
+                  ? void save({ visibility: "PRIVATE" })
+                  : setConfirmPublish(true)
+              }
+              className="btn-primary inline-flex items-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              {state.scheduledAt ? "Schedule" : "Review & publish"}
             </button>
           </div>
-        </div>
-      </nav>
-
-      <main className="pt-24 min-h-screen flex">
-        <div className="flex-grow max-w-4xl mx-auto px-4 sm:px-6 lg:px-12 mb-32 animate-fade-in-up">
-          <header className="mb-8 sm:mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <p className="text-primary font-medium tracking-widest uppercase text-[10px] mb-2 font-label">
-                Drafting Suite
-              </p>
-              <h1 className="font-headline text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tighter text-on-surface">
-                {editSlug ? "Edit Story" : "New Story"}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <button
-                onClick={() => setShowPreview(!showPreview)}
-                className="px-3 sm:px-5 py-2 text-xs sm:text-sm font-medium text-on-surface bg-surface-container-highest border border-outline-variant/15 rounded-lg hover:bg-surface-container-high transition-all"
-              >
-                {showPreview ? "Edit" : "Preview"}
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowPublishMenu(!showPublishMenu)}
-                  className="editorial-gradient px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-on-primary rounded-lg shadow-lg shadow-primary-container/20 active:scale-95 transition-all flex items-center gap-2"
-                >
-                  <span className="hidden sm:inline">Publishing options</span>
-                  <span className="sm:hidden">Publish</span>
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-
-                {showPublishMenu && (
-                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-56 bg-surface-container rounded-xl border border-outline-variant/10 shadow-xl z-50 overflow-hidden animate-scale-in">
-                    <button
-                      onClick={() => handleSave("DRAFT")}
-                      className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
-                    >
-                      <FileEdit className="w-5 h-5 text-on-surface-variant" />
-                      Save as Draft
-                    </button>
-                    <button
-                      onClick={() => handleSave("PUBLIC")}
-                      className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
-                    >
-                      <Send className="w-5 h-5 text-primary" />
-                      Publish Now
-                    </button>
-                    <div className="border-t border-outline-variant/10">
-                      <button
-                        onClick={() =>
-                          setShowSchedulePicker(!showSchedulePicker)
-                        }
-                        className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-3"
-                      >
-                        <Clock className="w-5 h-5 text-tertiary" />
-                        Schedule for Later
-                      </button>
-                      {showSchedulePicker && (
-                        <div className="px-4 pb-3">
-                          <input
-                            type="datetime-local"
-                            value={scheduleDate}
-                            onChange={e => setScheduleDate(e.target.value)}
-                            className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none mb-2"
-                          />
-                          <button
-                            onClick={handleSchedule}
-                            disabled={!scheduleDate}
-                            className="w-full editorial-gradient text-on-primary px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                          >
-                            Confirm Schedule
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </header>
-
-          {showPreview ? (
-            <div className="prose prose-invert prose-lg max-w-none prose-headings:font-headline prose-headings:font-semibold prose-headings:tracking-tight prose-p:font-body prose-p:text-on-surface-variant prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-on-surface prose-code:text-primary prose-code:bg-surface-container prose-code:px-2 prose-code:py-0.5 prose-code:rounded animate-fade-in">
-              <h1 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-on-surface mb-8">
-                {title || "Untitled Story"}
-              </h1>
-              {previewLoading ? (
-                <div className="space-y-4 animate-pulse">
-                  <div className="h-4 bg-surface-container rounded w-full"></div>
-                  <div className="h-4 bg-surface-container rounded w-5/6"></div>
-                  <div className="h-4 bg-surface-container rounded w-4/5"></div>
-                  <div className="h-4 bg-surface-container rounded w-full"></div>
-                  <div className="h-4 bg-surface-container rounded w-3/4"></div>
-                  <div className="h-4 bg-surface-container rounded w-5/6"></div>
-                </div>
-              ) : previewHtml ? (
-                <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
-              ) : (
-                <div className="whitespace-pre-wrap text-on-surface-variant">
-                  {body || "Start writing to see a preview..."}
-                </div>
-              )}
-            </div>
-          ) : (
-            <section className="space-y-8">
-              <div className="group">
-                <label className="block text-xs font-medium text-outline mb-4 ml-1 font-label">
-                  Story Title
-                </label>
-                <input
-                  className="w-full bg-transparent border-none focus:ring-0 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-headline font-bold text-on-surface placeholder:text-surface-variant tracking-tight p-0"
-                  placeholder="Enter a captivating title..."
-                  type="text"
-                  value={title}
-                  onChange={e => handleTitleChange(e.target.value)}
-                />
-                <div className="h-[2px] w-full bg-outline-variant/20 mt-4 group-focus-within:bg-primary transition-all duration-500" />
-              </div>
-
-              <div className="flex items-center gap-1 p-1 bg-surface-container-low/50 backdrop-blur-md rounded-xl sticky top-16 sm:top-24 z-30 border border-outline-variant/10 overflow-x-auto">
-                <button
-                  onClick={() => insertMarkdown("**", "**")}
-                  className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-                  title="Bold"
-                >
-                  <Bold className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <button
-                  onClick={() => insertMarkdown("*", "*")}
-                  className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-                  title="Italic"
-                >
-                  <Italic className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <button
-                  onClick={() => insertMarkdown("\n- ")}
-                  className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-                  title="List"
-                >
-                  <List className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <div className="w-px h-6 bg-outline-variant/20 mx-1 flex-shrink-0" />
-                <button
-                  onClick={() => insertMarkdown("![alt](", ")")}
-                  className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-                  title="Image"
-                >
-                  <Image className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <button
-                  onClick={() => insertMarkdown("[", "](url)")}
-                  className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-                  title="Link"
-                >
-                  <Link className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <button
-                  onClick={() => insertMarkdown("`", "`")}
-                  className="p-1.5 sm:p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-                  title="Code"
-                >
-                  <Code className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <div className="flex-grow" />
-                <a
-                  href="https://www.markdownguide.org/cheat-sheet/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-2 sm:px-3 text-xs font-medium text-primary hover:bg-primary/5 py-1.5 sm:py-2 rounded-lg transition-colors font-label flex-shrink-0 hidden sm:block"
-                >
-                  Markdown guide
-                </a>
-              </div>
-
-              <div className="min-h-[600px] text-lg leading-relaxed text-on-surface-variant font-body">
-                <textarea
-                  className="w-full bg-transparent border-none focus:ring-0 resize-none min-h-[600px] p-0 placeholder:text-surface-variant"
-                  placeholder="Begin your narrative..."
-                  value={body}
-                  onChange={e => setBody(e.target.value)}
-                />
-              </div>
-            </section>
-          )}
-        </div>
-
-        <aside className="hidden xl:flex flex-col w-80 bg-surface-container-lowest h-[calc(100vh-64px)] fixed right-0 top-16 z-40 p-8 space-y-8 border-l border-outline-variant/5 animate-slide-in-right">
-          <div>
-            <h3 className="font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary" />
-              Post Settings
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <button
-                  onClick={() => setShowSlugEditor(!showSlugEditor)}
-                  className="flex items-center gap-1 text-[10px] text-outline hover:text-on-surface-variant transition-colors font-label"
-                >
-                  <Link className="w-3 h-3" />
-                  <span>{slug || "auto-generated"}</span>
-                  {showSlugEditor ? (
-                    <ChevronUp className="w-3 h-3" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3" />
-                  )}
-                </button>
-                {showSlugEditor && (
-                  <div className="mt-2 animate-fade-in">
-                    <input
-                      className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
-                      placeholder="my-post-slug"
-                      value={slug}
-                      onChange={e => setSlug(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  Topic Tags
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 bg-surface-container-high text-xs rounded-full border border-outline-variant/10 text-primary flex items-center gap-1"
-                    >
-                      {tag}
-                      <button
-                        onClick={() => removeTag(tag)}
-                        className="hover:text-error transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <div className="flex items-center gap-1">
-                    <input
-                      className="bg-transparent border-none focus:ring-0 text-xs w-24 text-on-surface placeholder:text-outline"
-                      placeholder="Add tag..."
-                      value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addTag();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={addTag}
-                      className="p-1 text-outline hover:text-primary transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  Visibility
-                </label>
-                <select
-                  value={visibility}
-                  onChange={e => setVisibility(e.target.value)}
-                  className="w-full bg-surface-container-low rounded-xl px-3 py-2.5 text-xs text-on-surface font-medium border border-outline-variant/5 focus:border-primary focus:ring-0 outline-none appearance-none cursor-pointer"
-                >
-                  <option value="PUBLIC">Public</option>
-                  <option value="PRIVATE">Private</option>
-                  <option value="DRAFT">Draft</option>
-                  <option value="UNLISTED">Unlisted</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  SEO Description
-                </label>
-                <textarea
-                  className="w-full bg-surface-container-low rounded-xl px-3 py-2 text-xs text-on-surface border border-outline-variant/5 focus:border-primary focus:ring-0 outline-none resize-none h-20 transition-colors"
-                  placeholder="Brief description for search engines..."
-                  value={seoDescription}
-                  onChange={e => setSeoDescription(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  Cover Image
-                </label>
-                <input
-                  className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
-                  placeholder="Image URL for feed & SEO..."
-                  value={coverImage}
-                  onChange={e => setCoverImage(e.target.value)}
-                />
-                {coverImage && (
-                  <div className="mt-2 rounded-lg overflow-hidden border border-outline-variant/10 aspect-video bg-surface-container flex items-center justify-center">
-                    <img
-                      src={coverImage}
-                      alt="Cover preview"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-auto p-4 rounded-xl bg-surface-container-low border border-outline-variant/5">
-            <p className="text-[10px] font-bold text-outline uppercase mb-2 font-label">
-              Search Preview
-            </p>
-            <div className="space-y-1">
-              <div className="text-sm text-primary font-medium truncate">
-                {title || "Your post title"}
-              </div>
-              <div className="text-xs text-on-surface-variant line-clamp-2">
-                {seoDescription ||
-                  "Add an SEO description to improve search visibility..."}
-              </div>
-              <div className="text-[10px] text-outline">
-                openblog.com/blog/{slug || "your-slug"}
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-outline-variant/5 text-[10px] text-outline flex items-center justify-between font-label">
-            <div className="flex items-center gap-1">
-              {saving ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
-                  <span>Saving...</span>
-                </>
-              ) : saved ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
-                  <span>All changes saved</span>
-                </>
-              ) : error ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-error animate-pulse" />
-                  <span className="text-error">Unsaved changes</span>
-                </>
-              ) : (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-outline-variant" />
-                  <span>{wordCount > 0 ? "Ready" : "Start writing"}</span>
-                </>
-              )}
-            </div>
-            <span>{wordCount} Words</span>
-          </div>
-        </aside>
-      </main>
-
-      <div className="md:hidden fixed bottom-6 right-6 flex flex-col gap-3 safe-area-bottom z-40">
-        <button
-          onClick={() => setShowMobileSettings(true)}
-          className="w-12 h-12 rounded-full bg-surface-container-highest shadow-xl border border-outline-variant/20 flex items-center justify-center text-primary"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => setShowPreview(!showPreview)}
-          className="w-12 h-12 rounded-full bg-surface-container-highest shadow-xl border border-outline-variant/20 flex items-center justify-center text-primary"
-        >
-          <Eye className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => handleSave()}
-          className="w-14 h-14 rounded-full editorial-gradient shadow-xl shadow-primary-container/30 flex items-center justify-center text-on-primary"
-        >
-          <Send className="w-6 h-6" />
-        </button>
-      </div>
-
-      {showMobileSettings && (
-        <div className="xl:hidden fixed inset-0 z-50">
+        </header>
+        {error && (
           <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowMobileSettings(false)}
-          />
-          <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-surface-container-lowest p-6 space-y-8 overflow-y-auto animate-slide-in-right">
-            <div className="flex items-center justify-between">
-              <h3 className="font-headline font-bold text-on-surface flex items-center gap-2">
-                <Settings className="w-5 h-5 text-primary" />
-                Post Settings
-              </h3>
+            role="alert"
+            className="theme-danger-soft theme-danger-text rounded-xl p-4 mb-6"
+          >
+            {error}
+          </div>
+        )}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <section
+            aria-label="Story editor"
+            className="min-h-[70vh] rounded-3xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm sm:p-8"
+          >
+            {preview ? (
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-bold mb-8">
+                  {state.title || "Untitled story"}
+                </h1>
+                {previewError && (
+                  <p role="alert" className="theme-danger-text mb-5">
+                    {previewError}
+                  </p>
+                )}
+                <article className="prose prose-lg max-w-none">
+                  <LatexRenderer html={previewHtml} />
+                </article>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <label
+                    htmlFor="story-title"
+                    className="block text-sm font-semibold mb-2"
+                  >
+                    Story title
+                  </label>
+                  <input
+                    id="story-title"
+                    value={state.title}
+                    onChange={event => {
+                      update("title", event.target.value);
+                      if (!currentSlug)
+                        update("slug", slugify(event.target.value));
+                    }}
+                    className="w-full bg-transparent text-3xl sm:text-5xl font-bold outline-none min-h-16"
+                    placeholder="A clear, compelling title"
+                  />
+                </div>
+                <div
+                  role="toolbar"
+                  aria-label="Markdown formatting"
+                  className="sticky top-16 z-20 flex gap-1 overflow-x-auto rounded-2xl border border-outline-variant bg-surface-container-lowest/90 p-2 shadow-sm backdrop-blur-xl lg:top-4"
+                >
+                  {[
+                    [Bold, "Bold", "**", "**"],
+                    [Italic, "Italic", "*", "*"],
+                    [Heading2, "Heading", "## ", ""],
+                    [Quote, "Quote", "> ", ""],
+                    [List, "List", "- ", ""],
+                    [LinkIcon, "Link", "[", "](https://)"],
+                    [Code, "Code", "`", "`"],
+                  ].map(([Icon, label, prefix, suffix]) => {
+                    const ToolIcon = Icon as typeof Bold;
+                    return (
+                      <button
+                        key={label as string}
+                        type="button"
+                        onClick={() =>
+                          insert(prefix as string, suffix as string)
+                        }
+                        aria-label={`Format as ${String(label)}`}
+                        className="min-w-11 min-h-11 grid place-items-center rounded-lg hover:bg-surface-container-high"
+                      >
+                        <ToolIcon className="w-5 h-5" />
+                      </button>
+                    );
+                  })}
+                </div>
+                <div>
+                  <label htmlFor="story-body" className="sr-only">
+                    Story body in Markdown
+                  </label>
+                  <textarea
+                    ref={textareaRef}
+                    id="story-body"
+                    value={state.body}
+                    onChange={event => update("body", event.target.value)}
+                    className="w-full min-h-[60vh] bg-transparent resize-y text-lg leading-8 outline-none"
+                    placeholder="Begin writing in Markdown…"
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+          <aside
+            aria-label="Story settings"
+            className="hidden self-start overflow-hidden rounded-3xl border border-outline-variant bg-surface-container-low shadow-sm xl:sticky xl:top-6 xl:flex xl:max-h-[calc(100dvh-3rem)] xl:flex-col"
+          >
+            <h2 className="flex shrink-0 items-center gap-2 border-b border-outline-variant px-6 py-5 text-lg font-bold">
+              <Settings className="w-5 h-5" />
+              Story settings
+            </h2>
+            <div className="overflow-y-auto px-6 py-5">{settings}</div>
+          </aside>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setMobileSettings(true)}
+        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex items-center gap-2 shadow-xl btn-secondary xl:!hidden"
+      >
+        <Settings className="w-5 h-5" />
+        Settings
+      </button>
+      {mobileSettings && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-settings-title"
+          className="xl:hidden fixed inset-0 z-50 bg-black/60"
+          onKeyDown={event =>
+            event.key === "Escape" && setMobileSettings(false)
+          }
+        >
+          <div className="absolute inset-y-0 right-0 w-full max-w-md bg-surface p-6 overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 id="mobile-settings-title" className="text-xl font-bold">
+                Story settings
+              </h2>
               <button
-                onClick={() => setShowMobileSettings(false)}
-                className="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant"
+                type="button"
+                onClick={() => setMobileSettings(false)}
+                aria-label="Close story settings"
+                className="min-w-11 min-h-11"
               >
-                <X className="w-5 h-5" />
+                ×
               </button>
             </div>
-            <div className="space-y-6">
-              <div>
-                <button
-                  onClick={() => setShowSlugEditor(!showSlugEditor)}
-                  className="flex items-center gap-1 text-[10px] text-outline hover:text-on-surface-variant transition-colors font-label"
-                >
-                  <Link className="w-3 h-3" />
-                  <span>{slug || "auto-generated"}</span>
-                  {showSlugEditor ? (
-                    <ChevronUp className="w-3 h-3" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3" />
-                  )}
-                </button>
-                {showSlugEditor && (
-                  <div className="mt-2 animate-fade-in">
-                    <input
-                      className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
-                      placeholder="my-post-slug"
-                      value={slug}
-                      onChange={e => setSlug(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  Topic Tags
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 bg-surface-container-high text-xs rounded-full border border-outline-variant/10 text-primary flex items-center gap-1"
-                    >
-                      {tag}
-                      <button
-                        onClick={() => removeTag(tag)}
-                        className="hover:text-error transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <div className="flex items-center gap-1">
-                    <input
-                      className="bg-transparent border-none focus:ring-0 text-xs w-24 text-on-surface placeholder:text-outline"
-                      placeholder="Add tag..."
-                      value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addTag();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={addTag}
-                      className="p-1 text-outline hover:text-primary transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  Visibility
-                </label>
-                <select
-                  value={visibility}
-                  onChange={e => setVisibility(e.target.value)}
-                  className="w-full bg-surface-container-low rounded-xl px-3 py-2.5 text-xs text-on-surface font-medium border border-outline-variant/5 focus:border-primary focus:ring-0 outline-none appearance-none cursor-pointer"
-                >
-                  <option value="PUBLIC">Public</option>
-                  <option value="PRIVATE">Private</option>
-                  <option value="DRAFT">Draft</option>
-                  <option value="UNLISTED">Unlisted</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  SEO Description
-                </label>
-                <textarea
-                  className="w-full bg-surface-container-low rounded-xl px-3 py-2 text-xs text-on-surface border border-outline-variant/5 focus:border-primary focus:ring-0 outline-none resize-none h-20 transition-colors"
-                  placeholder="Brief description for search engines..."
-                  value={seoDescription}
-                  onChange={e => setSeoDescription(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-outline uppercase tracking-wider mb-3 font-label">
-                  Cover Image
-                </label>
-                <input
-                  className="w-full bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface border border-outline-variant/10 focus:border-primary focus:ring-0 outline-none transition-colors"
-                  placeholder="Image URL for feed & SEO..."
-                  value={coverImage}
-                  onChange={e => setCoverImage(e.target.value)}
-                />
-                {coverImage && (
-                  <div className="mt-2 rounded-lg overflow-hidden border border-outline-variant/10 aspect-video bg-surface-container flex items-center justify-center">
-                    <img
-                      src={coverImage}
-                      alt="Cover preview"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/5">
-              <p className="text-[10px] font-bold text-outline uppercase mb-2 font-label">
-                Search Preview
-              </p>
-              <div className="space-y-1">
-                <div className="text-sm text-primary font-medium truncate">
-                  {title || "Your post title"}
-                </div>
-                <div className="text-xs text-on-surface-variant line-clamp-2">
-                  {seoDescription ||
-                    "Add an SEO description to improve search visibility..."}
-                </div>
-                <div className="text-[10px] text-outline">
-                  openblog.com/blog/{slug || "your-slug"}
-                </div>
-              </div>
+            {settings}
+          </div>
+        </div>
+      )}
+      {confirmPublish && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="publish-title"
+          className="fixed inset-0 z-50 bg-black/60 grid place-items-center px-5"
+        >
+          <div className="w-full max-w-md bg-surface-container rounded-2xl p-6">
+            <h2 id="publish-title" className="text-2xl font-bold">
+              Publish this story?
+            </h2>
+            <p className="mt-3 text-on-surface-variant">
+              It will become public immediately and appear in feeds, search,
+              RSS, and the sitemap.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setConfirmPublish(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setConfirmPublish(false);
+                  void save({ visibility: "PUBLIC", scheduledAt: "" });
+                }}
+              >
+                Publish now
+              </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
-export default function EditorClient({ blogName }: { blogName?: string } = {}) {
+export default function EditorClient({
+  canonicalOrigin,
+}: {
+  canonicalOrigin: string;
+}) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-surface flex items-center justify-center">
-          <RefreshCw className="w-10 h-10 text-primary animate-spin" />
+        <div role="status" className="min-h-[60vh] grid place-items-center">
+          <RefreshCw className="animate-spin" />
+          <span className="sr-only">Loading editor</span>
         </div>
       }
     >
-      <EditorContent blogName={blogName} />
+      <EditorContent canonicalOrigin={canonicalOrigin} />
     </Suspense>
   );
 }

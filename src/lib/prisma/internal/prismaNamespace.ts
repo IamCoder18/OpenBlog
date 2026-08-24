@@ -391,6 +391,7 @@ export const ModelName = {
   UserProfile: 'UserProfile',
   ApiKey: 'ApiKey',
   Post: 'Post',
+  PostRedirect: 'PostRedirect',
   PostMetadata: 'PostMetadata',
   SiteSettings: 'SiteSettings',
   PageView: 'PageView'
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "userProfile" | "apiKey" | "post" | "postMetadata" | "siteSettings" | "pageView"
+    modelProps: "user" | "session" | "account" | "verification" | "userProfile" | "apiKey" | "post" | "postRedirect" | "postMetadata" | "siteSettings" | "pageView"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -931,6 +932,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PostRedirect: {
+      payload: Prisma.$PostRedirectPayload<ExtArgs>
+      fields: Prisma.PostRedirectFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PostRedirectFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PostRedirectFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>
+        }
+        findFirst: {
+          args: Prisma.PostRedirectFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PostRedirectFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>
+        }
+        findMany: {
+          args: Prisma.PostRedirectFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>[]
+        }
+        create: {
+          args: Prisma.PostRedirectCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>
+        }
+        createMany: {
+          args: Prisma.PostRedirectCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PostRedirectCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>[]
+        }
+        delete: {
+          args: Prisma.PostRedirectDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>
+        }
+        update: {
+          args: Prisma.PostRedirectUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>
+        }
+        deleteMany: {
+          args: Prisma.PostRedirectDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PostRedirectUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PostRedirectUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>[]
+        }
+        upsert: {
+          args: Prisma.PostRedirectUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PostRedirectPayload>
+        }
+        aggregate: {
+          args: Prisma.PostRedirectAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePostRedirect>
+        }
+        groupBy: {
+          args: Prisma.PostRedirectGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PostRedirectGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PostRedirectCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PostRedirectCountAggregateOutputType> | number
+        }
+      }
+    }
     PostMetadata: {
       payload: Prisma.$PostMetadataPayload<ExtArgs>
       fields: Prisma.PostMetadataFieldRefs
@@ -1264,10 +1339,14 @@ export type UserProfileScalarFieldEnum = (typeof UserProfileScalarFieldEnum)[key
 export const ApiKeyScalarFieldEnum = {
   id: 'id',
   key: 'key',
+  prefix: 'prefix',
   name: 'name',
   userId: 'userId',
   createdAt: 'createdAt',
-  expiresAt: 'expiresAt'
+  expiresAt: 'expiresAt',
+  lastUsedAt: 'lastUsedAt',
+  revokedAt: 'revokedAt',
+  scopes: 'scopes'
 } as const
 
 export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof ApiKeyScalarFieldEnum]
@@ -1282,6 +1361,9 @@ export const PostScalarFieldEnum = {
   visibility: 'visibility',
   authorId: 'authorId',
   publishedAt: 'publishedAt',
+  scheduledAt: 'scheduledAt',
+  isPinned: 'isPinned',
+  isFeatured: 'isFeatured',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1289,10 +1371,21 @@ export const PostScalarFieldEnum = {
 export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
 
 
+export const PostRedirectScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  postId: 'postId',
+  createdAt: 'createdAt'
+} as const
+
+export type PostRedirectScalarFieldEnum = (typeof PostRedirectScalarFieldEnum)[keyof typeof PostRedirectScalarFieldEnum]
+
+
 export const PostMetadataScalarFieldEnum = {
   id: 'id',
   seoDescription: 'seoDescription',
   coverImage: 'coverImage',
+  coverImageAlt: 'coverImageAlt',
   tags: 'tags',
   postId: 'postId'
 } as const
@@ -1303,7 +1396,8 @@ export type PostMetadataScalarFieldEnum = (typeof PostMetadataScalarFieldEnum)[k
 export const SiteSettingsScalarFieldEnum = {
   id: 'id',
   key: 'key',
-  value: 'value'
+  value: 'value',
+  updatedAt: 'updatedAt'
 } as const
 
 export type SiteSettingsScalarFieldEnum = (typeof SiteSettingsScalarFieldEnum)[keyof typeof SiteSettingsScalarFieldEnum]
@@ -1545,6 +1639,7 @@ export type GlobalOmitConfig = {
   userProfile?: Prisma.UserProfileOmit
   apiKey?: Prisma.ApiKeyOmit
   post?: Prisma.PostOmit
+  postRedirect?: Prisma.PostRedirectOmit
   postMetadata?: Prisma.PostMetadataOmit
   siteSettings?: Prisma.SiteSettingsOmit
   pageView?: Prisma.PageViewOmit

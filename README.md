@@ -2,7 +2,7 @@
 
 A self-hostable, AI-agent-friendly blog platform built on Next.js 16, PostgreSQL, and BetterAuth. Designed as a first-class publishing surface for both humans and machine agents — markdown authoring and a polished dashboard for people, plus a bearer-token REST API, an RSS feed, and a sitemap for software.
 
-- **For humans**: markdown editor, four themes, dashboard, role-based access, server-rendered public pages, and an `Explore` feed.
+- **For humans**: markdown editor, configurable publication design, dashboard, role-based access, server-rendered public pages, and a searchable story archive.
 - **For agents / LLM tools**: a token-authenticated JSON API for creating, listing, updating, and deleting posts; a `/api/render-markdown` preview endpoint; a public sitemap and RSS feed; and first-class TypeScript-friendly error responses.
 - **For self-hosters**: a single `docker compose up -d --build` brings up the whole stack. Data stays in your Postgres volume. No external service required.
 
@@ -75,9 +75,10 @@ If you'd rather see what you're running:
 ```bash
 git clone https://github.com/IamCoder18/OpenBlog.git openblog && cd openblog
 
-# 1. Set the only two env vars the compose setup actually needs.
+# 1. Set the three required deployment values.
 cat > .env <<EOF
 AUTH_SECRET="$(openssl rand -base64 32)"
+POSTGRES_PASSWORD="$(openssl rand -hex 32)"
 BASE_URL="http://localhost:3000"
 EOF
 
@@ -86,7 +87,7 @@ docker compose up -d
 
 # 3. Bootstrap an admin user inside the app container
 docker exec -it openblog-app \
-  node scripts/create-admin.js you@example.com "Your Name" "S3cureP@ss!"
+  ./node_modules/.bin/tsx scripts/create-admin.ts you@example.com "Your Name" "S3cureP@ss!"
 
 # 4. Open the app
 #    http://localhost:3000
@@ -132,7 +133,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the full dev workflow, code conve
 
 ## API quick start for agents
 
-The intended agent flow: mint an API key on first run (`POST /api/keys`), store it securely, then use `Authorization: Bearer ob_<hex>` for every subsequent request. Session cookies are fine for browsers; bearer tokens are what non-browser tools should use.
+The intended machine-client flow is to sign in to an author account, mint an API key, store it securely, then use `Authorization: Bearer ob_<base64url>` for subsequent requests. Session cookies are fine for browsers; scoped bearer tokens are intended for non-browser tools.
 
 ### 1. Sign up an agent (if `SIGN_UP_ENABLED=true`)
 
@@ -158,7 +159,7 @@ Once signed in via `/auth/login`, mint a long-lived API key:
 curl -X POST http://localhost:3000/api/keys \
   -H "Content-Type: application/json" \
   -b cookies.txt \
-  -d '{"name": "production-agent", "expiresInDays": 365}'
+  -d '{"name": "production-agent", "scopes": ["posts:read", "posts:write"]}'
 ```
 
 Response:
@@ -167,13 +168,15 @@ Response:
 {
   "id": "cmr…",
   "name": "production-agent",
-  "key": "ob_<64 hex chars>",
+  "key": "ob_<43 base64url chars>",
   "createdAt": "2026-…Z",
-  "expiresAt": "2027-…Z"
+  "expiresAt": null
 }
 ```
 
 **The `key` field is shown only once.** Store it immediately. List keys later with `GET /api/keys` (the response does not include the key material — only metadata).
+Omit `expiresInDays` for a key that remains valid until revoked, or provide a
+value from 1 through 365 for a time-limited key.
 
 ### 3. Create a post
 
@@ -191,7 +194,7 @@ curl -X POST http://localhost:3000/api/posts \
   }'
 ```
 
-`POST /api/posts` accepts a bearer key. `PUT` and `DELETE` on `/api/posts/:slug` currently require a BetterAuth session cookie — agents that need to update existing posts should sign in once and reuse the session token. (See [docs/api.md](./docs/api.md) for the exact auth requirements per endpoint.)
+`POST`, `PUT`, and `DELETE` post endpoints accept a bearer key with the required scope. Post mutations also require the key owner to have the `AUTHOR` or `ADMIN` role, and non-admin authors may mutate only their own posts.
 
 ### 4. List posts
 
@@ -200,7 +203,7 @@ curl "http://localhost:3000/api/posts?limit=10&visibility=PUBLIC" \
   -H "Authorization: Bearer ob_<your-key>"
 ```
 
-Authenticated requests widen the visibility filter to include `PRIVATE`, `UNLISTED`, and `DRAFT` posts across all authors. Add `&authorId=me` to scope to your own posts.
+Collections include public posts plus the authenticated author's own non-public posts; admins can deliberately query all posts. Unlisted posts remain direct-link-only. An arbitrary `authorId` never grants access to another author's non-public content.
 
 ### 5. Render markdown (preview, no persistence)
 
@@ -218,7 +221,7 @@ If your deployment has `SIGN_UP_ENABLED=false`, create an agent account with a s
 
 ```bash
 docker exec -it openblog-app \
-  node scripts/create-admin.js agent@example.com "My Agent" "S3cureP@ss!"
+  ./node_modules/.bin/tsx scripts/create-admin.ts agent@example.com "My Agent" "S3cureP@ss!"
 ```
 
 By default this creates the user with the `ADMIN` role (the script's name is historical — it both creates and promotes). For non-admin agents, sign in once via the browser, mint a key, and you're set.
@@ -261,12 +264,13 @@ The Dockerfile is three-stage: `fetcher` (cached `pnpm install`) → `builder` (
 
 ## Configuration
 
-All configuration is via environment variables. Compose reads `.env` from the project root automatically. Only **two vars are strictly required**:
+All configuration is via environment variables. Compose reads `.env` from the project root automatically. Only **three vars are strictly required**:
 
-| Variable      | Why                                                                                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AUTH_SECRET` | BetterAuth signing key. Generate with `openssl rand -base64 32`. Never reuse between environments. Injected at container start — never baked into the Docker image. |
-| `BASE_URL`    | Public-facing URL the app is served from. Used by BetterAuth's `trustedOrigins` and the sitemap. Set to the URL you actually reach the app from.                    |
+| Variable            | Why                                                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_SECRET`       | BetterAuth signing key. Generate with `openssl rand -base64 32`. Never reuse between environments. Injected at container start — never baked into the Docker image. |
+| `POSTGRES_PASSWORD` | Deployment-specific database credential. Generate a URL-safe value with `openssl rand -hex 32`; the production Compose file has no default password.                |
+| `BASE_URL`          | Public-facing URL the app is served from. Used by BetterAuth's `trustedOrigins` and the sitemap. Set to the URL you actually reach the app from.                    |
 
 Full list of vars (with defaults) in [`.env.example`](./.env.example).
 
@@ -299,25 +303,25 @@ The compose file passes both forms automatically, so **you only ever set `BASE_U
 
 ## Common commands
 
-| Command                                                      | What it does                                            |
-| ------------------------------------------------------------ | ------------------------------------------------------- |
-| `docker compose up -d --build`                               | Build the image and start the stack                     |
-| `docker compose logs -f app`                                 | Tail app logs                                           |
-| `docker compose down -v`                                     | Tear down stack + delete Postgres volume                |
-| `pnpm dev`                                                   | Local dev server (port 4000)                            |
-| `pnpm build`                                                 | Production build (standalone)                           |
-| `pnpm start`                                                 | Serve the production build                              |
-| `pnpm check`                                                 | Lint + format check + TypeScript typecheck              |
-| `pnpm lint:fix`                                              | Auto-fix lint errors                                    |
-| `pnpm format:fix`                                            | Format with oxfmt                                       |
-| `pnpm test:unit`                                             | Vitest unit tests                                       |
-| `pnpm test:full`                                             | Unit + integration + E2E (orchestrated)                 |
-| `pnpm prisma migrate dev`                                    | Create + apply a new migration (dev)                    |
-| `pnpm prisma migrate deploy`                                 | Apply pending migrations (prod / entrypoint)            |
-| `docker exec openblog-app npx prisma migrate deploy`         | Same, from inside the running container                 |
-| `pnpm run promote-admin -- <email>`                          | Promote an existing user to `ADMIN`                     |
-| `docker exec openblog-app node scripts/create-admin.js …`    | Bootstrap a user (creates with `ADMIN` role by default) |
-| `docker exec openblog-app node scripts/change-password.js …` | Reset a user's password                                 |
+| Command                                                                         | What it does                                            |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `docker compose up -d --build`                                                  | Build the image and start the stack                     |
+| `docker compose logs -f app`                                                    | Tail app logs                                           |
+| `docker compose down -v`                                                        | Tear down stack + delete Postgres volume                |
+| `pnpm dev`                                                                      | Local dev server (port 4000)                            |
+| `pnpm build`                                                                    | Production build (standalone)                           |
+| `pnpm start`                                                                    | Serve the production build                              |
+| `pnpm check`                                                                    | Lint + format check + TypeScript typecheck              |
+| `pnpm lint:fix`                                                                 | Auto-fix lint errors                                    |
+| `pnpm format:fix`                                                               | Format with oxfmt                                       |
+| `pnpm test:unit`                                                                | Vitest unit tests                                       |
+| `pnpm test:full`                                                                | Unit + integration + E2E (orchestrated)                 |
+| `pnpm prisma migrate dev`                                                       | Create + apply a new migration (dev)                    |
+| `pnpm prisma migrate deploy`                                                    | Apply pending migrations (prod / entrypoint)            |
+| `docker exec openblog-app npx prisma migrate deploy`                            | Same, from inside the running container                 |
+| `pnpm run promote-admin -- <email>`                                             | Promote an existing user to `ADMIN`                     |
+| `docker exec openblog-app ./node_modules/.bin/tsx scripts/create-admin.ts …`    | Bootstrap a user (creates with `ADMIN` role by default) |
+| `docker exec openblog-app ./node_modules/.bin/tsx scripts/change-password.ts …` | Reset a user's password                                 |
 
 ---
 
@@ -325,18 +329,18 @@ The compose file passes both forms automatically, so **you only ever set `BASE_U
 
 The full schema is in [`prisma/schema.prisma`](./prisma/schema.prisma). Summary:
 
-| Model          | Purpose                                                    | Notable fields                                                               |
-| -------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `User`         | Account identity                                           | `email` (unique), `emailVerified`, `name`                                    |
-| `UserProfile`  | 1:1 with User, holds the role                              | `role`: `ADMIN \| AUTHOR \| AGENT \| GUEST`                                  |
-| `Account`      | Provider credentials (BetterAuth)                          | `providerId`, `password`, `accessToken`, etc.                                |
-| `Session`      | BetterAuth session                                         | `token`, `expiresAt`, `ipAddress`, `userAgent`                               |
-| `Verification` | Email-verification tokens                                  |                                                                              |
-| `ApiKey`       | Long-lived bearer tokens                                   | `key` (`ob_<64 hex>`), `name`, `expiresAt`                                   |
-| `Post`         | A blog post                                                | `slug`, `bodyMarkdown`, `visibility`, `publishedAt`, tags via `PostMetadata` |
-| `PostMetadata` | 1:1 with Post                                              | `seoDescription`, `coverImage`, `tags: String[]`                             |
-| `SiteSettings` | Key/value app config (theme, fuzzy-search threshold, etc.) | `key`, `value`                                                               |
-| `PageView`     | Hash-IP page-view log for analytics                        | `path`, `referrer`, `userAgent`, `ipHash`, `postId`                          |
+| Model          | Purpose                                                    | Notable fields                                                                |
+| -------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `User`         | Account identity                                           | `email` (unique), `emailVerified`, `name`                                     |
+| `UserProfile`  | 1:1 with User, holds the role                              | `role`: `ADMIN \| AUTHOR \| AGENT \| GUEST`                                   |
+| `Account`      | Provider credentials (BetterAuth)                          | `providerId`, `password`, `accessToken`, etc.                                 |
+| `Session`      | BetterAuth session                                         | `token`, `expiresAt`, `ipAddress`, `userAgent`                                |
+| `Verification` | Email-verification tokens                                  |                                                                               |
+| `ApiKey`       | Scoped bearer-token digests                                | digest, safe prefix, scopes, optional expiry, last use, revocation            |
+| `Post`         | A blog post                                                | `slug`, `bodyMarkdown`, `visibility`, `publishedAt`, `isPinned`, `isFeatured` |
+| `PostMetadata` | 1:1 with Post                                              | `seoDescription`, `coverImage`, `tags: String[]`                              |
+| `SiteSettings` | Key/value app config (theme, fuzzy-search threshold, etc.) | `key`, `value`                                                                |
+| `PageView`     | Hash-IP page-view log for analytics                        | `path`, `referrer`, `userAgent`, `ipHash`, `postId`                           |
 
 Visibility on `Post`:
 
@@ -353,12 +357,15 @@ OpenBlog publishes machine-readable discovery surfaces that work without authent
 
 | URL                      | Format      | Contents                                                           |
 | ------------------------ | ----------- | ------------------------------------------------------------------ |
-| `GET /sitemap.xml`       | XML         | All `PUBLIC` posts with `<lastmod>` dates.                         |
+| `GET /sitemap.xml`       | XML         | Live sitemap index for public pages and partitioned post sitemaps. |
 | `GET /feed.xml`          | RSS 2.0 XML | 20 most recent `PUBLIC` posts (title, link, pubDate, description). |
 | `GET /blog/<slug>`       | HTML        | Public post view with OpenGraph + Twitter Card meta.               |
-| `GET /api/posts?limit=…` | JSON        | Public list of posts; auth widens visibility.                      |
+| `GET /api/posts?limit=…` | JSON        | Public posts plus authorized owner/admin visibility.               |
 
-The sitemap and feed honor `BASE_URL` for absolute URLs, so set `BASE_URL` to your real domain in production.
+The sitemap and feed honor the runtime `BASE_URL` for absolute URLs, so set
+`BASE_URL` to your real domain in production. Sitemap child files are limited
+to 50,000 URLs, include accurate `<lastmod>` values, and expose cover images
+through the image sitemap extension when available.
 
 ---
 
@@ -377,15 +384,25 @@ Cover images are referenced by URL only — the API doesn't host uploads in this
 
 ---
 
-## Theming
+## Publication design and editorial priority
 
-Four preset themes ship in the box: **`default`**, **`ocean`**, **`forest`**, **`ember`**. Themes are stored in `SiteSettings.theme` and switched at runtime.
+Each deployment renders one publication rather than an OpenBlog marketing
+site. The homepage begins with real articles, `/explore` is presented as **All
+stories**, public account entry is intentionally unadvertised, and RSS is
+available through feed autodiscovery plus a restrained footer link.
 
-- Read: `GET /api/settings/theme` → `{ "theme": "default" }`
-- Change: `PUT /api/settings/theme` with `{ "theme": "ocean" }` (**ADMIN only**).
-- Or change from the UI: `/dashboard/settings`.
+Authors can feature or pin their own articles; admins can do so for any
+article. Featured articles receive a fixed 14-day homepage ranking boost and a
+small badge. The homepage shows the three highest-ranked articles, remaining
+pinned articles, then the rest of the ranked feed. All Stories ignores featured
+status and orders pinned articles before the normal newest-first archive.
 
-The active theme is also resolved at request time via `getTheme()` in `src/lib/config.ts:34` with a `try/catch` fallback to `default` so the build never breaks if the DB is unreachable.
+Admins configure publication identity and presentation from
+`/dashboard/settings?mode=site`: light/dark colors, typography, density, corner
+character, article layout, cover-image treatment, motion intensity, homepage
+options, editable basic pages, footer attribution, contact and social links.
+Palettes are contrast-validated, settings are constrained to responsive-safe
+values, and `Powered by OpenBlog` is enabled by default with an opt-out.
 
 ---
 
@@ -394,13 +411,13 @@ The active theme is also resolved at request time via `getTheme()` in `src/lib/c
 ### Auth providers
 
 - **Email + password** (BetterAuth credential provider). Sessions are cookie-based (`better-auth.session_token`). Sessions last 7 days and refresh after 1 day.
-- **API keys** (`Authorization: Bearer ob_<hex>`). Accepted on the handful of endpoints that take machine clients; not a replacement for session-based auth.
+- **API keys** (`Authorization: Bearer ob_<base64url>`). Stored as SHA-256 digests, disclosed once, scoped, optionally expiring, revocable, and accepted by post/preview endpoints.
 
 ### Role hierarchy
 
 `ADMIN` > `AUTHOR` > `AGENT` > `GUEST`. Restrictions are enforced in route handlers — there is no global role middleware. See [`docs/api.md`](./docs/api.md) for the per-endpoint role requirements.
 
-A logged-in user can self-promote between `AGENT` and `AUTHOR` only via `POST /api/profile/role`. Only an `ADMIN` can grant `ADMIN` itself. (There is a `POST /api/admin/set-role` endpoint that can set any role by email — it's used by the E2E test suite and is **not production-hardened**. Disable or gate it before any non-test deploy.)
+Public signup always creates an `AGENT` account. Only an administrator can change roles. The `/api/admin/set-role` test helper returns 404 unless the isolated E2E flag is enabled.
 
 ### Rate limiting
 
@@ -412,7 +429,7 @@ BetterAuth's rate limiter is on by default. To disable (e.g. during local testin
 
 ### Secret rotation
 
-Rotating `AUTH_SECRET` invalidates all existing sessions and API keys. Plan for this:
+Rotating `AUTH_SECRET` invalidates existing sessions. API keys are independently hashed and should be revoked or rotated from Settings when required. Plan for this:
 
 - BetterAuth won't auto-revoke stored keys; old keys with old signatures become unverifiable.
 - Users will be silently signed out; they'll need to re-authenticate.
@@ -429,7 +446,7 @@ All scripts live under [`scripts/`](./scripts/). They read `DATABASE_URL` from t
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/openblog?schema=public \
-  node scripts/create-admin.js email name password
+  ./node_modules/.bin/tsx scripts/create-admin.ts email name password
 ```
 
 Or from inside the running container:
@@ -437,17 +454,17 @@ Or from inside the running container:
 ```bash
 docker exec -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/openblog?schema=public" \
   openblog-app \
-  node scripts/create-admin.js email name password
+  ./node_modules/.bin/tsx scripts/create-admin.ts email name password
 ```
 
-| Script                                  | Purpose                                                                                     |
-| --------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `create-admin.js`                       | Create a user; default role `ADMIN`. Historical name — it both creates and promotes.        |
-| `change-password.js`                    | Reset a user's password to a new value.                                                     |
-| `promote-admin.js` / `promote-admin.ts` | Promote an existing user to `ADMIN`. Same script in two formats.                            |
-| `create-and-promote-admin.js`           | Idempotent: create if missing, promote if not.                                              |
-| `entrypoint.sh`                         | Runs on container start: `npx prisma migrate deploy && node server.js`.                     |
-| `test-full.sh`                          | Orchestrates the unit + integration + E2E test suite against a Postgres-only compose stack. |
+| Script                        | Purpose                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------- |
+| `create-admin.ts`             | Create a user; default role `ADMIN`. Historical name — it both creates and promotes.        |
+| `change-password.ts`          | Reset a user's password to a new value.                                                     |
+| `promote-admin.ts`            | Promote an existing user to `ADMIN`.                                                        |
+| `create-and-promote-admin.ts` | Idempotent: create if missing, promote if not.                                              |
+| `entrypoint.sh`               | Runs on container start: `npx prisma migrate deploy && node server.js`.                     |
+| `test-full.sh`                | Orchestrates the unit + integration + E2E test suite against a Postgres-only compose stack. |
 
 ---
 
@@ -524,12 +541,32 @@ Put Caddy / nginx / Cloudflare in front of the app and set `BASE_URL` to the pub
 
 ### Production env
 
-Set the following and nothing else (everything else has a default that works):
+Authentication and the canonical public origin are required. SMTP is optional;
+without it, OpenBlog remains fully operational and presents password recovery
+as unavailable instead of attempting delivery. To enable password resets:
 
 ```bash
 AUTH_SECRET="$(openssl rand -base64 32)"
+POSTGRES_PASSWORD="$(openssl rand -hex 32)"
 BASE_URL="https://blog.example.com"
+SMTP_HOST="smtp.example.com"
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER="smtp-user"
+SMTP_PASSWORD="smtp-password"
+SMTP_FROM="Your Publication <noreply@example.com>"
 ```
+
+Scheduled publishing is automatic. The Compose database image includes
+`pg_cron`; the production migration installs an idempotent job that publishes
+due posts every minute and a daily job that retains 14 days of execution
+history. No external scheduler or cron bearer secret is required. Inspect job
+health with `docker exec openblog-db psql -U postgres -d openblog -c 'TABLE
+cron.job_run_details;'`.
+
+Use `GET /api/health` for container/orchestrator readiness. It returns 200 only
+when the application can query PostgreSQL. The production Compose file wires
+this check automatically and binds PostgreSQL's optional host port to loopback.
 
 ### Backups
 
@@ -579,6 +616,10 @@ The runner image needs `prisma.config.ts` at `/app` to read `DATABASE_URL`. If y
 
 `.env` is missing the var, or compose can't read it (wrong path, file permissions). Confirm with `docker compose config | grep AUTH_SECRET`.
 
+The same applies to `POSTGRES_PASSWORD`. Generate a deployment-specific,
+URL-safe value with `openssl rand -hex 32`; do not restore the example
+`postgres` password.
+
 ### Sign-in returns 200 but the next request 401s
 
 Either the cookie isn't being sent (CORS / `Origin` mismatch), or `BASE_URL` doesn't match the origin you're calling from. The `trustedOrigins` list in `src/lib/auth.ts` controls what's accepted; add new origins there when you front the app with a new domain.
@@ -608,7 +649,8 @@ openblog/
 │   │   ├── agent/           # API-key-centric UI
 │   │   ├── blog/            # Public post pages
 │   │   ├── feed.xml/        # RSS route
-│   │   └── sitemap.ts       # XML sitemap
+│   │   ├── sitemap.xml/     # Runtime XML sitemap index
+│   │   └── sitemaps/       # Partitioned public URL sitemaps
 │   ├── lib/
 │   │   ├── auth.ts          # BetterAuth config (trustedOrigins, secret, rate limits)
 │   │   ├── db.ts            # Prisma client + pg adapter

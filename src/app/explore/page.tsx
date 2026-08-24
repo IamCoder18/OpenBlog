@@ -4,49 +4,30 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import QueryToast from "@/components/QueryToast";
 import ExploreClient from "./ExploreClient";
 import { getSession } from "@/lib/session";
-
-interface PostsResponse {
-  posts: Post[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  bodyMarkdown: string;
-  bodyHtml: string;
-  publishedAt: string | null;
-  author: Author;
-  metadata: Metadata | null;
-}
-
-interface Author {
-  id: string;
-  name: string | null;
-  image: string | null;
-}
-
-interface Metadata {
-  readTime?: number;
-  category?: string;
-  coverImage?: string;
-  tags?: string[];
-}
+import { prisma } from "@/lib/db";
+import { postInclude } from "@/lib/posts";
 
 async function getInitialPosts() {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/api/posts?limit=10`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) return { posts: [], total: 0 };
-    return (await res.json()) as PostsResponse;
-  } catch {
-    return { posts: [], total: 0 };
-  }
+  const [posts, total] = await Promise.all([
+    prisma.post.findMany({
+      where: { visibility: "PUBLIC" },
+      include: postInclude,
+      orderBy: [
+        { isPinned: "desc" },
+        { publishedAt: "desc" },
+        { createdAt: "desc" },
+      ],
+      take: 10,
+    }),
+    prisma.post.count({ where: { visibility: "PUBLIC" } }),
+  ]);
+  return {
+    posts: posts.map(post => ({
+      ...post,
+      publishedAt: post.publishedAt?.toISOString() ?? null,
+    })),
+    total,
+  };
 }
 
 export default async function ExplorePage() {
@@ -55,21 +36,20 @@ export default async function ExplorePage() {
   const canAccessDashboard = user?.role === "ADMIN" || user?.role === "AUTHOR";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-on-surface">
+    <div className="min-h-screen flex flex-col text-on-surface">
       <QueryToast />
       <Navbar activeLink="explore" user={user} />
 
-      <main className="flex-1 pt-24 pb-24 max-w-7xl mx-auto px-8 w-full">
-        <header className="mb-16 text-center">
-          <span className="text-primary font-label text-xs tracking-widest uppercase">
-            Discover
-          </span>
-          <h1 className="font-headline text-5xl md:text-6xl font-extrabold tracking-tighter text-on-surface mt-4 mb-4">
-            Explore stories
+      <main
+        id="main-content"
+        className="site-container flex-1 pb-28 pt-28 md:pt-32"
+      >
+        <header className="publication-reveal mb-10 border-b border-outline-variant pb-8 sm:pb-10">
+          <h1 className="font-headline text-4xl font-extrabold tracking-[-0.055em] text-on-surface sm:text-6xl">
+            All stories
           </h1>
-          <p className="text-on-surface-variant text-lg max-w-2xl mx-auto leading-relaxed">
-            Browse through our curated collection of thought-provoking articles,
-            essays, and insights from authors around the world.
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-on-surface-variant">
+            Search or browse every public article in this publication.
           </p>
         </header>
 

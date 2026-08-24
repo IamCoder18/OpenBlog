@@ -1,10 +1,35 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type APIRequestContext } from "@playwright/test";
 import {
   createAuthenticatedUser,
   createAuthenticatedPost,
   generateRandomSlug,
   BASE_URL,
 } from "./test-helpers";
+
+function xmlLocations(xml: string): string[] {
+  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match =>
+    match[1]
+      .replaceAll("&amp;", "&")
+      .replaceAll("&quot;", '"')
+      .replaceAll("&apos;", "'")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+  );
+}
+
+async function sitemapDocuments(request: APIRequestContext): Promise<string[]> {
+  const indexResponse = await request.get(`${BASE_URL}/sitemap.xml`);
+  expect(indexResponse.ok()).toBeTruthy();
+  const index = await indexResponse.text();
+  const documents = await Promise.all(
+    xmlLocations(index).map(async url => {
+      const response = await request.get(url);
+      expect(response.ok()).toBeTruthy();
+      return response.text();
+    })
+  );
+  return [index, ...documents];
+}
 
 test.describe("RSS Feed Endpoint (/feed.xml)", () => {
   test("Returns valid XML with correct Content-Type", async ({ request }) => {
@@ -61,6 +86,12 @@ test.describe("RSS Feed Endpoint (/feed.xml)", () => {
 });
 
 test.describe("Sitemap Endpoint (/sitemap.xml)", () => {
+  test("Robots advertises the runtime sitemap URL", async ({ request }) => {
+    const response = await request.get(`${BASE_URL}/robots.txt`);
+    expect(response.ok()).toBeTruthy();
+    expect(await response.text()).toContain(`Sitemap: ${BASE_URL}/sitemap.xml`);
+  });
+
   test("Returns valid XML with correct Content-Type", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/sitemap.xml`);
 
@@ -73,17 +104,16 @@ test.describe("Sitemap Endpoint (/sitemap.xml)", () => {
     const xml = await response.text();
 
     expect(xml).toMatch(/<\?xml version="1\.0" encoding="UTF-8"\s*\?>/);
-    expect(xml).toContain("<urlset");
-    expect(xml).toContain("<url>");
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).toContain("<sitemap>");
     expect(xml).toContain("<loc>");
+    expect(xml).toContain('href="/sitemap.xsl"');
   });
 
   test("Includes base URL in sitemap", async ({ request }) => {
-    const response = await request.get(`${BASE_URL}/sitemap.xml`);
-    const xml = await response.text();
+    const documents = await sitemapDocuments(request);
 
-    expect(xml).toContain(`<loc>${BASE_URL}</loc>`);
-    // Base URL is included (without trailing slash in sitemap)
+    expect(documents.join("\n")).toContain(`<loc>${BASE_URL}</loc>`);
   });
 
   test("Returns valid XML structure when no posts exist", async ({
@@ -93,37 +123,63 @@ test.describe("Sitemap Endpoint (/sitemap.xml)", () => {
     const xml = await response.text();
 
     expect(response.ok()).toBeTruthy();
-    expect(xml).toContain("</urlset>");
+    expect(xml).toContain("</sitemapindex>");
   });
 
-  test("Public blog posts appear as URLs in sitemap", async ({ request }) => {
-    const postsResponse = await request.get(`${BASE_URL}/api/posts?limit=5`);
+  test("Reflects newly published posts and excludes non-indexable posts", async ({
+    request,
+  }) => {
+    const { cookies } = await createAuthenticatedUser(request, {
+      name: "Sitemap Test Author",
+    });
+    const publicSlug = generateRandomSlug();
+    const privateSlug = generateRandomSlug();
+    const unlistedSlug = generateRandomSlug();
 
-    if (postsResponse.ok()) {
-      const data = await postsResponse.json();
-      if (data.posts.length > 0) {
-        const sitemapResponse = await request.get(`${BASE_URL}/sitemap.xml`);
-        const xml = await sitemapResponse.text();
+    await createAuthenticatedPost(
+      request,
+      {
+        title: "Runtime Sitemap Public Post",
+        slug: publicSlug,
+        bodyMarkdown: "Created after the production build.",
+        visibility: "PUBLIC",
+        tags: ["Sitemap Runtime"],
+      },
+      cookies
+    );
+    await createAuthenticatedPost(
+      request,
+      {
+        title: "Runtime Sitemap Private Post",
+        slug: privateSlug,
+        bodyMarkdown: "Must not be indexed.",
+        visibility: "PRIVATE",
+      },
+      cookies
+    );
+    await createAuthenticatedPost(
+      request,
+      {
+        title: "Runtime Sitemap Unlisted Post",
+        slug: unlistedSlug,
+        bodyMarkdown: "Must not be indexed.",
+        visibility: "UNLISTED",
+      },
+      cookies
+    );
 
-        for (const post of data.posts) {
-          expect(xml).toContain(`/blog/${post.slug}`);
-        }
-      }
-    }
+    const xml = (await sitemapDocuments(request)).join("\n");
+    expect(xml).toContain(`/blog/${publicSlug}`);
+    expect(xml).toContain("/topics/sitemap%20runtime");
+    expect(xml).not.toContain(`/blog/${privateSlug}`);
+    expect(xml).not.toContain(`/blog/${unlistedSlug}`);
   });
 
   test("Includes lastmod elements for posts", async ({ request }) => {
-    const postsResponse = await request.get(`${BASE_URL}/api/posts?limit=1`);
-
-    if (postsResponse.ok()) {
-      const data = await postsResponse.json();
-      if (data.posts.length > 0) {
-        const sitemapResponse = await request.get(`${BASE_URL}/sitemap.xml`);
-        const xml = await sitemapResponse.text();
-
-        expect(xml).toContain("<lastmod>");
-      }
-    }
+    const xml = (await sitemapDocuments(request)).join("\n");
+    expect(xml).toMatch(
+      /<lastmod>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z<\/lastmod>/
+    );
   });
 });
 

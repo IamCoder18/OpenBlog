@@ -9,10 +9,12 @@ test.describe("Blog Feed Page (/)", () => {
 
   test("Homepage loads with correct title 'OpenBlog'", async ({ page }) => {
     await expect(page).toHaveTitle(/OpenBlog/);
-    await expect(page.getByText("OpenBlog", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "OpenBlog" }).first()
+    ).toBeVisible();
   });
 
-  test("Featured hero section displays when posts exist", async ({
+  test("publication header and article feed display when posts exist", async ({
     request,
     page,
   }) => {
@@ -20,55 +22,61 @@ test.describe("Blog Feed Page (/)", () => {
     if (response.ok()) {
       const data = await response.json();
       if (data.posts.length > 0) {
-        const heroSection = page.locator("header").first();
-        await expect(heroSection).toBeVisible();
-      }
-    }
-  });
-
-  test("'Featured Insight' label is visible", async ({ request, page }) => {
-    const response = await request.get(`${BASE_URL}/api/posts?limit=1`);
-    if (response.ok()) {
-      const data = await response.json();
-      if (data.posts.length > 0) {
-        await expect(page.getByText("Featured Post")).toBeVisible();
-      }
-    }
-  });
-
-  test("Featured post title and excerpt are displayed", async ({
-    request,
-    page,
-  }) => {
-    const response = await request.get(`${BASE_URL}/api/posts?limit=1`);
-    if (response.ok()) {
-      const data = await response.json();
-      if (data.posts.length > 0) {
-        const featuredPost = data.posts[0];
         await expect(
-          page.locator("h1").filter({ hasText: featuredPost.title })
+          page.getByRole("heading", { name: "OpenBlog" })
+        ).toBeVisible();
+        await expect(
+          page.getByRole("heading", { name: "Latest stories" })
         ).toBeVisible();
       }
     }
   });
 
-  test("'Read the Full Story' button links to post", async ({
-    request,
-    page,
-  }) => {
-    const response = await request.get(`${BASE_URL}/api/posts?limit=1`);
+  test("featured stories carry a visible badge", async ({ request, page }) => {
+    const response = await request.get(
+      `${BASE_URL}/api/posts?limit=50&visibility=PUBLIC`
+    );
     if (response.ok()) {
       const data = await response.json();
-      if (data.posts.length > 0) {
-        const slug = data.posts[0].slug;
-        const button = page.getByRole("link", { name: /read the full story/i });
-        await expect(button).toBeVisible();
-        await expect(button).toHaveAttribute("href", `/blog/${slug}`);
+      if (data.posts.some((post: { isFeatured: boolean }) => post.isFeatured)) {
+        await expect(page.getByText("Featured", { exact: true })).toBeVisible();
       }
     }
   });
 
-  test("Bento grid layout displays recent posts", async ({ request, page }) => {
+  test("highest-ranked post title is displayed", async ({ request, page }) => {
+    const response = await request.get(
+      `${BASE_URL}/api/posts?limit=1&order=home&visibility=PUBLIC`
+    );
+    if (response.ok()) {
+      const data = await response.json();
+      if (data.posts.length > 0) {
+        const rankedPost = data.posts[0];
+        await expect(
+          page.getByRole("heading", { name: rankedPost.title, exact: true })
+        ).toBeVisible();
+      }
+    }
+  });
+
+  test("leading story card links to the post", async ({ request, page }) => {
+    const response = await request.get(
+      `${BASE_URL}/api/posts?limit=1&order=home&visibility=PUBLIC`
+    );
+    if (response.ok()) {
+      const data = await response.json();
+      if (data.posts.length > 0) {
+        const slug = data.posts[0].slug;
+        const storyLink = page.getByRole("link", {
+          name: `Read ${data.posts[0].title}`,
+        });
+        await expect(storyLink).toBeVisible();
+        await expect(storyLink).toHaveAttribute("href", `/blog/${slug}`);
+      }
+    }
+  });
+
+  test("story grid displays recent posts", async ({ request, page }) => {
     const response = await request.get(`${BASE_URL}/api/posts?limit=7`);
     if (response.ok()) {
       const data = await response.json();
@@ -79,7 +87,7 @@ test.describe("Blog Feed Page (/)", () => {
     }
   });
 
-  test("'Recent Stories' section heading is visible", async ({
+  test("latest stories section heading is visible", async ({
     request,
     page,
   }) => {
@@ -88,19 +96,22 @@ test.describe("Blog Feed Page (/)", () => {
       const data = await response.json();
       if (data.posts.length > 0) {
         await expect(
-          page.getByRole("heading", { name: "Recent Stories" })
+          page.getByRole("heading", { name: "Latest stories" })
         ).toBeVisible();
       }
     }
   });
 
-  test("View toggle buttons (grid/list) exist", async ({ request, page }) => {
+  test("primary discovery action is available", async ({ request, page }) => {
     const response = await request.get(`${BASE_URL}/api/posts?limit=1`);
     if (response.ok()) {
       const data = await response.json();
       if (data.posts.length > 0) {
-        await expect(page.getByTestId("grid-toggle")).toBeVisible();
-        await expect(page.getByTestId("list-toggle")).toBeVisible();
+        const discoverLink = page
+          .getByRole("link", { name: "All stories" })
+          .first();
+        await expect(discoverLink).toBeVisible();
+        await expect(discoverLink).toHaveAttribute("href", "/explore");
       }
     }
   });
@@ -112,7 +123,7 @@ test.describe("Blog Feed Page (/)", () => {
     const response = await request.get(`${BASE_URL}/api/posts?limit=20`);
     if (response.ok()) {
       const data = await response.json();
-      if (data.total > 10) {
+      if (data.total > 12) {
         const loadMoreButton = page.getByRole("button", { name: /load more/i });
         await expect(loadMoreButton).toBeVisible();
       }
@@ -123,6 +134,17 @@ test.describe("Blog Feed Page (/)", () => {
     const footer = page.getByRole("contentinfo");
     await expect(footer).toBeVisible();
     await expect(footer).toContainText(new Date().getFullYear().toString());
+  });
+
+  test("reader navigation masks account entry and keeps RSS restrained", async ({
+    page,
+  }) => {
+    await expect(page.getByRole("link", { name: /sign in/i })).toHaveCount(0);
+    const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("link", { name: "RSS" })).toHaveAttribute(
+      "href",
+      "/feed.xml"
+    );
   });
 });
 
@@ -193,8 +215,10 @@ test.describe("Individual Post Page (/blog/[slug])", () => {
           waitUntil: "networkidle",
         });
         const authorName = page
-          .locator("p")
-          .filter({ hasText: data.posts[0].author.name || "Anonymous" });
+          .getByRole("link", {
+            name: data.posts[0].author.name || "Anonymous",
+          })
+          .first();
         await expect(authorName).toBeVisible();
       }
     }
@@ -328,6 +352,8 @@ test.describe("Empty States", () => {
     await page.goto(`${BASE_URL}/blog/this-post-does-not-exist-12345`, {
       waitUntil: "networkidle",
     });
-    await expect(page.getByText("Not Found")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Post not found" })
+    ).toBeVisible();
   });
 });

@@ -183,8 +183,12 @@ if (-not (Test-Path ".env") -or (-not $SkipEnvPrompt)) {
   $bytes = New-Object byte[] 32
   (New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes) | Out-Null
   $secret = [Convert]::ToBase64String($bytes)
+  $dbBytes = New-Object byte[] 32
+  (New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes($dbBytes) | Out-Null
+  $postgresPassword = ([BitConverter]::ToString($dbBytes)).Replace("-", "").ToLowerInvariant()
   @"
 AUTH_SECRET="$secret"
+POSTGRES_PASSWORD="$postgresPassword"
 BASE_URL="$BaseUrl"
 BLOG_NAME="$BlogName"
 SIGN_UP_ENABLED="$SignUpEnabled"
@@ -221,7 +225,7 @@ for ($i = 1; $i -le 90; $i++) {
 
 # ─── Admin ─────────────────────────────────────────────────────────────────
 Write-Box "Creating admin user"
-& docker compose -f $ComposeFile --project-name $ProjectName exec -T app node scripts/create-admin.js $AdminEmail $AdminName $AdminPassword 2>&1 | Out-Null
+& docker compose -f $ComposeFile --project-name $ProjectName exec -T app ./node_modules/.bin/tsx scripts/create-admin.ts $AdminEmail $AdminName $AdminPassword 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Fail "Admin creation failed." }
 Write-Ok "Admin $script:B$AdminEmail$script:X provisioned with role $script:BADMIN$script:X"
 Write-Host ""

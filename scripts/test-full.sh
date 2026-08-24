@@ -8,6 +8,9 @@ COMPOSE_FILE="docker-compose.test.yaml"
 
 # Point Prisma to the ephemeral test database
 export DATABASE_URL="postgresql://postgres:postgres@localhost:$DB_PORT/openblog_test"
+export AUTH_SECRET="openblog-test-secret-at-least-32-characters-long"
+export BASE_URL="http://localhost:$PORT"
+export BLOG_NAME="OpenBlog"
 
 get_pid_on_port() {
   ss -lptn "sport = :$PORT" 2>/dev/null | grep -oP 'pid=\K\d+' | head -n 1
@@ -56,14 +59,13 @@ trap cleanup EXIT INT TERM
 kill_port_3001_surgical
 
 # --- Database Orchestration ---
+docker compose -f "$COMPOSE_FILE" down -v > /dev/null 2>&1
 docker compose --progress quiet -f "$COMPOSE_FILE" up -d
 
 until docker exec openblog-db-test pg_isready -h localhost -U postgres > /dev/null 2>&1; do
   sleep 1
 done
 
-docker exec openblog-db-test psql -U postgres -c 'DROP DATABASE IF EXISTS openblog_test;' > /dev/null
-docker exec openblog-db-test psql -U postgres -c 'CREATE DATABASE openblog_test;' > /dev/null
 pnpm --silent run prisma-test migrate deploy > /dev/null 2>&1
 
 # --- Run Tests ---

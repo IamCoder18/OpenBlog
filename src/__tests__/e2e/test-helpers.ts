@@ -107,7 +107,7 @@ export async function loginUser(
   );
 }
 
-export async function createAuthenticatedUser(
+async function createAuthenticatedBaseUser(
   request: APIRequestContext,
   options?: {
     email?: string;
@@ -300,6 +300,27 @@ export async function createAuthenticatedUser(
   );
 }
 
+export async function createAuthenticatedUser(
+  request: APIRequestContext,
+  options?: {
+    email?: string;
+    password?: string;
+    name?: string;
+  }
+): Promise<{ user: TestUser; cookies: string }> {
+  const result = await createAuthenticatedBaseUser(request, options);
+  const roleResponse = await request.post(`${BASE_URL}/api/admin/set-role`, {
+    data: { role: "AUTHOR", self: true },
+    headers: getHeaders({ Cookie: result.cookies }),
+  });
+  if (!roleResponse.ok()) {
+    throw new Error(
+      `Failed to grant test author role: ${await roleResponse.text()}`
+    );
+  }
+  return result;
+}
+
 export async function createAuthenticatedAdminUser(
   request: APIRequestContext,
   options?: {
@@ -344,10 +365,22 @@ export async function createAuthenticatedPost(
   },
   cookies: string
 ) {
-  const response = await request.post(`${BASE_URL}/api/posts`, {
+  let response = await request.post(`${BASE_URL}/api/posts`, {
     data: options,
     headers: getHeaders({ Cookie: cookies }),
   });
+
+  if (response.status() === 403) {
+    const roleResponse = await request.post(`${BASE_URL}/api/admin/set-role`, {
+      data: { role: "AUTHOR", self: true },
+      headers: getHeaders({ Cookie: cookies }),
+    });
+    if (!roleResponse.ok()) return response;
+    response = await request.post(`${BASE_URL}/api/posts`, {
+      data: options,
+      headers: getHeaders({ Cookie: cookies }),
+    });
+  }
 
   return response;
 }

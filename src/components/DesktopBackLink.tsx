@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 
 export default function DesktopBackLink() {
   const [label, setLabel] = useState<string | null>(null);
+  const [href, setHref] = useState("/");
 
   useEffect(() => {
     const ref = document.referrer;
@@ -17,10 +18,12 @@ export default function DesktopBackLink() {
     const path = url.pathname;
     if (path === "/explore") {
       setLabel("Back to Explore");
+      setHref(`${path}${url.search}`);
     } else if (path === "/") {
       setLabel("Back to Feed");
     } else if (path.startsWith("/dashboard")) {
       setLabel("Back to Dashboard");
+      setHref(`${path}${url.search}`);
     } else {
       setLabel("Back");
     }
@@ -30,7 +33,7 @@ export default function DesktopBackLink() {
 
   return (
     <Link
-      href="/"
+      href={href}
       className="hidden md:inline-flex items-center gap-2 px-0 py-2 text-primary text-sm font-medium mb-8 font-label hover:opacity-80 transition-opacity"
     >
       <ArrowLeft className="w-5 h-5" />

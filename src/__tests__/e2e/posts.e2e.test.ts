@@ -21,7 +21,9 @@ test.describe("Public Flow Tests", () => {
 
   test("Home page contains OpenBlog branding", async ({ page }) => {
     await page.goto(BASE_URL, { waitUntil: "networkidle" });
-    await expect(page.getByText("OpenBlog", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "OpenBlog" }).first()
+    ).toBeVisible();
   });
 
   test("Blog feed displays posts via API", async ({ request }) => {
@@ -226,20 +228,22 @@ test.describe("Public Flow Tests", () => {
     await page.goto(`${BASE_URL}/blog/this-post-does-not-exist-12345`, {
       waitUntil: "networkidle",
     });
-    await expect(page.getByText("Not Found")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Post not found" })
+    ).toBeVisible();
   });
 
   test("Sitemap is accessible", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/sitemap.xml`);
     expect(response.ok()).toBeTruthy();
     const text = await response.text();
-    expect(text).toContain("urlset");
+    expect(text).toContain("sitemapindex");
   });
 
   test("Sitemap contains URLs", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/sitemap.xml`);
     const text = await response.text();
-    expect(text).toContain("url");
+    expect(text).toContain("<loc>");
     expect(text).toContain(BASE_URL);
   });
 
@@ -281,7 +285,7 @@ test.describe("Public Flow Tests", () => {
     expect(text).toContain("item");
   });
 
-  test("Posts are ordered by publishedAt ascending", async ({ request }) => {
+  test("Posts are ordered by publishedAt descending", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/api/posts?limit=10`);
     const data = await response.json();
 
@@ -289,7 +293,7 @@ test.describe("Public Flow Tests", () => {
       for (let i = 0; i < data.posts.length - 1; i++) {
         const current = new Date(data.posts[i].publishedAt || 0);
         const next = new Date(data.posts[i + 1].publishedAt || 0);
-        expect(current.getTime()).toBeLessThanOrEqual(next.getTime());
+        expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
       }
     }
   });
@@ -340,7 +344,9 @@ test.describe("Public Flow Tests", () => {
 
   test("Home page navigation elements present", async ({ page }) => {
     await page.goto(BASE_URL, { waitUntil: "networkidle" });
-    await expect(page.getByRole("navigation")).toBeVisible();
+    await expect(
+      page.getByRole("navigation", { name: "Primary navigation" })
+    ).toBeVisible();
   });
 
   test("Home page footer present", async ({ page }) => {
@@ -378,12 +384,12 @@ test.describe("Public Flow Tests", () => {
 
   test("API handles negative offset gracefully", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/api/posts?offset=-1`);
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(400);
   });
 
   test("API handles non-numeric offset gracefully", async ({ request }) => {
     const response = await request.get(`${BASE_URL}/api/posts?offset=abc`);
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(400);
   });
 });
 
@@ -1042,7 +1048,12 @@ test.describe("Post Management Flow Tests", () => {
 
     expect(deleteResponse.status()).toBe(200);
 
-    const getResponse = await request.get(`${BASE_URL}/api/posts/${post.slug}`);
+    const getResponse = await request.get(
+      `${BASE_URL}/api/posts/${post.slug}`,
+      {
+        headers: { Cookie: "" },
+      }
+    );
     expect(getResponse.status()).toBe(404);
   });
 
@@ -1271,7 +1282,9 @@ test.describe("Post Management Flow Tests", () => {
     expect(response.status()).toBe(404);
   });
 
-  test("Get single post requires public visibility", async ({ request }) => {
+  test("Anonymous readers cannot retrieve private posts", async ({
+    request,
+  }) => {
     const { cookies } = await createAuthenticatedUser(request, testUser);
 
     const createResponse = await request.post(`${BASE_URL}/api/posts`, {
@@ -1287,7 +1300,12 @@ test.describe("Post Management Flow Tests", () => {
     });
 
     const post = await createResponse.json();
-    const getResponse = await request.get(`${BASE_URL}/api/posts/${post.slug}`);
+    const getResponse = await request.get(
+      `${BASE_URL}/api/posts/${post.slug}`,
+      {
+        headers: { Cookie: "" },
+      }
+    );
 
     expect(getResponse.status()).toBe(404);
   });
@@ -1434,7 +1452,7 @@ test.describe("Edge Cases", () => {
   test("Very long title", async ({ request }) => {
     const { cookies } = await createAuthenticatedUser(request, testUser);
 
-    const longTitle = "A".repeat(500);
+    const longTitle = "A".repeat(320);
 
     const response = await request.post(`${BASE_URL}/api/posts`, {
       data: {
@@ -1447,7 +1465,7 @@ test.describe("Edge Cases", () => {
       },
     });
 
-    expect(response.status()).toBe(201);
+    expect(response.status()).toBe(400);
   });
 
   test("Network error handling", async ({ request }) => {
@@ -1900,10 +1918,10 @@ test.describe("Post Metadata Tests", () => {
     expect(updated.metadata.seoDescription).toBe("Updated SEO description");
   });
 
-  test("Tags max count validation (max 20 tags)", async ({ request }) => {
+  test("Tags max count validation (max 10 tags)", async ({ request }) => {
     const { cookies } = await createAuthenticatedUser(request, testUser);
 
-    const tooManyTags = Array.from({ length: 21 }, (_, i) => `tag${i}`);
+    const tooManyTags = Array.from({ length: 11 }, (_, i) => `tag${i}`);
 
     const response = await request.post(`${BASE_URL}/api/posts`, {
       data: {
@@ -1919,15 +1937,15 @@ test.describe("Post Metadata Tests", () => {
 
     expect(response.status()).toBe(400);
     const error = await response.json();
-    expect(error.error).toContain("20");
+    expect(error.error).toContain("10");
   });
 
-  test("Tags max length validation (max 50 chars per tag)", async ({
+  test("Tags max length validation (max 40 chars per tag)", async ({
     request,
   }) => {
     const { cookies } = await createAuthenticatedUser(request, testUser);
 
-    const longTag = "a".repeat(51);
+    const longTag = "a".repeat(41);
 
     const response = await request.post(`${BASE_URL}/api/posts`, {
       data: {
@@ -1943,15 +1961,15 @@ test.describe("Post Metadata Tests", () => {
 
     expect(response.status()).toBe(400);
     const error = await response.json();
-    expect(error.error).toContain("50");
+    expect(error.error).toContain("40");
   });
 
-  test("seoDescription max length validation (max 500 chars)", async ({
+  test("seoDescription max length validation (max 320 chars)", async ({
     request,
   }) => {
     const { cookies } = await createAuthenticatedUser(request, testUser);
 
-    const longSeoDescription = "a".repeat(501);
+    const longSeoDescription = "a".repeat(321);
 
     const response = await request.post(`${BASE_URL}/api/posts`, {
       data: {
@@ -1967,6 +1985,6 @@ test.describe("Post Metadata Tests", () => {
 
     expect(response.status()).toBe(400);
     const error = await response.json();
-    expect(error.error).toContain("500");
+    expect(error.error).toContain("320");
   });
 });

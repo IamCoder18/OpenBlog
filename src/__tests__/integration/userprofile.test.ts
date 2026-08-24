@@ -122,7 +122,7 @@ describe("UserProfile Integration Tests", () => {
   });
 
   describe("2. AGENT role has correct permissions", () => {
-    it("should allow AGENT to delete their own post", async () => {
+    it("should deny AGENT permission to delete posts", async () => {
       const { user } = await createTestUser({
         email: "agent-owner@test.com",
       });
@@ -138,7 +138,7 @@ describe("UserProfile Integration Tests", () => {
       const response = await makeRequest("agent-own-post", user.id);
       const data = await response.json();
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(403);
     });
 
     it("should deny AGENT to delete another user's post", async () => {
@@ -480,6 +480,7 @@ describe("UserProfile Integration Tests", () => {
     it("should reject user with profile deleted after initial creation", async () => {
       const { user } = await createTestUser({
         email: "revoked-profile@test.com",
+        role: "AUTHOR",
       });
 
       const post = await createTestPost({
@@ -498,7 +499,15 @@ describe("UserProfile Integration Tests", () => {
         where: { userId: user.id },
       });
 
-      const responseAfter = await makeRequest("revoke-post", user.id);
+      await createTestPost({
+        title: "Post After Revoke",
+        slug: "post-after-revoke",
+        bodyMarkdown: "# Content",
+        bodyHtml: "<h1>Content</h1>",
+        authorId: user.id,
+        visibility: "PUBLIC",
+      });
+      const responseAfter = await makeRequest("post-after-revoke", user.id);
       expect(responseAfter.status).toBe(403);
     });
   });
@@ -607,7 +616,7 @@ describe("UserProfile Integration Tests", () => {
       expect(guestProfile?.role).toBe("GUEST");
     });
 
-    it("should allow role upgrade and grant additional permissions", async () => {
+    it("should grant publishing permissions only after upgrade to AUTHOR", async () => {
       const { user, profile } = await createTestUser({
         email: `upgrade-perms-${Date.now()}@test.com`,
         role: "GUEST",
@@ -631,7 +640,7 @@ describe("UserProfile Integration Tests", () => {
 
       await prisma.userProfile.update({
         where: { userId: user.id },
-        data: { role: "AGENT" },
+        data: { role: "AUTHOR" },
       });
 
       const responseAfter = await makeRequest(slug, user.id);

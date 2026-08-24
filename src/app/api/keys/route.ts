@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
-import { randomBytes } from "crypto";
 import { apiHandler } from "@/lib/api-error";
+import { API_KEY_SCOPES, createApiKeySecret } from "@/lib/api-keys";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +23,10 @@ export const GET = apiHandler(async function GET() {
       name: true,
       createdAt: true,
       expiresAt: true,
+      prefix: true,
+      scopes: true,
+      lastUsedAt: true,
+      revokedAt: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -46,7 +50,7 @@ export const POST = apiHandler(async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { name, expiresInDays } = body;
+  const { name, expiresInDays, scopes = ["posts:read", "posts:write"] } = body;
 
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json(
@@ -62,7 +66,30 @@ export const POST = apiHandler(async function POST(req: NextRequest) {
     );
   }
 
-  const keyValue = `ob_${randomBytes(32).toString("hex")}`;
+  if (
+    !Array.isArray(scopes) ||
+    scopes.length === 0 ||
+    scopes.some(scope => !API_KEY_SCOPES.includes(scope))
+  ) {
+    return NextResponse.json(
+      { error: "Select at least one valid scope" },
+      { status: 400 }
+    );
+  }
+
+  if (
+    expiresInDays !== undefined &&
+    (typeof expiresInDays !== "number" ||
+      expiresInDays < 1 ||
+      expiresInDays > 365)
+  ) {
+    return NextResponse.json(
+      { error: "Expiry must be between 1 and 365 days" },
+      { status: 400 }
+    );
+  }
+
+  const { secret, digest, prefix } = createApiKeySecret();
 
   let expiresAt: Date | undefined;
   if (typeof expiresInDays === "number" && expiresInDays > 0) {
@@ -73,18 +100,21 @@ export const POST = apiHandler(async function POST(req: NextRequest) {
   const apiKey = await prisma.apiKey.create({
     data: {
       name: name.trim(),
-      key: keyValue,
+      key: digest,
+      prefix,
+      scopes: [...new Set(scopes)],
       userId: session.user.id as string,
       ...(expiresAt && { expiresAt }),
     },
     select: {
       id: true,
       name: true,
-      key: true,
       createdAt: true,
       expiresAt: true,
+      prefix: true,
+      scopes: true,
     },
   });
 
-  return NextResponse.json(apiKey, { status: 201 });
+  return NextResponse.json({ ...apiKey, key: secret }, { status: 201 });
 });

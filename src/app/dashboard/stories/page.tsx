@@ -47,30 +47,27 @@ export default async function StoriesPage({
       <header className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <span className="text-primary font-label text-[10px] tracking-[0.2em] uppercase">
-              {isPersonal ? "Your Workspace" : "Admin Mode"}
+            <span className="eyebrow">
+              {isPersonal ? "Your workspace" : "Publication view"}
             </span>
-            <h1 className="font-headline text-3xl sm:text-4xl font-extrabold tracking-tight text-on-surface mt-2">
-              {isPersonal ? "Your Stories" : "All Stories"}
+            <h1 className="mt-2 font-headline text-3xl font-extrabold tracking-[-0.045em] text-on-surface sm:text-4xl">
+              {isPersonal ? "Story library" : "All stories"}
             </h1>
             <p className="text-on-surface-variant text-sm mt-2">
               {isPersonal
-                ? "Refine, schedule, and curate your content."
-                : "Manage all content across the platform."}
+                ? "Draft, refine, and publish from one focused place."
+                : "Manage every story across the publication."}
             </p>
           </div>
-          <Link
-            href="/dashboard/editor"
-            className="editorial-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all active:scale-95 flex-shrink-0"
-          >
+          <Link href="/dashboard/editor" className="btn-primary flex-shrink-0">
             <Plus className="w-5 h-5" />
-            New Post
+            Write a story
           </Link>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-8">
-          <div className="bg-surface-container-low rounded-xl p-3 sm:p-4">
+          <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-3 shadow-sm sm:p-4">
             <div className="text-[9px] sm:text-[10px] text-on-surface-variant font-label uppercase tracking-wider mb-1">
               Total
             </div>
@@ -78,7 +75,7 @@ export default async function StoriesPage({
               {total.toLocaleString()}
             </div>
           </div>
-          <div className="bg-surface-container-low rounded-xl p-3 sm:p-4">
+          <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-3 shadow-sm sm:p-4">
             <div className="text-[9px] sm:text-[10px] text-on-surface-variant font-label uppercase tracking-wider mb-1">
               Published
             </div>
@@ -86,7 +83,7 @@ export default async function StoriesPage({
               {publishedCount.toLocaleString()}
             </div>
           </div>
-          <div className="bg-surface-container-low rounded-xl p-3 sm:p-4">
+          <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-3 shadow-sm sm:p-4">
             <div className="text-[9px] sm:text-[10px] text-on-surface-variant font-label uppercase tracking-wider mb-1">
               Drafts
             </div>

@@ -323,6 +323,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push PostgreSQL with pg_cron
+        id: database-build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.postgres
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ steps.tags.outputs.repo_lc }}:postgres-16.14-pg-cron-1.6.7
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=postgres
+          cache-to: type=gha,mode=max,scope=postgres
+
   # ──────────────────────────────────────────────────────────────────────────
   # 3. Create the GitHub Release. Skipped on PRs (no push happened).
   # ──────────────────────────────────────────────────────────────────────────

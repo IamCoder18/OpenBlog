@@ -20,7 +20,7 @@ import { headers } from "next/headers";
 import {
   prisma,
   cleanupDatabase,
-  createTestUser,
+  createTestAuthor,
   createTestPost,
 } from "./test-utils";
 
@@ -75,7 +75,9 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("1. Delete own post succeeds", () => {
     it("should delete post when user is the author", async () => {
-      const { user } = await createTestUser({ email: "owner-delete@test.com" });
+      const { user } = await createTestAuthor({
+        email: "owner-delete@test.com",
+      });
       const post = await createTestPost({
         title: "My Post",
         slug: "owner-delete-test",
@@ -93,7 +95,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should delete post with metadata", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "owner-delete-meta@test.com",
       });
       const post = await createTestPost({
@@ -117,10 +119,10 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("2. Delete other's post forbidden (403) - unless ADMIN", () => {
     it("should return 403 when non-owner tries to delete", async () => {
-      const { user: owner } = await createTestUser({
+      const { user: owner } = await createTestAuthor({
         email: "owner-other@test.com",
       });
-      const { user: other } = await createTestUser({
+      const { user: other } = await createTestAuthor({
         email: "other-delete@test.com",
       });
       const post = await createTestPost({
@@ -140,10 +142,10 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should still allow owner to delete after other user tried", async () => {
-      const { user: owner } = await createTestUser({
+      const { user: owner } = await createTestAuthor({
         email: "owner-still@test.com",
       });
-      const { user: other } = await createTestUser({
+      const { user: other } = await createTestAuthor({
         email: "other-still@test.com",
       });
       const post = await createTestPost({
@@ -167,10 +169,10 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("3. ADMIN can delete any post", () => {
     it("should allow admin to delete someone else's post", async () => {
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-delete@test.com",
       });
-      const { user: admin } = await createTestUser({
+      const { user: admin } = await createTestAuthor({
         email: "admin-delete@test.com",
         role: "ADMIN",
       });
@@ -191,7 +193,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should allow admin to delete their own post", async () => {
-      const { user: admin } = await createTestUser({
+      const { user: admin } = await createTestAuthor({
         email: "admin-own-delete@test.com",
         role: "ADMIN",
       });
@@ -214,7 +216,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("4. AUTHOR role can delete own posts but not others'", () => {
     it("should allow AUTHOR to delete their own post", async () => {
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-own-delete@test.com",
         role: "AUTHOR",
       });
@@ -235,10 +237,10 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should deny AUTHOR from deleting another user's post", async () => {
-      const { user: postAuthor } = await createTestUser({
+      const { user: postAuthor } = await createTestAuthor({
         email: "post-author-delete@test.com",
       });
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-other-delete@test.com",
         role: "AUTHOR",
       });
@@ -261,10 +263,10 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("5. GUEST role rejected (403)", () => {
     it("should return 403 for GUEST role", async () => {
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-guest-delete@test.com",
       });
-      const { user: guest } = await createTestUser({
+      const { user: guest } = await createTestAuthor({
         email: "guest-delete@test.com",
         role: "GUEST",
       });
@@ -286,7 +288,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("5. UserProfile existence check", () => {
     it("should return 403 when user has no profile", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "no-profile-delete@test.com",
       });
       const post = await createTestPost({
@@ -311,7 +313,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("6. Delete non-existent post (404)", () => {
     it("should return 404 when post doesn't exist", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "not-found-delete@test.com",
       });
 
@@ -325,7 +327,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("7. Verify cascade delete - metadata is also deleted", () => {
     it("should delete post metadata when post is deleted", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "cascade-delete@test.com",
       });
       const post = await createTestPost({
@@ -358,7 +360,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("8. Verify post is actually removed from database after delete", () => {
     it("should not find post in database after deletion", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "removed-from-db@test.com",
       });
       const post = await createTestPost({
@@ -389,7 +391,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("9. Returns proper success message", () => {
     it("should return success message with correct text", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "success-message@test.com",
       });
       const post = await createTestPost({
@@ -411,7 +413,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should not return error field on success", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "no-error-field@test.com",
       });
       const post = await createTestPost({
@@ -433,7 +435,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("10. Unauthorized access (no session)", () => {
     it("should return 401 when no session", async () => {
-      const { user } = await createTestUser({ email: "no-session@test.com" });
+      const { user } = await createTestAuthor({ email: "no-session@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "no-session-test",
@@ -465,7 +467,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
 
   describe("11. Delete different visibility posts", () => {
     it("should delete PRIVATE post", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "delete-private@test.com",
       });
       const post = await createTestPost({
@@ -485,7 +487,9 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should delete DRAFT post", async () => {
-      const { user } = await createTestUser({ email: "delete-draft@test.com" });
+      const { user } = await createTestAuthor({
+        email: "delete-draft@test.com",
+      });
       const post = await createTestPost({
         title: "Draft Post",
         slug: "delete-draft-test",
@@ -503,7 +507,7 @@ describe("DELETE /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should delete UNLISTED post", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "delete-unlisted@test.com",
       });
       const post = await createTestPost({

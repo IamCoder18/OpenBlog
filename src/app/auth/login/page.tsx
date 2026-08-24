@@ -9,5 +9,10 @@ export default async function LoginPage() {
     redirect(user.role === "AGENT" ? "/agent/profile" : "/dashboard");
   }
 
-  return <LoginClient signUpEnabled={config.SIGN_UP_ENABLED} />;
+  return (
+    <LoginClient
+      signUpEnabled={config.SIGN_UP_ENABLED}
+      blogName={config.BLOG_NAME}
+    />
+  );
 }

@@ -74,12 +74,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+      <div
+        aria-live="polite"
+        aria-atomic="false"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[100] flex flex-col gap-3 max-w-sm pointer-events-none"
+      >
         {toasts.map(toast => {
           const IconComponent = ICONS[toast.type];
           return (
             <div
               key={toast.id}
+              role={toast.type === "error" ? "alert" : "status"}
               className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl backdrop-blur-xl shadow-ambient animate-slide-in-right ${STYLES[toast.type]}`}
             >
               <IconComponent className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -88,6 +93,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               </p>
               <button
                 onClick={() => removeToast(toast.id)}
+                aria-label={`Dismiss ${toast.type} notification`}
                 className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4 opacity-60" />

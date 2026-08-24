@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { renderMarkdown } from "@/lib/markdown";
-import { headers } from "next/headers";
 import { apiHandler } from "@/lib/api-error";
+import { getRequestViewer } from "@/lib/request-viewer";
 
 export const dynamic = "force-dynamic";
 
 export const POST = apiHandler(async function POST(req: NextRequest) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-
-  if (!session?.user) {
+  const headersList = req.headers;
+  const viewer = await getRequestViewer(headersList, "posts:read");
+  if (!viewer) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const userProfile = await prisma.userProfile.findUnique({
-    where: { userId: session.user.id as string },
-  });
-
-  if (!userProfile || userProfile.role === "GUEST") {
+  if (viewer.role === "GUEST") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

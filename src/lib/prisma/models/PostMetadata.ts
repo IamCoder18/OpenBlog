@@ -28,6 +28,7 @@ export type PostMetadataMinAggregateOutputType = {
   id: string | null
   seoDescription: string | null
   coverImage: string | null
+  coverImageAlt: string | null
   postId: string | null
 }
 
@@ -35,6 +36,7 @@ export type PostMetadataMaxAggregateOutputType = {
   id: string | null
   seoDescription: string | null
   coverImage: string | null
+  coverImageAlt: string | null
   postId: string | null
 }
 
@@ -42,6 +44,7 @@ export type PostMetadataCountAggregateOutputType = {
   id: number
   seoDescription: number
   coverImage: number
+  coverImageAlt: number
   tags: number
   postId: number
   _all: number
@@ -52,6 +55,7 @@ export type PostMetadataMinAggregateInputType = {
   id?: true
   seoDescription?: true
   coverImage?: true
+  coverImageAlt?: true
   postId?: true
 }
 
@@ -59,6 +63,7 @@ export type PostMetadataMaxAggregateInputType = {
   id?: true
   seoDescription?: true
   coverImage?: true
+  coverImageAlt?: true
   postId?: true
 }
 
@@ -66,6 +71,7 @@ export type PostMetadataCountAggregateInputType = {
   id?: true
   seoDescription?: true
   coverImage?: true
+  coverImageAlt?: true
   tags?: true
   postId?: true
   _all?: true
@@ -147,6 +153,7 @@ export type PostMetadataGroupByOutputType = {
   id: string
   seoDescription: string | null
   coverImage: string | null
+  coverImageAlt: string | null
   tags: string[]
   postId: string
   _count: PostMetadataCountAggregateOutputType | null
@@ -176,6 +183,7 @@ export type PostMetadataWhereInput = {
   id?: Prisma.StringFilter<"PostMetadata"> | string
   seoDescription?: Prisma.StringNullableFilter<"PostMetadata"> | string | null
   coverImage?: Prisma.StringNullableFilter<"PostMetadata"> | string | null
+  coverImageAlt?: Prisma.StringNullableFilter<"PostMetadata"> | string | null
   tags?: Prisma.StringNullableListFilter<"PostMetadata">
   postId?: Prisma.StringFilter<"PostMetadata"> | string
   post?: Prisma.XOR<Prisma.PostScalarRelationFilter, Prisma.PostWhereInput>
@@ -185,6 +193,7 @@ export type PostMetadataOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   seoDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  coverImageAlt?: Prisma.SortOrderInput | Prisma.SortOrder
   tags?: Prisma.SortOrder
   postId?: Prisma.SortOrder
   post?: Prisma.PostOrderByWithRelationInput
@@ -198,6 +207,7 @@ export type PostMetadataWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.PostMetadataWhereInput | Prisma.PostMetadataWhereInput[]
   seoDescription?: Prisma.StringNullableFilter<"PostMetadata"> | string | null
   coverImage?: Prisma.StringNullableFilter<"PostMetadata"> | string | null
+  coverImageAlt?: Prisma.StringNullableFilter<"PostMetadata"> | string | null
   tags?: Prisma.StringNullableListFilter<"PostMetadata">
   post?: Prisma.XOR<Prisma.PostScalarRelationFilter, Prisma.PostWhereInput>
 }, "id" | "postId">
@@ -206,6 +216,7 @@ export type PostMetadataOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   seoDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  coverImageAlt?: Prisma.SortOrderInput | Prisma.SortOrder
   tags?: Prisma.SortOrder
   postId?: Prisma.SortOrder
   _count?: Prisma.PostMetadataCountOrderByAggregateInput
@@ -220,6 +231,7 @@ export type PostMetadataScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"PostMetadata"> | string
   seoDescription?: Prisma.StringNullableWithAggregatesFilter<"PostMetadata"> | string | null
   coverImage?: Prisma.StringNullableWithAggregatesFilter<"PostMetadata"> | string | null
+  coverImageAlt?: Prisma.StringNullableWithAggregatesFilter<"PostMetadata"> | string | null
   tags?: Prisma.StringNullableListFilter<"PostMetadata">
   postId?: Prisma.StringWithAggregatesFilter<"PostMetadata"> | string
 }
@@ -228,6 +240,7 @@ export type PostMetadataCreateInput = {
   id?: string
   seoDescription?: string | null
   coverImage?: string | null
+  coverImageAlt?: string | null
   tags?: Prisma.PostMetadataCreatetagsInput | string[]
   post: Prisma.PostCreateNestedOneWithoutMetadataInput
 }
@@ -236,6 +249,7 @@ export type PostMetadataUncheckedCreateInput = {
   id?: string
   seoDescription?: string | null
   coverImage?: string | null
+  coverImageAlt?: string | null
   tags?: Prisma.PostMetadataCreatetagsInput | string[]
   postId: string
 }
@@ -244,6 +258,7 @@ export type PostMetadataUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImageAlt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.PostMetadataUpdatetagsInput | string[]
   post?: Prisma.PostUpdateOneRequiredWithoutMetadataNestedInput
 }
@@ -252,6 +267,7 @@ export type PostMetadataUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImageAlt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.PostMetadataUpdatetagsInput | string[]
   postId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -260,6 +276,7 @@ export type PostMetadataCreateManyInput = {
   id?: string
   seoDescription?: string | null
   coverImage?: string | null
+  coverImageAlt?: string | null
   tags?: Prisma.PostMetadataCreatetagsInput | string[]
   postId: string
 }
@@ -268,6 +285,7 @@ export type PostMetadataUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImageAlt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.PostMetadataUpdatetagsInput | string[]
 }
 
@@ -275,6 +293,7 @@ export type PostMetadataUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImageAlt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.PostMetadataUpdatetagsInput | string[]
   postId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -284,18 +303,11 @@ export type PostMetadataNullableScalarRelationFilter = {
   isNot?: Prisma.PostMetadataWhereInput | null
 }
 
-export type StringNullableListFilter<$PrismaModel = never> = {
-  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
-  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
-  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  isEmpty?: boolean
-}
-
 export type PostMetadataCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   seoDescription?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
+  coverImageAlt?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   postId?: Prisma.SortOrder
 }
@@ -304,6 +316,7 @@ export type PostMetadataMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   seoDescription?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
+  coverImageAlt?: Prisma.SortOrder
   postId?: Prisma.SortOrder
 }
 
@@ -311,6 +324,7 @@ export type PostMetadataMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   seoDescription?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
+  coverImageAlt?: Prisma.SortOrder
   postId?: Prisma.SortOrder
 }
 
@@ -359,6 +373,7 @@ export type PostMetadataCreateWithoutPostInput = {
   id?: string
   seoDescription?: string | null
   coverImage?: string | null
+  coverImageAlt?: string | null
   tags?: Prisma.PostMetadataCreatetagsInput | string[]
 }
 
@@ -366,6 +381,7 @@ export type PostMetadataUncheckedCreateWithoutPostInput = {
   id?: string
   seoDescription?: string | null
   coverImage?: string | null
+  coverImageAlt?: string | null
   tags?: Prisma.PostMetadataCreatetagsInput | string[]
 }
 
@@ -389,6 +405,7 @@ export type PostMetadataUpdateWithoutPostInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImageAlt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.PostMetadataUpdatetagsInput | string[]
 }
 
@@ -396,6 +413,7 @@ export type PostMetadataUncheckedUpdateWithoutPostInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImageAlt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.PostMetadataUpdatetagsInput | string[]
 }
 
@@ -405,6 +423,7 @@ export type PostMetadataSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   seoDescription?: boolean
   coverImage?: boolean
+  coverImageAlt?: boolean
   tags?: boolean
   postId?: boolean
   post?: boolean | Prisma.PostDefaultArgs<ExtArgs>
@@ -414,6 +433,7 @@ export type PostMetadataSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   seoDescription?: boolean
   coverImage?: boolean
+  coverImageAlt?: boolean
   tags?: boolean
   postId?: boolean
   post?: boolean | Prisma.PostDefaultArgs<ExtArgs>
@@ -423,6 +443,7 @@ export type PostMetadataSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   seoDescription?: boolean
   coverImage?: boolean
+  coverImageAlt?: boolean
   tags?: boolean
   postId?: boolean
   post?: boolean | Prisma.PostDefaultArgs<ExtArgs>
@@ -432,11 +453,12 @@ export type PostMetadataSelectScalar = {
   id?: boolean
   seoDescription?: boolean
   coverImage?: boolean
+  coverImageAlt?: boolean
   tags?: boolean
   postId?: boolean
 }
 
-export type PostMetadataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "seoDescription" | "coverImage" | "tags" | "postId", ExtArgs["result"]["postMetadata"]>
+export type PostMetadataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "seoDescription" | "coverImage" | "coverImageAlt" | "tags" | "postId", ExtArgs["result"]["postMetadata"]>
 export type PostMetadataInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   post?: boolean | Prisma.PostDefaultArgs<ExtArgs>
 }
@@ -456,6 +478,7 @@ export type $PostMetadataPayload<ExtArgs extends runtime.Types.Extensions.Intern
     id: string
     seoDescription: string | null
     coverImage: string | null
+    coverImageAlt: string | null
     tags: string[]
     postId: string
   }, ExtArgs["result"]["postMetadata"]>
@@ -885,6 +908,7 @@ export interface PostMetadataFieldRefs {
   readonly id: Prisma.FieldRef<"PostMetadata", 'String'>
   readonly seoDescription: Prisma.FieldRef<"PostMetadata", 'String'>
   readonly coverImage: Prisma.FieldRef<"PostMetadata", 'String'>
+  readonly coverImageAlt: Prisma.FieldRef<"PostMetadata", 'String'>
   readonly tags: Prisma.FieldRef<"PostMetadata", 'String[]'>
   readonly postId: Prisma.FieldRef<"PostMetadata", 'String'>
 }

@@ -20,7 +20,7 @@ import { headers } from "next/headers";
 import {
   prisma,
   cleanupDatabase,
-  createTestUser,
+  createTestAuthor,
   createTestPost,
 } from "./test-utils";
 
@@ -77,7 +77,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("1. Update post title successfully", () => {
     it("should update title with valid data", async () => {
-      const { user } = await createTestUser({ email: "title-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "title-update@test.com",
+      });
       const post = await createTestPost({
         title: "Original Title",
         slug: "original-title-test",
@@ -100,7 +102,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should preserve other fields when updating title", async () => {
-      const { user } = await createTestUser({ email: "preserve@test.com" });
+      const { user } = await createTestAuthor({ email: "preserve@test.com" });
       const post = await createTestPost({
         title: "Original",
         slug: "preserve-fields-test",
@@ -127,7 +129,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("2. Update post bodyMarkdown and verify HTML rendering", () => {
     it("should update bodyMarkdown and render HTML", async () => {
-      const { user } = await createTestUser({ email: "body-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "body-update@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "body-update-test",
@@ -151,7 +155,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should preserve existing HTML when bodyMarkdown unchanged", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "body-unchanged@test.com",
       });
       const post = await createTestPost({
@@ -177,7 +181,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should handle complex markdown rendering", async () => {
-      const { user } = await createTestUser({ email: "complex-md@test.com" });
+      const { user } = await createTestAuthor({ email: "complex-md@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "complex-md-test",
@@ -205,7 +209,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("3. Update slug (with validation for format and uniqueness)", () => {
     it("should update slug to valid format", async () => {
-      const { user } = await createTestUser({ email: "slug-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "slug-update@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "old-slug-test",
@@ -228,7 +234,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 409 when slug already exists", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "slug-conflict@test.com",
       });
       await createTestPost({
@@ -262,7 +268,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should allow same user to keep same slug", async () => {
-      const { user } = await createTestUser({ email: "same-slug@test.com" });
+      const { user } = await createTestAuthor({ email: "same-slug@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "same-slug-test",
@@ -285,7 +291,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 for invalid slug format (uppercase)", async () => {
-      const { user } = await createTestUser({ email: "slug-upper@test.com" });
+      const { user } = await createTestAuthor({ email: "slug-upper@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "valid-slug-test",
@@ -308,7 +314,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 for invalid slug format (special chars)", async () => {
-      const { user } = await createTestUser({ email: "slug-special@test.com" });
+      const { user } = await createTestAuthor({
+        email: "slug-special@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "valid-slug-2",
@@ -330,7 +338,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 when slug is too long (100 chars)", async () => {
-      const { user } = await createTestUser({ email: "slug-long@test.com" });
+      const { user } = await createTestAuthor({ email: "slug-long@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "short-slug-test",
@@ -355,7 +363,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("4. Update visibility (PUBLIC, PRIVATE, UNLISTED)", () => {
     it("should update visibility to PRIVATE", async () => {
-      const { user } = await createTestUser({ email: "vis-private@test.com" });
+      const { user } = await createTestAuthor({
+        email: "vis-private@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "vis-private-test",
@@ -379,7 +389,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should update visibility to PUBLIC and set publishedAt", async () => {
-      const { user } = await createTestUser({ email: "vis-public@test.com" });
+      const { user } = await createTestAuthor({ email: "vis-public@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "vis-public-test",
@@ -403,7 +413,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should update visibility to UNLISTED", async () => {
-      const { user } = await createTestUser({ email: "vis-unlisted@test.com" });
+      const { user } = await createTestAuthor({
+        email: "vis-unlisted@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "vis-unlisted-test",
@@ -426,7 +438,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should preserve publishedAt when already PUBLIC", async () => {
-      const { user } = await createTestUser({ email: "vis-preserve@test.com" });
+      const { user } = await createTestAuthor({
+        email: "vis-preserve@test.com",
+      });
       const originalDate = new Date("2024-01-01");
       const post = await createTestPost({
         title: "Test Post",
@@ -453,7 +467,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("5. Update seoDescription", () => {
     it("should update seoDescription", async () => {
-      const { user } = await createTestUser({ email: "seo-update@test.com" });
+      const { user } = await createTestAuthor({ email: "seo-update@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "seo-update-test",
@@ -477,7 +491,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should add seoDescription when metadata doesn't exist", async () => {
-      const { user } = await createTestUser({ email: "seo-add@test.com" });
+      const { user } = await createTestAuthor({ email: "seo-add@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "seo-add-test",
@@ -502,7 +516,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("6. Update tags", () => {
     it("should update tags", async () => {
-      const { user } = await createTestUser({ email: "tags-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "tags-update@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "tags-update-test",
@@ -526,7 +542,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should add tags when metadata doesn't exist", async () => {
-      const { user } = await createTestUser({ email: "tags-add@test.com" });
+      const { user } = await createTestAuthor({ email: "tags-add@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "tags-add-test",
@@ -549,7 +565,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should clear tags when empty array provided", async () => {
-      const { user } = await createTestUser({ email: "tags-clear@test.com" });
+      const { user } = await createTestAuthor({ email: "tags-clear@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "tags-clear-test",
@@ -575,7 +591,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("7. Metadata upsert - create metadata if doesn't exist, update if exists", () => {
     it("should create metadata when post has no metadata", async () => {
-      const { user } = await createTestUser({ email: "meta-create@test.com" });
+      const { user } = await createTestAuthor({
+        email: "meta-create@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "meta-create-test",
@@ -600,7 +618,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should update existing metadata", async () => {
-      const { user } = await createTestUser({ email: "meta-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "meta-update@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "meta-update-test",
@@ -626,7 +646,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should only update seoDescription when tags not provided", async () => {
-      const { user } = await createTestUser({ email: "meta-partial@test.com" });
+      const { user } = await createTestAuthor({
+        email: "meta-partial@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "meta-partial-test",
@@ -654,7 +676,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("8. Partial updates (only some fields)", () => {
     it("should update only title", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "partial-title@test.com",
       });
       const post = await createTestPost({
@@ -680,7 +702,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should update only bodyMarkdown", async () => {
-      const { user } = await createTestUser({ email: "partial-body@test.com" });
+      const { user } = await createTestAuthor({
+        email: "partial-body@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "partial-body-test",
@@ -704,7 +728,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should handle empty body gracefully", async () => {
-      const { user } = await createTestUser({ email: "empty-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "empty-update@test.com",
+      });
       const post = await createTestPost({
         title: "Test Post",
         slug: "empty-update-test",
@@ -724,7 +750,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("9. Update own post succeeds", () => {
     it("should allow owner to update their post", async () => {
-      const { user } = await createTestUser({ email: "owner-update@test.com" });
+      const { user } = await createTestAuthor({
+        email: "owner-update@test.com",
+      });
       const post = await createTestPost({
         title: "My Post",
         slug: "owner-post-test",
@@ -749,8 +777,12 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("10. Update other's post forbidden (403) - unless ADMIN", () => {
     it("should return 403 when non-owner tries to update", async () => {
-      const { user: owner } = await createTestUser({ email: "owner@test.com" });
-      const { user: other } = await createTestUser({ email: "other@test.com" });
+      const { user: owner } = await createTestAuthor({
+        email: "owner@test.com",
+      });
+      const { user: other } = await createTestAuthor({
+        email: "other@test.com",
+      });
       const post = await createTestPost({
         title: "Owner's Post",
         slug: "other-post-test",
@@ -775,10 +807,10 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("11. ADMIN can edit any post", () => {
     it("should allow admin to update someone else's post", async () => {
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author@test.com",
       });
-      const { user: admin } = await createTestUser({
+      const { user: admin } = await createTestAuthor({
         email: "admin@test.com",
         role: "ADMIN",
       });
@@ -806,7 +838,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("12. AUTHOR can update own posts but not others'", () => {
     it("should allow AUTHOR to update their own post", async () => {
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-own-update@test.com",
         role: "AUTHOR",
       });
@@ -832,10 +864,10 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should deny AUTHOR from updating another user's post", async () => {
-      const { user: postAuthor } = await createTestUser({
+      const { user: postAuthor } = await createTestAuthor({
         email: "post-author-update@test.com",
       });
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-other-update@test.com",
         role: "AUTHOR",
       });
@@ -863,10 +895,10 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("13. GUEST role rejected (403)", () => {
     it("should return 403 for GUEST role", async () => {
-      const { user: author } = await createTestUser({
+      const { user: author } = await createTestAuthor({
         email: "author-guest@test.com",
       });
-      const { user: guest } = await createTestUser({
+      const { user: guest } = await createTestAuthor({
         email: "guest@test.com",
         role: "GUEST",
       });
@@ -893,7 +925,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("13. UserProfile existence check", () => {
     it("should return 403 when user has no profile", async () => {
-      const { user } = await createTestUser({ email: "no-profile@test.com" });
+      const { user } = await createTestAuthor({ email: "no-profile@test.com" });
       const post = await createTestPost({
         title: "Test Post",
         slug: "no-profile-test",
@@ -921,7 +953,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("14. Update non-existent post (404)", () => {
     it("should return 404 when post doesn't exist", async () => {
-      const { user } = await createTestUser({ email: "not-found@test.com" });
+      const { user } = await createTestAuthor({ email: "not-found@test.com" });
 
       const response = await makeRequest(
         "non-existent-post",
@@ -938,7 +970,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("15. Title length validation (1-200 chars)", () => {
     it("should return 200 for 1 character title", async () => {
-      const { user } = await createTestUser({ email: "title-min@test.com" });
+      const { user } = await createTestAuthor({ email: "title-min@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "title-min-test",
@@ -960,7 +992,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 200 for 200 character title", async () => {
-      const { user } = await createTestUser({ email: "title-max@test.com" });
+      const { user } = await createTestAuthor({ email: "title-max@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "title-max-test",
@@ -982,7 +1014,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 for empty title", async () => {
-      const { user } = await createTestUser({ email: "title-empty@test.com" });
+      const { user } = await createTestAuthor({
+        email: "title-empty@test.com",
+      });
       const post = await createTestPost({
         title: "Test",
         slug: "title-empty-test",
@@ -1005,7 +1039,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 for title over 200 characters", async () => {
-      const { user } = await createTestUser({ email: "title-over@test.com" });
+      const { user } = await createTestAuthor({ email: "title-over@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "title-over-test",
@@ -1030,7 +1064,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
   describe("16. Slug format validation", () => {
     it("should return 400 for slug with spaces", async () => {
-      const { user } = await createTestUser({ email: "slug-space@test.com" });
+      const { user } = await createTestAuthor({ email: "slug-space@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "slug-space-test",
@@ -1052,7 +1086,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 for slug starting with hyphen", async () => {
-      const { user } = await createTestUser({ email: "slug-start@test.com" });
+      const { user } = await createTestAuthor({ email: "slug-start@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "slug-start-test",
@@ -1074,7 +1108,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 for slug ending with hyphen", async () => {
-      const { user } = await createTestUser({ email: "slug-end@test.com" });
+      const { user } = await createTestAuthor({ email: "slug-end@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "slug-end-test",
@@ -1096,9 +1130,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
   });
 
-  describe("17. Tags validation (max 20, 50 chars)", () => {
-    it("should return 400 when tags exceed 20 items", async () => {
-      const { user } = await createTestUser({ email: "tags-many@test.com" });
+  describe("17. Tags validation (max 10, 40 chars)", () => {
+    it("should return 400 when tags exceed 10 items", async () => {
+      const { user } = await createTestAuthor({ email: "tags-many@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "tags-many-test",
@@ -1108,7 +1142,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
         visibility: "PUBLIC",
       });
 
-      const manyTags = Array.from({ length: 21 }, (_, i) => `tag${i}`);
+      const manyTags = Array.from({ length: 11 }, (_, i) => `tag${i}`);
 
       const response = await makeRequest(
         "tags-many-test",
@@ -1119,11 +1153,11 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toContain("20");
+      expect(data.error).toContain("10");
     });
 
-    it("should return 400 when tag exceeds 50 characters", async () => {
-      const { user } = await createTestUser({ email: "tags-long@test.com" });
+    it("should return 400 when tag exceeds 40 characters", async () => {
+      const { user } = await createTestAuthor({ email: "tags-long@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "tags-long-test",
@@ -1135,18 +1169,18 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
       const response = await makeRequest(
         "tags-long-test",
-        { tags: ["A".repeat(51)] },
+        { tags: ["A".repeat(41)] },
         user.id
       );
 
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toContain("50");
+      expect(data.error).toContain("40");
     });
 
     it("should return 400 when tags is not an array", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "tags-not-array@test.com",
       });
       const post = await createTestPost({
@@ -1170,8 +1204,8 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
       expect(data.error).toContain("array");
     });
 
-    it("should return 200 with exactly 20 tags", async () => {
-      const { user } = await createTestUser({ email: "tags-exact@test.com" });
+    it("should return 200 with exactly 10 tags", async () => {
+      const { user } = await createTestAuthor({ email: "tags-exact@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "tags-exact-test",
@@ -1181,7 +1215,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
         visibility: "PUBLIC",
       });
 
-      const twentyTags = Array.from({ length: 20 }, (_, i) => `tag${i}`);
+      const twentyTags = Array.from({ length: 10 }, (_, i) => `tag${i}`);
 
       const response = await makeRequest(
         "tags-exact-test",
@@ -1194,8 +1228,8 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
       expect(response.status).toBe(200);
     });
 
-    it("should return 200 with tag of exactly 50 characters", async () => {
-      const { user } = await createTestUser({ email: "tags-max@test.com" });
+    it("should return 200 with tag of exactly 40 characters", async () => {
+      const { user } = await createTestAuthor({ email: "tags-max@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "tags-max-test",
@@ -1207,7 +1241,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
       const response = await makeRequest(
         "tags-max-test",
-        { tags: ["A".repeat(50)] },
+        { tags: ["A".repeat(40)] },
         user.id
       );
 
@@ -1217,9 +1251,9 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
   });
 
-  describe("18. seoDescription validation (max 500 chars)", () => {
-    it("should return 400 when seoDescription exceeds 500 characters", async () => {
-      const { user } = await createTestUser({ email: "seo-long@test.com" });
+  describe("18. seoDescription validation (max 320 chars)", () => {
+    it("should return 400 when seoDescription exceeds 320 characters", async () => {
+      const { user } = await createTestAuthor({ email: "seo-long@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "seo-long-test",
@@ -1231,18 +1265,18 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
       const response = await makeRequest(
         "seo-long-test",
-        { seoDescription: "A".repeat(501) },
+        { seoDescription: "A".repeat(321) },
         user.id
       );
 
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toContain("500");
+      expect(data.error).toContain("320");
     });
 
-    it("should return 200 when seoDescription is exactly 500 characters", async () => {
-      const { user } = await createTestUser({ email: "seo-exact@test.com" });
+    it("should return 200 when seoDescription is exactly 320 characters", async () => {
+      const { user } = await createTestAuthor({ email: "seo-exact@test.com" });
       const post = await createTestPost({
         title: "Test",
         slug: "seo-exact-test",
@@ -1254,7 +1288,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
       const response = await makeRequest(
         "seo-exact-test",
-        { seoDescription: "A".repeat(500) },
+        { seoDescription: "A".repeat(320) },
         user.id
       );
 
@@ -1264,7 +1298,7 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
     });
 
     it("should return 400 when seoDescription is not a string", async () => {
-      const { user } = await createTestUser({
+      const { user } = await createTestAuthor({
         email: "seo-not-string@test.com",
       });
       const post = await createTestPost({
@@ -1286,6 +1320,52 @@ describe("PUT /api/posts/[slug] - Integration Tests", () => {
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("string");
+    });
+  });
+
+  describe("19. Editorial priority", () => {
+    it("lets an author feature and pin their own article", async () => {
+      const { user } = await createTestAuthor({
+        email: "update-priority@test.com",
+      });
+      await createTestPost({
+        title: "Priority",
+        slug: "update-priority",
+        bodyMarkdown: "# Content",
+        bodyHtml: "<h1>Content</h1>",
+        authorId: user.id,
+        visibility: "PUBLIC",
+      });
+      const response = await makeRequest(
+        "update-priority",
+        { isPinned: true, isFeatured: true },
+        user.id
+      );
+      const data = await response.json();
+      expect(response.status).toBe(200);
+      expect(data.isPinned).toBe(true);
+      expect(data.isFeatured).toBe(true);
+    });
+
+    it("rejects non-boolean editorial priority values", async () => {
+      const { user } = await createTestAuthor({
+        email: "update-priority-invalid@test.com",
+      });
+      await createTestPost({
+        title: "Priority",
+        slug: "update-priority-invalid",
+        bodyMarkdown: "# Content",
+        bodyHtml: "<h1>Content</h1>",
+        authorId: user.id,
+        visibility: "PUBLIC",
+      });
+      const response = await makeRequest(
+        "update-priority-invalid",
+        { isFeatured: 1 },
+        user.id
+      );
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toContain("boolean");
     });
   });
 });

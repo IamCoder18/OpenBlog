@@ -32,8 +32,9 @@ export const DELETE = apiHandler(async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await prisma.apiKey.delete({
+  await prisma.apiKey.update({
     where: { id },
+    data: { revokedAt: new Date() },
   });
 
   return NextResponse.json({ message: "API key deleted successfully" });

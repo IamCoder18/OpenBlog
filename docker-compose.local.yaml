@@ -13,13 +13,24 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    image: openblog-postgres:local
     container_name: openblog-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (generate with `openssl rand -hex 32`)}
       POSTGRES_DB: openblog
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_cron
+      - -c
+      - cron.database_name=openblog
+      - -c
+      - cron.use_background_workers=on
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -37,19 +48,30 @@ services:
     image: openblog:local
     container_name: openblog-app
     restart: unless-stopped
+    init: true
     depends_on:
       postgres:
         condition: service_healthy
     ports:
       - "${APP_HOST_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/openblog?schema=public
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/openblog?schema=public
       BASE_URL: ${BASE_URL:-http://localhost:3000}
       BLOG_NAME: ${BLOG_NAME:-OpenBlog}
+      BLOG_DESCRIPTION: ${BLOG_DESCRIPTION:-}
+      SITE_LOGO_URL: ${SITE_LOGO_URL:-}
+      SITE_CONTACT_EMAIL: ${SITE_CONTACT_EMAIL:-}
+      SITE_SOCIAL_URL: ${SITE_SOCIAL_URL:-}
       NODE_ENV: production
       PORT: 3000
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set (generate with `openssl rand -base64 32`)}
       SIGN_UP_ENABLED: ${SIGN_UP_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
 
 volumes:
   postgres_data:

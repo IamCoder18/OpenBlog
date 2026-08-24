@@ -53,6 +53,11 @@ export type ApiKey = Prisma.ApiKeyModel
  */
 export type Post = Prisma.PostModel
 /**
+ * Model PostRedirect
+ * 
+ */
+export type PostRedirect = Prisma.PostRedirectModel
+/**
  * Model PostMetadata
  * 
  */

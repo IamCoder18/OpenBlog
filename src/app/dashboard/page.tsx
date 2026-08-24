@@ -7,6 +7,7 @@ import {
   TrendingUp,
   ArrowRight,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
@@ -95,26 +96,38 @@ export default async function DashboardPage({
   return (
     <div className="pt-20 lg:pt-8 px-4 sm:px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
       {/* Header */}
-      <header className="mb-10">
-        <span className="text-primary font-label text-[10px] tracking-[0.2em] uppercase">
-          {isPersonal ? "Your Workspace" : "Admin Mode"}
-        </span>
-        <h1 className="font-headline text-3xl sm:text-4xl font-extrabold tracking-tight text-on-surface mt-2">
-          {isPersonal
-            ? `Welcome back, ${user.name?.split(" ")[0] || "there"}`
-            : "Site Analytics"}
-        </h1>
-        <p className="text-on-surface-variant text-sm mt-2 max-w-lg">
-          {isPersonal
-            ? "Here's how your stories are performing."
-            : "Overview of all content and traffic on the platform."}
-        </p>
+      <header className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="eyebrow">
+            {isPersonal ? "Your workspace" : "Publication view"}
+          </span>
+          <h1 className="mt-2 font-headline text-3xl font-extrabold tracking-[-0.045em] text-on-surface sm:text-4xl">
+            {isPersonal
+              ? `Welcome back, ${user.name?.split(" ")[0] || "there"}`
+              : "Site performance"}
+          </h1>
+          <p className="mt-2 max-w-lg text-sm text-on-surface-variant">
+            {isPersonal
+              ? "See what’s working, then keep the momentum going."
+              : "A clear view of content and traffic across the publication."}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/dashboard/stories" className="btn-secondary">
+            <FileText className="size-4" />
+            Open library
+          </Link>
+          <Link href="/dashboard/editor" className="btn-primary">
+            <Plus className="size-4" />
+            Write a story
+          </Link>
+        </div>
       </header>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {/* Stories */}
-        <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up">
+        <div className="animate-fade-in-up rounded-2xl border border-outline-variant bg-surface-container-low p-5 shadow-sm">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <FileText className="w-5 h-5 text-primary" />
@@ -134,7 +147,7 @@ export default async function DashboardPage({
         </div>
 
         {/* Published */}
-        <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-75">
+        <div className="animate-fade-in-up delay-75 rounded-2xl border border-outline-variant bg-surface-container-low p-5 shadow-sm">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 theme-success-soft rounded-lg">
               <Eye className="w-5 h-5 theme-success-text" />
@@ -149,7 +162,7 @@ export default async function DashboardPage({
         </div>
 
         {/* Drafts */}
-        <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-100">
+        <div className="animate-fade-in-up delay-100 rounded-2xl border border-outline-variant bg-surface-container-low p-5 shadow-sm">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 bg-tertiary/10 rounded-lg">
               <Edit3 className="w-5 h-5 text-tertiary" />
@@ -164,7 +177,7 @@ export default async function DashboardPage({
         </div>
 
         {/* Total Views */}
-        <div className="bg-surface-container-low rounded-2xl p-5 animate-fade-in-up delay-150">
+        <div className="animate-fade-in-up delay-150 rounded-2xl border border-outline-variant bg-surface-container-low p-5 shadow-sm">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <TrendingUp className="w-5 h-5 text-primary" />
@@ -181,7 +194,7 @@ export default async function DashboardPage({
 
       {/* Chart */}
       <div className="mb-10">
-        <ViewsChart />
+        <ViewsChart scope={isPersonal ? "personal" : "site"} />
       </div>
 
       {/* Recent Stories */}
@@ -204,7 +217,7 @@ export default async function DashboardPage({
             <Link
               key={post.id}
               href={`/dashboard/editor?slug=${post.slug}`}
-              className="flex items-center gap-4 p-4 bg-surface-container-low hover:bg-surface-container rounded-xl transition-all duration-200 group"
+              className="group flex items-center gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container hover:shadow-sm"
             >
               <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
                 <FileText className="w-5 h-5 text-outline-variant group-hover:text-primary transition-colors" />

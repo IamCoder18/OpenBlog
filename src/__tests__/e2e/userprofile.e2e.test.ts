@@ -84,7 +84,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
   });
 
   test.describe("AGENT Role Tests", () => {
-    test("AGENT role can create posts", async ({ request }) => {
+    test("AGENT role cannot create posts", async ({ request }) => {
       const { cookies } = await createAuthenticatedAgentUser(request, testUser);
 
       const response = await request.post(`${BASE_URL}/api/posts`, {
@@ -99,12 +99,10 @@ test.describe("UserProfile Role-Based Access Tests", () => {
         },
       });
 
-      expect(response.status()).toBe(201);
-      const post = await response.json();
-      expect(post.title).toBe("AGENT Created Post");
+      expect(response.status()).toBe(403);
     });
 
-    test("AGENT role can update own posts", async ({ request }) => {
+    test("AGENT role cannot create a post to update", async ({ request }) => {
       const { cookies } = await createAuthenticatedAgentUser(request, testUser);
 
       const createResponse = await request.post(`${BASE_URL}/api/posts`, {
@@ -119,32 +117,13 @@ test.describe("UserProfile Role-Based Access Tests", () => {
         },
       });
 
-      expect(createResponse.status()).toBe(201);
-
-      const post = await createResponse.json();
-
-      const deleteResponse = await request.delete(
-        `${BASE_URL}/api/posts/${post.slug}`,
-        {
-          headers: {
-            Origin: BASE_URL,
-            Cookie: cookies,
-          },
-        }
-      );
-
-      expect(deleteResponse.status()).toBe(200);
-
-      const getResponse = await request.get(
-        `${BASE_URL}/api/posts/${post.slug}`
-      );
-      expect(getResponse.status()).toBe(404);
+      expect(createResponse.status()).toBe(403);
     });
 
     test("AGENT role cannot delete others' posts (403)", async ({
       request,
     }) => {
-      const { cookies: agent1Cookies } = await createAuthenticatedAgentUser(
+      const { cookies: authorCookies } = await createAuthenticatedAuthorUser(
         request,
         testUser
       );
@@ -161,7 +140,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
         },
         headers: {
           Origin: BASE_URL,
-          Cookie: agent1Cookies,
+          Cookie: authorCookies,
         },
       });
 
@@ -187,7 +166,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
 
   test.describe("ADMIN Role Tests", () => {
     test("ADMIN role can edit any post", async ({ request }) => {
-      const { cookies: agentCookies } = await createAuthenticatedAgentUser(
+      const { cookies: authorCookies } = await createAuthenticatedAuthorUser(
         request,
         testUser
       );
@@ -200,7 +179,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
         },
         headers: {
           Origin: BASE_URL,
-          Cookie: agentCookies,
+          Cookie: authorCookies,
         },
       });
 
@@ -229,7 +208,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
     });
 
     test("ADMIN role can delete any post", async ({ request }) => {
-      const { cookies: agentCookies } = await createAuthenticatedAgentUser(
+      const { cookies: authorCookies } = await createAuthenticatedAuthorUser(
         request,
         testUser
       );
@@ -242,7 +221,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
         },
         headers: {
           Origin: BASE_URL,
-          Cookie: agentCookies,
+          Cookie: authorCookies,
         },
       });
 
@@ -543,9 +522,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
       expect(sessionData.user.email).toBe(testUser.email);
     });
 
-    test("AGENT role has correct permissions vs regular authenticated user", async ({
-      request,
-    }) => {
+    test("AGENT cannot mutate an AUTHOR post", async ({ request }) => {
       const { cookies: agentCookies } = await createAuthenticatedAgentUser(
         request,
         testUser
@@ -563,7 +540,7 @@ test.describe("UserProfile Role-Based Access Tests", () => {
         },
       });
 
-      expect(createResponse.status()).toBe(201);
+      expect(createResponse.status()).toBe(403);
 
       const { cookies: regularCookies } = await createAuthenticatedUser(
         request,

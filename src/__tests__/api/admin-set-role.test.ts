@@ -27,6 +27,7 @@ import { prisma } from "@/lib/db";
 describe("POST /api/admin/set-role", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.E2E_TESTING = "true";
   });
 
   const createRequest = (body: any, headers: Record<string, string> = {}) => {
@@ -38,6 +39,14 @@ describe("POST /api/admin/set-role", () => {
   };
 
   describe("1. Authentication", () => {
+    it("is not exposed outside the isolated E2E environment", async () => {
+      process.env.E2E_TESTING = "false";
+      const response = await POST(
+        createRequest({ email: "test@example.com", role: "ADMIN" })
+      );
+      expect(response.status).toBe(404);
+    });
+
     it("should return 401 when no session user", async () => {
       (auth.api.getSession as vi.Mock).mockResolvedValue(null);
 

@@ -24,7 +24,13 @@ const RANGE_LABELS: Record<DateRange, string> = {
   "90d": "90 days",
 };
 
-export default function ViewsChart({ postId }: { postId?: string }) {
+export default function ViewsChart({
+  postId,
+  scope = "personal",
+}: {
+  postId?: string;
+  scope?: "personal" | "site";
+}) {
   const toast = useToast();
   const [range, setRange] = useState<DateRange>("30d");
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -34,18 +40,19 @@ export default function ViewsChart({ postId }: { postId?: string }) {
     async (params: string) => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/analytics?${params}`);
-        if (res.ok) {
-          const result = await res.json();
-          setData(result);
-        }
+        const query = new URLSearchParams(params);
+        query.set("scope", scope);
+        const res = await fetch(`/api/analytics?${query}`);
+        if (!res.ok) throw new Error("Analytics request failed");
+        const result = await res.json();
+        setData(result);
       } catch {
         toast.addToast("error", "Failed to load analytics.");
       } finally {
         setLoading(false);
       }
     },
-    [toast]
+    [scope, toast]
   );
 
   useEffect(() => {
@@ -58,11 +65,9 @@ export default function ViewsChart({ postId }: { postId?: string }) {
 
   const maxViews = Math.max(...(data?.viewsByDay.map(d => d.views) || [1]), 1);
   const barHeights =
-    data?.viewsByDay.map(d => Math.max(4, (d.views / maxViews) * 100)) || [];
+    data?.viewsByDay.map(d => (d.views / maxViews) * 100) || [];
 
-  const dailyAvg = data
-    ? Math.round(data.totalViews / Math.max(data.period.days, 1))
-    : 0;
+  const dailyAvg = data ? data.totalViews / Math.max(data.period.days, 1) : 0;
 
   return (
     <div
@@ -73,7 +78,7 @@ export default function ViewsChart({ postId }: { postId?: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h3 className="font-headline text-lg font-bold text-on-surface">
-            Page Views
+            {scope === "site" ? "Site-wide" : "Your stories"} page views
           </h3>
           <p className="text-xs text-on-surface-variant mt-1">
             Traffic over the last {RANGE_LABELS[range]}
@@ -117,8 +122,10 @@ export default function ViewsChart({ postId }: { postId?: string }) {
           <div className="text-xl sm:text-2xl font-bold font-headline text-on-surface">
             {loading ? (
               <span className="inline-block w-16 h-7 bg-surface-container-highest rounded animate-pulse" />
+            ) : dailyAvg < 10 ? (
+              dailyAvg.toFixed(1)
             ) : (
-              dailyAvg.toLocaleString()
+              Math.round(dailyAvg).toLocaleString()
             )}
           </div>
         </div>
@@ -134,6 +141,8 @@ export default function ViewsChart({ postId }: { postId?: string }) {
           barHeights.map((h, i) => (
             <div
               key={i}
+              tabIndex={0}
+              aria-label={`${data?.viewsByDay[i]?.views ?? 0} views on ${data?.viewsByDay[i]?.date ?? "unknown date"}`}
               className="flex-1 bg-primary/15 rounded-t-sm hover:bg-primary/30 transition-colors relative group cursor-pointer"
               style={{ height: `${h}%` }}
             >
@@ -177,6 +186,43 @@ export default function ViewsChart({ postId }: { postId?: string }) {
               </span>
             ))}
         </div>
+      )}
+      {data && data.viewsByDay.length > 0 && (
+        <details className="mt-6">
+          <summary className="cursor-pointer min-h-11 flex items-center text-sm text-primary">
+            View accessible data table
+          </summary>
+          <div className="overflow-x-auto mt-3">
+            <table className="w-full text-sm">
+              <caption className="sr-only">Daily page views in UTC</caption>
+              <thead>
+                <tr>
+                  <th scope="col" className="text-left p-2">
+                    Date (UTC)
+                  </th>
+                  <th scope="col" className="text-right p-2">
+                    Views
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.viewsByDay.map(day => (
+                  <tr key={day.date}>
+                    <td className="p-2">
+                      <time dateTime={day.date}>
+                        {new Intl.DateTimeFormat(undefined, {
+                          dateStyle: "medium",
+                          timeZone: "UTC",
+                        }).format(new Date(day.date))}
+                      </time>
+                    </td>
+                    <td className="p-2 text-right">{day.views}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       )}
     </div>
   );

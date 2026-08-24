@@ -3,7 +3,7 @@ import { randomBytes, scryptSync } from "crypto";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { PrismaClient } from "../src/lib/prisma";
+import { PrismaClient } from "../src/lib/prisma/client";
 
 function hashPassword(password: string): string {
   const config = { N: 16384, r: 16, p: 1 };
@@ -79,17 +79,13 @@ async function main(): Promise<void> {
       console.log(
         `Created missing profile for ${email} and set role to ADMIN.`
       );
-    } else if (existingUser.profile.role !== "ADMIN") {
+    } else {
       await prisma.userProfile.update({
         where: { userId: existingUser.id },
         data: { role: "ADMIN" },
       });
       // eslint-disable-next-line no-console
       console.log(`Promoted ${email} to ADMIN.`);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log(`${email} is already an ADMIN.`);
-      process.exit(0);
     }
 
     const hasCredentialAccount = existingUser.accounts.some(
@@ -101,6 +97,7 @@ async function main(): Promise<void> {
         data: {
           userId: existingUser.id,
           providerId: "credential",
+          accountId: existingUser.id,
           password: hashedPassword,
         },
       });

@@ -3,13 +3,13 @@ import { randomBytes, scryptSync } from "crypto";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { PrismaClient } from "../src/lib/prisma";
+import { PrismaClient } from "../src/lib/prisma/client";
 
 // Password hashing function matching Better Auth's implementation
 function hashPassword(password: string): string {
   const config = { N: 16384, r: 16, p: 1, dkLen: 64 };
   const salt = randomBytes(16).toString("hex");
-  const key = scryptSync(password.normalize("NFKC"), salt, {
+  const key = scryptSync(password.normalize("NFKC"), salt, config.dkLen, {
     N: config.N,
     p: config.p,
     r: config.r,
@@ -43,7 +43,7 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main(): Promise<void> {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.findFirst({
     where: { email: { mode: "insensitive", equals: email } },
     include: { accounts: true },
   });
@@ -72,6 +72,7 @@ async function main(): Promise<void> {
       data: {
         userId: user.id,
         providerId: "credential",
+        accountId: user.id,
         password: hashedPassword,
       },
     });

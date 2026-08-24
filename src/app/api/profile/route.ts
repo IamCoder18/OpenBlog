@@ -85,6 +85,17 @@ export const PUT = apiHandler(async function PUT(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (typeof image === "string" && image) {
+      try {
+        const url = new URL(image);
+        if (url.protocol !== "https:") throw new Error();
+      } catch {
+        return NextResponse.json(
+          { error: "Image must be a valid HTTPS URL" },
+          { status: 400 }
+        );
+      }
+    }
     updateData.image = image;
   }
 

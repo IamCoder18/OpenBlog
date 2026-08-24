@@ -1,45 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useDebouncedCallback } from "@/lib/hooks";
-import {
-  Search,
-  X,
-  FileText,
-  User,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-
-interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  bodyMarkdown: string;
-  bodyHtml: string;
-  publishedAt: string | null;
-  author: Author;
-  metadata: Metadata | null;
-}
-
-interface Author {
-  id: string;
-  name: string | null;
-  image: string | null;
-}
-
-interface Metadata {
-  readTime?: number;
-  category?: string;
-  coverImage?: string;
-  tags?: string[];
-}
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, FileText, Search, X } from "lucide-react";
+import PublicStoryCard, {
+  type PublicStory,
+} from "@/components/PublicStoryCard";
 
 interface PostsResponse {
-  posts: Post[];
+  posts: PublicStory[];
   total: number;
-  limit: number;
-  offset: number;
 }
 
 const PAGE_SIZE = 10;
@@ -48,200 +19,263 @@ export default function ExploreClient({
   initialPosts,
   initialTotal,
 }: {
-  initialPosts: Post[];
+  initialPosts: PublicStory[];
   initialTotal: number;
 }) {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlParams = useSearchParams();
+  const initialQuery = urlParams.get("q") ?? "";
+  const initialPage = Math.max(
+    1,
+    Number.parseInt(urlParams.get("page") ?? "1", 10) || 1
+  );
+  const [posts, setPosts] = useState(initialPosts);
   const [total, setTotal] = useState(initialTotal);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState(initialQuery);
+  const [page, setPage] = useState(initialPage);
+  const [loading, setLoading] = useState(
+    initialQuery !== "" || initialPage !== 1
+  );
+  const [error, setError] = useState("");
+  const [requestVersion, setRequestVersion] = useState(0);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const firstRun = useRef(true);
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        limit: PAGE_SIZE.toString(),
-        offset: (page * PAGE_SIZE).toString(),
+  const topics = Array.from(
+    new Set(initialPosts.flatMap(post => post.metadata?.tags ?? []))
+  ).slice(0, 7);
+
+  const updateUrl = useCallback(
+    (nextQuery: string, nextPage: number) => {
+      const params = new URLSearchParams();
+      if (nextQuery.trim()) params.set("q", nextQuery.trim());
+      if (nextPage > 1) params.set("page", String(nextPage));
+      router.replace(`${pathname}${params.size ? `?${params}` : ""}`, {
+        scroll: false,
       });
-      if (search.trim()) {
-        params.set("search", search.trim());
-      }
-
-      const res = await fetch(`/api/posts?${params}`);
-      if (res.ok) {
-        const data: PostsResponse = await res.json();
-        setPosts(data.posts);
-        setTotal(data.total);
-      }
-    } catch {
-      // Handle error silently
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+    },
+    [pathname, router]
+  );
 
   useEffect(() => {
-    void fetchPosts();
-  }, [fetchPosts]);
+    if (firstRun.current && !initialQuery && initialPage === 1) {
+      firstRun.current = false;
+      return;
+    }
+    firstRun.current = false;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      setError("");
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String((page - 1) * PAGE_SIZE),
+        order: "all",
+        visibility: "PUBLIC",
+      });
+      if (query.trim()) params.set("search", query.trim());
+      try {
+        const response = await fetch(`/api/posts?${params}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Request failed");
+        const data = (await response.json()) as PostsResponse;
+        setPosts(data.posts);
+        setTotal(data.total);
+      } catch (cause) {
+        if ((cause as DOMException).name !== "AbortError") {
+          setError(
+            "Stories couldn’t be loaded. Your previous results are still shown."
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 250);
+    updateUrl(query, page);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [initialPage, initialQuery, page, query, requestVersion, updateUrl]);
 
-  const handleSearchChange = useDebouncedCallback((value: string) => {
-    setSearch(value);
-    setPage(0);
-  }, 300);
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  function goToPage(nextPage: number) {
+    setPage(nextPage);
+    requestAnimationFrame(() => {
+      headingRef.current?.focus();
+      headingRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
 
   return (
     <>
-      <div className="max-w-xl mx-auto mb-16">
-        <div className="bg-surface-container-low rounded-2xl p-4 flex items-center gap-3 border border-outline-variant/10">
-          <Search className="w-4 h-4 text-on-surface-variant ml-2" />
-          <input
-            className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-on-surface-variant/50 outline-none"
-            placeholder="Search stories, topics, authors..."
-            type="text"
-            defaultValue={search}
-            onChange={e => handleSearchChange(e.target.value)}
+      <form
+        className="relative z-10 mx-auto -mt-16 mb-7 max-w-3xl px-4"
+        role="search"
+        onSubmit={event => event.preventDefault()}
+      >
+        <label htmlFor="explore-search" className="sr-only">
+          Search stories
+        </label>
+        <div className="flex items-center gap-2 rounded-2xl border border-outline-variant bg-surface-container-lowest p-2 shadow-[0_18px_50px_rgba(28,32,51,0.12)]">
+          <Search
+            aria-hidden="true"
+            className="ml-2 size-5 shrink-0 text-primary"
           />
-          {search && (
+          <input
+            id="explore-search"
+            className="min-h-12 min-w-0 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-on-surface-variant/70"
+            placeholder="Search by title, topic, or keyword…"
+            value={query}
+            onChange={event => {
+              setQuery(event.target.value);
+              setPage(1);
+            }}
+          />
+          {query && (
             <button
+              type="button"
               onClick={() => {
-                setSearch("");
-                setPage(0);
+                setQuery("");
+                setPage(1);
               }}
-              className="p-1 hover:bg-surface-container-high rounded transition-colors"
+              aria-label="Clear search"
+              className="grid min-h-11 min-w-11 place-items-center rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
             >
-              <X className="w-4 h-4 text-on-surface-variant" />
+              <X className="size-5" />
             </button>
           )}
         </div>
-      </div>
+      </form>
 
-      <section>
-        <div className="flex items-end justify-between mb-8">
-          <h2 className="font-headline text-2xl font-bold text-on-surface">
-            {search ? `Search results` : "All stories"}
-          </h2>
-          {total > 0 && (
-            <span className="text-xs text-on-surface-variant font-label">
-              {total} {total === 1 ? "story" : "stories"} found
-            </span>
-          )}
+      {topics.length > 0 && !query && (
+        <nav
+          aria-label="Topics"
+          className="mb-12 flex flex-wrap justify-center gap-2"
+        >
+          <span className="py-2 text-xs font-bold text-on-surface-variant">
+            Topics:
+          </span>
+          {topics.map(topic => (
+            <Link
+              key={topic}
+              href={`/topics/${encodeURIComponent(topic)}`}
+              className="rounded-full bg-surface-container px-3.5 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {topic}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      <section aria-busy={loading} aria-live="polite">
+        <div className="mb-7 flex items-end justify-between gap-4">
+          <div>
+            <span className="eyebrow">{query ? "Search" : "Archive"}</span>
+            <h2
+              ref={headingRef}
+              tabIndex={-1}
+              className="mt-2 text-3xl font-bold tracking-[-0.04em] outline-none"
+            >
+              {query ? `Results for “${query}”` : "Browse all stories"}
+            </h2>
+          </div>
+          <span className="rounded-full bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant">
+            {total} {total === 1 ? "story" : "stories"}
+          </span>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-surface-container-low rounded-xl overflow-hidden animate-pulse"
-              >
-                <div className="aspect-video bg-surface-container-highest" />
-                <div className="p-6 space-y-3">
-                  <div className="h-3 w-16 rounded bg-surface-container-highest" />
-                  <div className="h-5 w-3/4 rounded bg-surface-container-highest" />
-                  <div className="h-4 w-full rounded bg-surface-container-highest" />
-                </div>
-              </div>
-            ))}
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 theme-danger-soft theme-danger-text"
+          >
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setRequestVersion(value => value + 1)}
+              className="font-bold underline"
+            >
+              Try again
+            </button>
           </div>
-        ) : posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <FileText className="w-12 h-12 text-outline-variant mb-4" />
-            <h3 className="font-headline text-xl font-bold text-on-surface mb-2">
-              {search ? "No stories found" : "Nothing to explore yet"}
+        )}
+
+        {loading && (
+          <div
+            role="status"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-on-surface-variant"
+          >
+            <span className="size-2 animate-pulse rounded-full bg-primary" />
+            Updating results…
+          </div>
+        )}
+
+        {posts.length === 0 && !loading ? (
+          <div className="rounded-3xl border border-outline-variant bg-surface-container-lowest px-6 py-20 text-center">
+            <span className="mx-auto mb-5 grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <FileText className="size-6" />
+            </span>
+            <h3 className="text-xl font-bold">
+              {query ? "No matching stories" : "Nothing to explore yet"}
             </h3>
-            <p className="text-on-surface-variant text-sm">
-              {search
-                ? `No results for "${search}". Try different keywords.`
-                : "Check back soon for new stories."}
+            <p className="mt-2 text-on-surface-variant">
+              {query
+                ? "Try fewer words or a broader topic."
+                : "Published articles will appear here."}
             </p>
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="btn-secondary mt-5"
+              >
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map(post => (
-              <a
-                key={post.id}
-                href={`/blog/${post.slug}`}
-                className="group bg-surface-container-low rounded-xl overflow-hidden hover:bg-surface-container transition-all duration-300"
-              >
-                {post.metadata?.coverImage && (
-                  <div className="aspect-video bg-surface-container overflow-hidden">
-                    <img
-                      src={post.metadata.coverImage}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  {post.metadata?.category && (
-                    <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] uppercase font-bold tracking-widest rounded-full mb-3">
-                      {post.metadata.category}
-                    </span>
-                  )}
-                  <h3 className="font-headline text-lg font-bold mb-2 text-on-surface group-hover:text-primary transition-colors">
-                    {post.title}
-                  </h3>
-                  <p className="text-on-surface-variant text-sm leading-relaxed line-clamp-2 mb-4">
-                    {post.bodyMarkdown?.slice(0, 120)}...
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center">
-                      <User className="w-4 h-4 text-on-surface-variant" />
-                    </div>
-                    <span className="text-xs text-on-surface-variant">
-                      {post.author.name || "Anonymous"}
-                    </span>
-                  </div>
-                </div>
-              </a>
+          <div
+            className={`publication-card-grid publication-stagger grid grid-cols-1 gap-6 transition-opacity md:grid-cols-2 lg:grid-cols-3 ${loading ? "opacity-55" : "opacity-100"}`}
+          >
+            {posts.map((post, index) => (
+              <PublicStoryCard key={post.id} post={post} index={index} />
             ))}
           </div>
         )}
 
         {totalPages > 1 && (
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-on-surface-variant font-label">
-              Showing {page * PAGE_SIZE + 1}–
-              {Math.min((page + 1) * PAGE_SIZE, total)} of {total}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-30"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const pageNum =
-                  Math.max(0, Math.min(page - 2, totalPages - 5)) + i;
-                if (pageNum >= totalPages) return null;
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg font-bold text-xs transition-colors ${
-                      page === pageNum
-                        ? "bg-primary-container text-on-primary"
-                        : "bg-surface-container-low text-on-surface-variant hover:text-on-surface"
-                    }`}
-                  >
-                    {pageNum + 1}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page >= totalPages - 1}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-30"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          <nav
+            aria-label="Search result pages"
+            className="mt-12 flex items-center justify-center gap-3"
+          >
+            <button
+              type="button"
+              disabled={page <= 1 || loading}
+              onClick={() => goToPage(page - 1)}
+              aria-label="Previous page"
+              className="btn-secondary min-w-11 px-3"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <span className="rounded-full bg-surface-container px-4 py-2 text-sm font-semibold">
+              {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={page >= totalPages || loading}
+              onClick={() => goToPage(page + 1)}
+              aria-label="Next page"
+              className="btn-secondary min-w-11 px-3"
+            >
+              <ChevronRight className="size-5" />
+            </button>
+          </nav>
         )}
       </section>
     </>

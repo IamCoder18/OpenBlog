@@ -16,13 +16,16 @@ interface MobileBottomNavProps {
   activeTab?: "feed" | "explore" | "dashboard";
   canAccessDashboard?: boolean;
   userRole?: string;
+  isAdmin?: boolean;
 }
 
 export default function MobileBottomNav({
   activeTab,
   canAccessDashboard = false,
   userRole,
+  isAdmin,
 }: MobileBottomNavProps) {
+  canAccessDashboard = canAccessDashboard || !!isAdmin;
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -56,43 +59,53 @@ export default function MobileBottomNav({
   return (
     <>
       {/* ── Bottom Bar ────────────────────────────────────── */}
-      <nav className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-surface/70 backdrop-blur-xl safe-area-bottom">
-        <div className="flex justify-around items-center h-16">
+      <nav
+        aria-label="Mobile navigation"
+        className="md:hidden fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-outline-variant bg-surface-container-lowest/90 shadow-[0_16px_50px_rgba(28,32,51,0.18)] backdrop-blur-xl safe-area-bottom"
+      >
+        <div
+          className={`grid items-center h-16 px-1 ${canAccessDashboard || userRole ? "grid-cols-3" : "grid-cols-2"}`}
+        >
           <Link
             href="/"
-            className={`flex flex-col items-center justify-center gap-0.5 px-6 py-2 rounded-lg transition-colors duration-200 ${
+            aria-current={activeTab === "feed" ? "page" : undefined}
+            className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl transition-colors duration-200 ${
               activeTab === "feed"
-                ? "text-primary"
+                ? "bg-primary/10 text-primary"
                 : "text-on-surface-variant active:bg-surface-container"
             }`}
           >
             <Home className="w-6 h-6" />
-            <span className="text-[11px] font-label tracking-wide">Feed</span>
+            <span className="text-[11px] font-semibold tracking-wide">
+              Stories
+            </span>
           </Link>
 
           <Link
             href="/explore"
-            className={`flex flex-col items-center justify-center gap-0.5 px-6 py-2 rounded-lg transition-colors duration-200 ${
+            aria-current={activeTab === "explore" ? "page" : undefined}
+            className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl transition-colors duration-200 ${
               activeTab === "explore"
-                ? "text-primary"
+                ? "bg-primary/10 text-primary"
                 : "text-on-surface-variant active:bg-surface-container"
             }`}
           >
             <Compass className="w-6 h-6" />
-            <span className="text-[11px] font-label tracking-wide">
-              Explore
+            <span className="text-[11px] font-semibold tracking-wide">
+              All stories
             </span>
           </Link>
 
-          {(canAccessDashboard || userRole === "AGENT") && (
+          {(canAccessDashboard || userRole) && (
             <button
               onClick={() => setDrawerOpen(true)}
-              className={`flex flex-col items-center justify-center gap-0.5 px-6 py-2 rounded-lg transition-colors duration-200 ${
+              className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl transition-colors duration-200 ${
                 drawerOpen
-                  ? "text-primary"
+                  ? "bg-primary/10 text-primary"
                   : "text-on-surface-variant active:bg-surface-container"
               }`}
               aria-label="Open menu"
+              aria-expanded={drawerOpen}
             >
               <Menu className="w-6 h-6" />
               <span className="text-[11px] font-label tracking-wide">More</span>
@@ -102,11 +115,12 @@ export default function MobileBottomNav({
       </nav>
 
       {/* ── Bottom Sheet Overlay ──────────────────────────── */}
-      {(canAccessDashboard || userRole === "AGENT") && (
+      {(canAccessDashboard || userRole) && drawerOpen && (
         <div
-          className={`fixed inset-0 z-[60] md:hidden transition-opacity duration-300 ${
-            drawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-menu-title"
+          className="fixed inset-0 z-[60] md:hidden"
         >
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -123,7 +137,10 @@ export default function MobileBottomNav({
             </div>
 
             <div className="flex items-center justify-between px-6 pb-3">
-              <span className="text-lg font-headline font-bold tracking-tight text-on-surface">
+              <span
+                id="mobile-menu-title"
+                className="text-lg font-headline font-bold tracking-tight text-on-surface"
+              >
                 Menu
               </span>
               <button
@@ -135,7 +152,7 @@ export default function MobileBottomNav({
               </button>
             </div>
 
-            <nav className="px-4 pb-8">
+            <nav aria-label="Account navigation" className="px-4 pb-8">
               <ul className="space-y-1">
                 {userRole === "AGENT" ? (
                   <li>
@@ -148,7 +165,7 @@ export default function MobileBottomNav({
                       Account
                     </Link>
                   </li>
-                ) : (
+                ) : canAccessDashboard ? (
                   <li>
                     <Link
                       href="/dashboard"
@@ -163,7 +180,7 @@ export default function MobileBottomNav({
                       Dashboard
                     </Link>
                   </li>
-                )}
+                ) : null}
                 <li>
                   <form action="/api/auth/sign-out" method="POST">
                     <button

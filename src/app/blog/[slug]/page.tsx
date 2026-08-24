@@ -1,15 +1,19 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import LatexRenderer from "@/components/LatexRenderer";
-import RelatedPostsClient from "@/components/RelatedPostsClient";
 import ShareButton from "@/components/ShareButton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DesktopBackLink from "@/components/DesktopBackLink";
+import ReadingProgress from "@/components/ReadingProgress";
 import { getSession } from "@/lib/session";
-import { User, FileEdit } from "lucide-react";
+import { ArrowRight, FileEdit, User } from "lucide-react";
+import { getPublicPostBySlug } from "@/lib/posts";
+import { config } from "@/lib/config";
+import { stripMarkdown } from "@/lib/strip-markdown";
+import { prisma } from "@/lib/db";
+import FeaturedBadge from "@/components/FeaturedBadge";
 
 interface Author {
   id: string;
@@ -20,9 +24,10 @@ interface Author {
 interface MetadataType {
   readTime?: number;
   category?: string;
-  description?: string;
+  seoDescription?: string;
   tags?: string[];
   coverImage?: string;
+  coverImageAlt?: string;
 }
 
 interface Post {
@@ -32,21 +37,20 @@ interface Post {
   bodyMarkdown: string;
   bodyHtml: string;
   publishedAt: string | null;
+  isPinned: boolean;
+  isFeatured: boolean;
   author: Author;
   metadata: MetadataType | null;
 }
 
 async function getPost(slug: string): Promise<Post | null> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/api/posts/${slug}`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+  const result = await getPublicPostBySlug(slug);
+  return result?.post
+    ? ({
+        ...result.post,
+        publishedAt: result.post.publishedAt?.toISOString() ?? null,
+      } as Post)
+    : null;
 }
 
 function formatDate(dateString: string | null) {
@@ -77,16 +81,19 @@ export async function generateMetadata({
   const post = await getPost(slug);
 
   if (!post) {
-    return { title: "Post Not Found | OpenBlog" };
+    return { title: `Post Not Found | ${config.BLOG_NAME}` };
   }
 
   return {
-    title: `${post.title} | OpenBlog`,
-    description: post.metadata?.description || post.bodyMarkdown?.slice(0, 160),
+    title: `${post.title} | ${config.BLOG_NAME}`,
+    description:
+      post.metadata?.seoDescription || stripMarkdown(post.bodyMarkdown, 160),
+    alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       title: post.title,
       description:
-        post.metadata?.description || post.bodyMarkdown?.slice(0, 160),
+        post.metadata?.seoDescription || stripMarkdown(post.bodyMarkdown, 160),
+      url: `/blog/${post.slug}`,
       type: "article",
       publishedTime: post.publishedAt || undefined,
       authors: post.author.name ? [post.author.name] : undefined,
@@ -98,7 +105,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: post.title,
       description:
-        post.metadata?.description || post.bodyMarkdown?.slice(0, 160),
+        post.metadata?.seoDescription || stripMarkdown(post.bodyMarkdown, 160),
       ...(post.metadata?.coverImage && {
         images: [post.metadata.coverImage],
       }),
@@ -108,68 +115,106 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const result = await getPublicPostBySlug(slug);
 
-  if (!post) {
+  if (!result) {
     notFound();
   }
+  if (result.redirected) permanentRedirect(`/blog/${result.post.slug}`);
+  const post = {
+    ...result.post,
+    publishedAt: result.post.publishedAt?.toISOString() ?? null,
+  } as Post;
 
   const { user } = await getSession();
   const canEdit = user && (user.role === "ADMIN" || user.id === post.author.id);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    datePublished: post.publishedAt,
+    author: {
+      "@type": "Person",
+      name: post.author.name || "Anonymous",
+      url: `${config.BASE_URL}/authors/${post.author.id}`,
+    },
+    publisher: { "@type": "Organization", name: config.BLOG_NAME },
+    mainEntityOfPage: `${config.BASE_URL}/blog/${post.slug}`,
+    ...(post.metadata?.coverImage ? { image: post.metadata.coverImage } : {}),
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface text-on-surface">
+    <div className="min-h-screen flex flex-col text-on-surface">
       <Navbar user={user} />
+      <ReadingProgress />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
 
-      <main className="flex-1 pt-24 pb-20 max-w-3xl mx-auto px-8 w-full">
-        {/* Back Link (desktop only, dynamic based on referrer) */}
-        <DesktopBackLink />
+      <main id="main-content" className="flex-1 pb-24 pt-28 md:pt-32">
+        <div className="site-container max-w-[52rem]">
+          <DesktopBackLink />
+        </div>
 
-        {/* Article Header */}
-        <header className="mb-12">
+        <header className="site-container mb-10 max-w-[52rem] animate-fade-in-up">
+          {post.isFeatured && <FeaturedBadge className="mb-5" />}
           {post.metadata?.category && (
-            <span className="inline-block px-3 py-1 bg-primary-container/10 text-primary text-[10px] uppercase font-bold tracking-widest rounded-full mb-6">
+            <span className="mb-6 inline-flex rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
               {post.metadata.category}
             </span>
           )}
 
-          <h1 className="font-headline text-4xl md:text-5xl font-extrabold tracking-tighter leading-tight mb-6 text-on-surface">
+          <h1 className="font-headline text-[clamp(2.8rem,7vw,5rem)] font-extrabold leading-[1.02] tracking-[-0.06em] text-on-surface">
             {post.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-6 pb-8 border-b border-outline-variant/15">
+          {post.metadata?.seoDescription && (
+            <p className="mt-6 max-w-3xl text-lg leading-8 text-on-surface-variant sm:text-xl">
+              {post.metadata.seoDescription}
+            </p>
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center gap-5 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4 shadow-sm sm:p-5">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center overflow-hidden">
+              <div className="flex size-12 items-center justify-center overflow-hidden rounded-full bg-surface-container">
                 {post.author.image ? (
-                  <Image
+                  <img
                     className="w-full h-full object-cover"
                     src={post.author.image}
                     alt={post.author.name || ""}
-                    width={48}
-                    height={48}
+                    width="48"
+                    height="48"
                   />
                 ) : (
                   <User className="w-5 h-5 text-on-surface-variant" />
                 )}
               </div>
               <div>
-                <p className="text-on-surface font-medium text-sm">
+                <Link
+                  href={`/authors/${post.author.id}`}
+                  className="text-sm font-bold text-on-surface hover:text-primary"
+                >
                   {post.author.name || "Anonymous"}
-                </p>
-                <div className="flex items-center space-x-2 text-xs text-on-surface-variant font-label">
-                  <span>{formatDate(post.publishedAt)}</span>
+                </Link>
+                <div className="mt-0.5 flex items-center space-x-2 text-xs text-on-surface-variant">
+                  <time dateTime={post.publishedAt || undefined}>
+                    {formatDate(post.publishedAt)}
+                  </time>
                   <span>&middot;</span>
                   <span>{getReadTime(post.bodyMarkdown)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Share buttons */}
             <div className="flex items-center gap-2 ml-auto">
               {canEdit && (
                 <Link
                   href={`/dashboard/editor?slug=${post.slug}`}
-                  className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
+                  aria-label={`Edit ${post.title}`}
+                  className="grid min-h-11 min-w-11 place-items-center rounded-full text-on-surface-variant transition-all hover:bg-surface-container hover:text-primary"
                 >
                   <FileEdit className="w-4 h-4" />
                 </Link>
@@ -178,40 +223,91 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Tags */}
           {post.metadata?.tags && post.metadata.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-6">
+            <div className="mt-6 flex flex-wrap gap-2">
               {post.metadata.tags.map(tag => (
-                <span
+                <Link
                   key={tag}
-                  className="px-3 py-1 bg-surface-container text-xs text-on-surface-variant rounded-full"
+                  href={`/topics/${encodeURIComponent(tag)}`}
+                  className="rounded-full bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   #{tag}
-                </span>
+                </Link>
               ))}
             </div>
           )}
         </header>
 
         {post.metadata?.coverImage && (
-          <div className="mb-12 rounded-xl overflow-hidden aspect-video bg-surface-container">
+          <div className="story-media site-container mb-14 aspect-[16/9] max-w-6xl overflow-hidden rounded-3xl shadow-[0_24px_70px_rgba(28,32,51,0.12)] animate-fade-in-up delay-100">
             <img
               src={post.metadata.coverImage}
-              alt={post.title}
-              className="w-full h-full object-cover"
+              alt={post.metadata.coverImageAlt || ""}
+              width="1200"
+              height="675"
+              className="h-full w-full object-cover"
             />
           </div>
         )}
 
-        {/* Article Content */}
-        <article className="prose prose-invert prose-lg max-w-none prose-headings:font-headline prose-headings:font-semibold prose-headings:tracking-tight prose-p:font-body prose-p:text-on-surface-variant prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-on-surface prose-code:text-primary prose-code:bg-surface-container prose-code:px-2 prose-code:py-0.5 prose-code:rounded prose-pre:bg-surface-container-low prose-pre:border prose-pre:border-outline-variant/20 prose-blockquote:border-l-primary-container prose-blockquote:bg-surface-container/50 prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:rounded-r prose-li:text-on-surface-variant prose-img:rounded-xl">
-          <LatexRenderer html={post.bodyHtml} />
-        </article>
+        <div className="site-container max-w-3xl">
+          <article className="prose prose-lg max-w-none prose-headings:font-headline prose-headings:font-bold prose-headings:tracking-tight prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-surface-container prose-code:px-2 prose-code:py-0.5 prose-img:rounded-2xl">
+            <LatexRenderer html={post.bodyHtml} />
+          </article>
 
-        <RelatedPostsClient slug={slug} />
+          <RelatedStories postId={post.id} tags={post.metadata?.tags ?? []} />
+        </div>
       </main>
 
       <Footer />
     </div>
+  );
+}
+
+async function RelatedStories({
+  postId,
+  tags,
+}: {
+  postId: string;
+  tags: string[];
+}) {
+  const posts = await prisma.post.findMany({
+    where: {
+      id: { not: postId },
+      visibility: "PUBLIC",
+      ...(tags.length ? { metadata: { tags: { hasSome: tags } } } : {}),
+    },
+    select: { slug: true, title: true },
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+  });
+  if (!posts.length)
+    return (
+      <Link href="/explore" className="btn-secondary mt-14">
+        Explore more stories <ArrowRight className="size-4" />
+      </Link>
+    );
+  return (
+    <aside
+      className="mt-20 border-t border-outline-variant pt-10"
+      aria-labelledby="related-title"
+    >
+      <span className="eyebrow">Up next</span>
+      <h2 id="related-title" className="mb-6 mt-2 text-3xl font-bold">
+        Continue reading
+      </h2>
+      <div className="grid gap-3">
+        {posts.map(related => (
+          <Link
+            key={related.slug}
+            href={`/blog/${related.slug}`}
+            className="group flex items-center justify-between gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 font-semibold transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-lg"
+          >
+            <span>{related.title}</span>
+            <ArrowRight className="size-4 shrink-0 transition-transform group-hover:translate-x-1" />
+          </Link>
+        ))}
+      </div>
+    </aside>
   );
 }

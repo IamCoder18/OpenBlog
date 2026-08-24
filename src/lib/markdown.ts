@@ -150,7 +150,8 @@ export async function renderMarkdown(
   const strippedComments = parsed.replace(/<!--[\s\S]*?-->/g, "");
   const sanitized = DOMPurify.sanitize(strippedComments, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ["style", "tabindex"],
+    FORBID_TAGS: ["iframe", "object", "embed", "form", "input", "button"],
+    FORBID_ATTR: ["style"],
   });
 
   return { html: sanitized };

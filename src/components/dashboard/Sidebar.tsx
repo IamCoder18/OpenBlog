@@ -12,8 +12,8 @@ import {
   Menu,
   Plus,
   X,
-  PenLine,
   Home,
+  PenLine,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -21,12 +21,14 @@ interface SidebarProps {
   userName: string;
   userRole: string;
   userEmail: string;
+  publicationName: string;
 }
 
 export default function Sidebar({
   userName,
   userRole,
   userEmail,
+  publicationName,
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -83,19 +85,22 @@ export default function Sidebar({
   return (
     <>
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-surface-container-low/80 backdrop-blur-xl border-b border-outline-variant/10 flex items-center justify-between px-4">
+      <div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container-lowest/90 px-4 backdrop-blur-xl lg:hidden">
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
+          aria-label="Open dashboard navigation"
+          aria-expanded={mobileOpen}
+          className="min-w-11 min-h-11 grid place-items-center rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
         >
           <Menu className="w-6 h-6" />
         </button>
-        <span className="font-headline font-bold text-on-surface tracking-tight">
-          Dashboard
+        <span className="font-headline font-bold tracking-tight text-on-surface">
+          Workspace
         </span>
         <Link
           href="/dashboard/editor"
-          className="p-2 rounded-lg editorial-gradient text-on-primary"
+          aria-label="Create a new story"
+          className="editorial-gradient grid min-h-11 min-w-11 place-items-center rounded-full text-white shadow-md"
         >
           <Plus className="w-5 h-5" />
         </Link>
@@ -111,20 +116,25 @@ export default function Sidebar({
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-[70] h-full w-72 bg-surface-container-low flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+        aria-label="Dashboard navigation"
+        className={`fixed left-0 top-0 z-[70] flex h-full w-72 flex-col border-r border-outline-variant bg-surface-container-lowest transition-transform duration-300 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+        <div className="flex items-center justify-between px-5 pb-5 pt-5">
           <Link
             href={`/dashboard${modeQS}`}
-            className="font-headline text-lg font-bold text-on-surface tracking-tight hover:text-primary transition-colors"
+            className="group flex min-w-0 items-center gap-2.5 font-headline font-extrabold tracking-[-0.035em] text-on-surface"
           >
-            Dashboard
+            <span className="editorial-gradient grid size-9 shrink-0 place-items-center rounded-xl text-white shadow-sm transition-transform group-hover:-rotate-3">
+              <PenLine className="size-[1.1rem]" />
+            </span>
+            <span className="min-w-0 truncate">{publicationName}</span>
           </Link>
           <button
             onClick={() => setMobileOpen(false)}
+            aria-label="Close dashboard navigation"
             className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
           >
             <X className="w-5 h-5" />
@@ -132,21 +142,18 @@ export default function Sidebar({
         </div>
 
         {/* New Post CTA */}
-        <div className="px-4 mb-4">
-          <Link
-            href="/dashboard/editor"
-            className="w-full py-2.5 px-4 editorial-gradient text-on-primary font-semibold rounded-lg text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
-          >
+        <div className="mb-5 px-4">
+          <Link href="/dashboard/editor" className="btn-primary w-full">
             <Plus className="w-5 h-5" />
-            New Post
+            Write a story
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 space-y-0.5">
+        <nav aria-label="Dashboard sections" className="flex-1 space-y-1 px-3">
           {/* Section label */}
-          <div className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/60 font-label px-3 py-2">
-            {adminMode ? "Site Management" : "Your Workspace"}
+          <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-on-surface-variant/60">
+            {adminMode ? "Publication" : "Workspace"}
           </div>
 
           {navItems.map(item => {
@@ -156,9 +163,10 @@ export default function Sidebar({
                 key={item.href}
                 href={`${item.href}${modeQS}`}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                   isActive(item.href)
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary text-white shadow-[0_8px_20px_rgba(var(--theme-shadow-rgb),0.18)]"
                     : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                 }`}
               >
@@ -167,30 +175,20 @@ export default function Sidebar({
               </Link>
             );
           })}
-
-          {/* Editor link — preserves mode so sidebar stays in admin/personal */}
-          <Link
-            href={`/dashboard/editor${modeQS}`}
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-              pathname === "/dashboard/editor"
-                ? "bg-primary/10 text-primary"
-                : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-            }`}
-          >
-            <PenLine className="w-5 h-5" />
-            Editor
-          </Link>
         </nav>
 
         {/* Admin Mode Toggle */}
         {isAdmin && (
           <div className="px-4 mb-4">
-            <div className="bg-surface-container rounded-xl p-4">
-              <button onClick={toggleMode} className="w-full text-left group">
+            <div className="rounded-2xl border border-outline-variant bg-surface-container p-4">
+              <button
+                onClick={toggleMode}
+                aria-pressed={adminMode}
+                className="w-full min-h-11 text-left group"
+              >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-label font-semibold text-on-surface-variant uppercase tracking-wider">
-                    Admin Mode
+                    Publication view
                   </span>
                   <div
                     className={`relative w-[42px] h-[24px] rounded-full transition-colors duration-300 ${
@@ -217,12 +215,10 @@ export default function Sidebar({
         )}
 
         {/* User / Logout */}
-        <div className="px-4 pb-4 border-t border-outline-variant/10 pt-4">
+        <div className="border-t border-outline-variant px-4 pb-4 pt-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-on-primary-container">
-                {initials}
-              </span>
+            <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <span className="text-xs font-bold text-primary">{initials}</span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold text-on-surface truncate">

@@ -1,6 +1,6 @@
 # OpenBlog API Reference
 
-This document describes OpenBlog's HTTP API. Every endpoint below is served by the Next.js server in `src/app/api/`. Authentication uses either a BetterAuth session cookie or a bearer API key (`Authorization: Bearer ob_<hex>`).
+This document describes OpenBlog's HTTP API. Every endpoint below is served by the Next.js server in `src/app/api/`. Authentication uses either a BetterAuth session cookie or a scoped bearer API key (`Authorization: Bearer ob_<base64url>`).
 
 ## Conventions
 
@@ -40,20 +40,22 @@ A user has one role stored in `UserProfile.role`:
 
 - **ADMIN** — full control: users, themes, role changes, content moderation.
 - **AUTHOR** — create/edit their own posts, manage their own API keys.
-- **AGENT** — create/edit their own posts, manage their own API keys. Default for self-service sign-ups.
+- **AGENT** — integration/account access and API-key management; cannot publish. Default for self-service sign-ups.
 - **GUEST** — read-only; cannot create posts. Used for restricted human viewers.
 
-A logged-in user can self-promote between `AGENT` and `AUTHOR` via `POST /api/profile/role`. Only `ADMIN` can set `ADMIN` on others (see `POST /api/admin/set-role`, which is currently E2E-only and not production-hardened).
+Only an `ADMIN` can change account roles. The `/api/admin/set-role` helper is unavailable outside the isolated E2E environment.
 
 ## API keys
 
 Long-lived bearer tokens for headless agents.
 
-- `POST /api/keys` with `{ name, expiresInDays? }` → `{ id, name, key, createdAt, expiresAt }`. The `key` field (`ob_<64 hex>`) is shown **once** — store it immediately.
+- `POST /api/keys` with `{ name, expiresInDays?, scopes? }` → safe metadata plus the one-time `key`. The `ob_<base64url>` secret is shown **once**; only its digest and prefix are stored.
 - `GET /api/keys` → `{ keys: [{ id, name, createdAt, expiresAt }, ...] }` for the caller (the full key is never returned).
 - `DELETE /api/keys/:id` → revoke (owner-only).
 
-Use as `Authorization: Bearer ob_<hex>`. Keys are accepted on `POST /api/posts`; other write endpoints (`PUT`/`DELETE /api/posts/:slug`, profile/role changes, etc.) currently require a BetterAuth session.
+Use as `Authorization: Bearer ob_<base64url>`. Keys are accepted on post collection/detail mutations and Markdown preview when their scope and account role permit it.
+Omitting `expiresInDays` creates an indefinite key that remains valid until it
+is revoked. When supplied, expiry must be between 1 and 365 days.
 
 ## Posts
 
@@ -63,14 +65,15 @@ List posts.
 
 | Query        | Type   | Notes                                                                                      |
 | ------------ | ------ | ------------------------------------------------------------------------------------------ |
-| `limit`      | int    | default 10, no hard upper bound (callers should self-limit)                                |
+| `limit`      | int    | default 10, maximum 50                                                                     |
 | `offset`     | int    | default 0                                                                                  |
 | `search`     | string | fuzzy match on title/slug (trigram)                                                        |
 | `visibility` | enum   | `PUBLIC \| PRIVATE \| UNLISTED \| DRAFT` (single value; only the first occurrence is read) |
 | `tag`        | string | filter by tag (single value; only the first occurrence is read)                            |
 | `authorId`   | string | `me` resolves to the calling user                                                          |
+| `order`      | enum   | `home` uses featured/recency ranking; `all` puts pinned posts first, then newest           |
 
-- **Auth**: open by default. A valid session or bearer key widens the visibility filter to include `PRIVATE`, `UNLISTED`, and `DRAFT` posts across **all authors** (no ownership narrowing).
+- **Auth**: open by default. Anonymous collections contain only public posts. Authors additionally receive their own non-public posts; admins may receive all. Unlisted posts are direct-link-only.
 - **Response**: `{ posts: [...], total, limit, offset }`.
 
 ### `POST /api/posts`
@@ -87,7 +90,10 @@ Create a post.
     "visibility": "PUBLIC | PRIVATE | UNLISTED | DRAFT (optional, default PUBLIC)",
     "seoDescription": "string (optional)",
     "tags": ["string"],
-    "coverImage": "string (optional URL)"
+    "coverImage": "string (optional URL)",
+    "coverImageAlt": "string (optional)",
+    "isPinned": "boolean (optional)",
+    "isFeatured": "boolean (optional)"
   }
   ```
 - **Response**: `201` with the created post + author + metadata.
@@ -122,7 +128,7 @@ Update `name` and/or `image`. Pass `"image": null` to clear the avatar.
 
 ### `POST /api/profile/role`
 
-Self-select role between `AGENT` and `AUTHOR`. Cannot set `ADMIN`. Body: `{ "role": "AGENT" | "AUTHOR" }`.
+Admin-only role management. Body: `{ "userId": "…", "role": "ADMIN" | "AUTHOR" | "AGENT" | "GUEST" }`.
 
 ## Settings
 
@@ -133,6 +139,25 @@ Current site theme: `{ theme: "default" | "ocean" | "forest" | "ember" }`. Open.
 ### `PUT /api/settings/theme`
 
 Set theme. **ADMIN** only. Body: `{ "theme": "ocean" }`.
+
+### `GET /api/settings/publication`
+
+Returns the public publication presentation settings: validated light/dark
+colors, typography, corner style, density, article layout, cover-image and
+motion preferences, homepage switches, footer attribution, and editable basic
+pages. Open because the same values are rendered publicly.
+
+### `PUT /api/settings/publication`
+
+Replace publication presentation settings. **ADMIN** only. Values are
+normalized to constrained options and text/background combinations must meet
+WCAG 4.5:1 contrast.
+
+### `GET /api/settings/site` / `PUT /api/settings/site`
+
+Read or update publication identity (`name`, `description`, `logoUrl`,
+`contactEmail`, and `socialUrl`). Updates are **ADMIN** only; public URLs must
+use HTTP or HTTPS.
 
 ## Users
 
@@ -190,7 +215,10 @@ Aggregate views.
 
 ### `GET /sitemap.xml`
 
-Auto-generated XML sitemap of public posts.
+Runtime-generated XML sitemap index. It links to partitioned sitemap files at
+`/sitemaps/site-N.xml` and `/sitemaps/posts-N.xml`. Only public content is
+included, modification dates reflect actual content changes, and each child
+sitemap stays within the 50,000-URL protocol limit.
 
 ### `GET /feed.xml`
 
@@ -220,17 +248,17 @@ For convenience, the user-facing routes are:
 
 Operational scripts (not part of the HTTP API):
 
-| Command                                                  | What it does                               |
-| -------------------------------------------------------- | ------------------------------------------ |
-| `node scripts/create-admin.js <email> <name> <password>` | Create or promote an admin user            |
-| `node scripts/change-password.js <email> <new-password>` | Reset a user's password                    |
-| `node scripts/promote-admin.js <email>`                  | Promote an existing user to admin          |
-| `pnpm run promote-admin -- <email>`                      | Same as above (tsx wrapper)                |
-| `npx prisma migrate deploy`                              | Run pending migrations (run by entrypoint) |
+| Command                                                                     | What it does                               |
+| --------------------------------------------------------------------------- | ------------------------------------------ |
+| `./node_modules/.bin/tsx scripts/create-admin.ts <email> <name> <password>` | Create or promote an admin user            |
+| `./node_modules/.bin/tsx scripts/change-password.ts <email> <new-password>` | Reset a user's password                    |
+| `./node_modules/.bin/tsx scripts/promote-admin.ts <email>`                  | Promote an existing user to admin          |
+| `pnpm run promote-admin -- <email>`                                         | Same as above (tsx wrapper)                |
+| `npx prisma migrate deploy`                                                 | Run pending migrations (run by entrypoint) |
 
 These run against the value of `DATABASE_URL` in the current shell. From the running Docker container:
 
 ```sh
 docker exec -e DATABASE_URL="$DATABASE_URL" openblog-app \
-  node scripts/create-admin.js you@example.com "You" "S3cureP@ss!"
+  ./node_modules/.bin/tsx scripts/create-admin.ts you@example.com "You" "S3cureP@ss!"
 ```

@@ -1,23 +1,25 @@
 import { SearchX, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-8">
-      <div className="text-center">
-        <SearchX className="w-20 h-20 text-outline-variant mb-6 mx-auto" />
-        <h1 className="font-headline text-6xl font-extrabold tracking-tighter text-on-surface mb-4">
-          404
+    <div className="flex min-h-screen flex-col items-center justify-center px-6">
+      <div className="w-full max-w-xl rounded-3xl border border-outline-variant bg-surface-container-lowest p-8 text-center shadow-[0_24px_70px_rgba(28,32,51,0.1)] sm:p-12">
+        <span className="mx-auto mb-6 grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <SearchX className="size-7" />
+        </span>
+        <p className="eyebrow">404 · Lost page</p>
+        <h1 className="mt-3 font-headline text-4xl font-extrabold tracking-[-0.05em] text-on-surface sm:text-5xl">
+          This idea wandered off.
         </h1>
-        <p className="text-on-surface-variant text-lg mb-8 max-w-md">
-          The page you are looking for does not exist or has been moved.
+        <p className="mx-auto mb-8 mt-4 max-w-md text-lg text-on-surface-variant">
+          The page may have moved, but there are plenty of stories waiting back
+          at the publication.
         </p>
-        <a
-          href="/"
-          className="editorial-gradient text-on-primary px-8 py-4 rounded-lg font-semibold inline-flex items-center gap-2 transition-all duration-300 hover:opacity-90 active:scale-95"
-        >
+        <Link href="/" className="btn-primary">
           <ArrowLeft className="w-5 h-5" />
-          Back to Home
-        </a>
+          Back to stories
+        </Link>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ interface ShareButtonProps {
 export default function ShareButton({ title, slug }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -18,6 +19,8 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
     typeof window !== "undefined"
       ? `${window.location.origin}/blog/${slug}`
       : `/blog/${slug}`;
+  const canNativeShare =
+    typeof navigator !== "undefined" && "share" in navigator;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -30,24 +33,32 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
         setOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      requestAnimationFrame(() =>
+        popoverRef.current?.querySelector<HTMLButtonElement>("button")?.focus()
+      );
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [open]);
 
   const handleCopy = async () => {
+    setError(false);
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = url;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
+      setError(true);
+      return;
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -58,8 +69,10 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
       <button
         ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all"
+        className="grid min-h-11 min-w-11 place-items-center rounded-full text-on-surface-variant transition-all hover:bg-surface-container hover:text-primary"
         aria-label="Share"
+        aria-expanded={open}
+        aria-haspopup="dialog"
       >
         <Share2 className="w-5 h-5" />
       </button>
@@ -69,6 +82,8 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             ref={popoverRef}
+            role="dialog"
+            aria-label="Share story"
             className="absolute right-0 top-full mt-2 w-72 bg-surface-container rounded-2xl border border-outline-variant/15 shadow-2xl z-50 animate-scale-in overflow-hidden"
           >
             <div className="p-5">
@@ -96,7 +111,20 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
               </div>
 
               <button
-                onClick={handleCopy}
+                onClick={async () => {
+                  if (canNativeShare) {
+                    try {
+                      await navigator.share({ title, url });
+                      setOpen(false);
+                      buttonRef.current?.focus();
+                      return;
+                    } catch (shareError) {
+                      if ((shareError as DOMException).name === "AbortError")
+                        return;
+                    }
+                  }
+                  await handleCopy();
+                }}
                 className={`w-full mt-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
                   copied
                     ? "theme-success-soft theme-success-text border border-current/20"
@@ -108,8 +136,17 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}
-                {copied ? "Link copied!" : "Copy to clipboard"}
+                {copied
+                  ? "Link copied!"
+                  : canNativeShare
+                    ? "Share story"
+                    : "Copy to clipboard"}
               </button>
+              {error && (
+                <p role="alert" className="mt-2 text-xs theme-danger-text">
+                  Could not copy the link. Select it above and copy it manually.
+                </p>
+              )}
             </div>
           </div>
         </>

@@ -88,11 +88,16 @@ enum Role {
 
 model ApiKey {
   id        String    @id @default(cuid())
+  /// SHA-256 digest of the bearer token. The plaintext token is returned once.
   key       String    @unique
+  prefix    String    @default("")
   name      String
   userId    String
   createdAt DateTime  @default(now())
   expiresAt DateTime?
+  lastUsedAt DateTime?
+  revokedAt DateTime?
+  scopes    String[]  @default(["posts:read", "posts:write"])
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -106,15 +111,32 @@ model Post {
   visibility    Visibility    @default(PUBLIC)
   authorId      String
   publishedAt   DateTime?
+  scheduledAt   DateTime?
+  isPinned      Boolean       @default(false)
+  isFeatured    Boolean       @default(false)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   author        User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   metadata      PostMetadata?
   pageViews     PageView[]
+  redirects     PostRedirect[]
 
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, name: "Post_title_trgm_idx")
   @@index([slug(ops: raw("gin_trgm_ops"))], type: Gin, name: "Post_slug_trgm_idx")
+  @@index([visibility, isPinned, publishedAt])
+  @@index([visibility, isFeatured, publishedAt])
+}
+
+model PostRedirect {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  postId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
 }
 
 enum Visibility {
@@ -128,6 +150,7 @@ model PostMetadata {
   id           String   @id @default(cuid())
   seoDescription String?
   coverImage   String?
+  coverImageAlt String?
   tags         String[]
   postId       String   @unique
 
@@ -137,9 +160,10 @@ model PostMetadata {
 }
 
 model SiteSettings {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model PageView {

@@ -9,16 +9,25 @@ export default function AnalyticsTracker() {
 
   useEffect(() => {
     if (pathname === lastPath.current) return;
+    const match = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
+    if (!match) return;
     lastPath.current = pathname;
 
     const track = async () => {
       try {
+        const postResponse = await fetch(
+          `/api/posts/${encodeURIComponent(match[1])}`
+        );
+        if (!postResponse.ok) return;
+        const post = (await postResponse.json()) as { id: string };
+
         await fetch("/api/analytics", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             path: pathname,
             referrer: document.referrer || null,
+            postId: post.id,
           }),
         });
       } catch {

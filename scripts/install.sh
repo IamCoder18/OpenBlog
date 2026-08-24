@@ -292,8 +292,10 @@ fi
 
 if $NEED_ENV; then
   GENERATED_SECRET="$(openssl rand -base64 32 2>/dev/null || head -c 48 /dev/urandom | base64)"
+  GENERATED_POSTGRES_PASSWORD="$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   cat > .env <<EOF
 AUTH_SECRET="${GENERATED_SECRET}"
+POSTGRES_PASSWORD="${GENERATED_POSTGRES_PASSWORD}"
 BASE_URL="${BASE_URL}"
 BLOG_NAME="${BLOG_NAME}"
 SIGN_UP_ENABLED="${SIGN_UP_ENABLED}"
@@ -333,7 +335,7 @@ done
 # ─── Create admin ──────────────────────────────────────────────────────────
 box "Creating admin user"
 docker compose -f "$COMPOSE_FILE" --project-name "$PROJECT" exec -T app \
-  node scripts/create-admin.js "$ADMIN_EMAIL" "$ADMIN_NAME" "$ADMIN_PASSWORD" \
+  ./node_modules/.bin/tsx scripts/create-admin.ts "$ADMIN_EMAIL" "$ADMIN_NAME" "$ADMIN_PASSWORD" \
   >/dev/null || fail "Admin creation failed."
 ok "Admin ${B}${ADMIN_EMAIL}${X} provisioned with role ${B}ADMIN${X}"
 printf '\n'

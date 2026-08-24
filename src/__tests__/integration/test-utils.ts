@@ -1,19 +1,21 @@
 import { prisma } from "@/lib/db";
-import { Role } from "@/lib/prisma";
+import { Role } from "@/lib/prisma/client";
 
 export { prisma, Role };
 
 // Clean all tables in the database
 export async function cleanupDatabase(): Promise<void> {
   // Delete in correct order to respect foreign keys
+  await prisma.postRedirect.deleteMany();
+  await prisma.pageView.deleteMany();
   await prisma.postMetadata.deleteMany();
+  await prisma.post.deleteMany();
   await prisma.apiKey.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.verification.deleteMany();
-  await prisma.userProfile.deleteMany();
-  await prisma.post.deleteMany();
   await prisma.siteSettings.deleteMany();
+  await prisma.userProfile.deleteMany();
   await prisma.user.deleteMany();
 }
 
@@ -45,6 +47,15 @@ export async function createTestUser(options?: {
   });
 
   return { user, profile };
+}
+
+export function createTestAuthor(
+  options?: Parameters<typeof createTestUser>[0]
+) {
+  return createTestUser({
+    ...options,
+    role: options?.role ?? Role.AUTHOR,
+  });
 }
 
 // Create a test post

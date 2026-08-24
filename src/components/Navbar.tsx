@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  LayoutDashboard,
+  PenLine,
+  Search,
+  UserRound,
+} from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import MobileBackButton from "./MobileBackButton";
-import { config } from "@/lib/config";
+import ColorModeToggle from "./ColorModeToggle";
+import { getPublicationSettings, getSiteProfile } from "@/lib/site-settings";
 
 interface NavbarProps {
   activeLink?: "feed" | "explore" | "dashboard";
@@ -17,7 +24,7 @@ interface NavbarProps {
   } | null;
 }
 
-export default function Navbar({
+export default async function Navbar({
   activeLink = "feed",
   showBack,
   backHref = "/",
@@ -25,59 +32,102 @@ export default function Navbar({
   blogName,
   user,
 }: NavbarProps) {
-  const name = blogName || config.BLOG_NAME;
+  const [profile, publication] = await Promise.all([
+    getSiteProfile(),
+    getPublicationSettings(),
+  ]);
+  const name = blogName || profile.name;
   const canAccessDashboard = user?.role === "ADMIN" || user?.role === "AUTHOR";
 
   return (
-    <nav className="theme-nav fixed top-0 w-full z-50 backdrop-blur-xl transition-all duration-300 animate-fade-in-down">
-      <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto font-headline tracking-tight antialiased text-sm font-medium">
-        <div className="flex items-center gap-2 md:gap-8">
+    <nav
+      aria-label="Primary navigation"
+      className="theme-nav fixed top-0 w-full z-50 backdrop-blur-xl transition-all duration-300"
+    >
+      <div className="site-container h-[4.5rem] flex items-center justify-between font-body text-sm">
+        <div className="flex items-center gap-1 md:gap-7">
           <MobileBackButton />
           <Link
             href="/"
-            className="text-xl font-bold tracking-tighter text-on-surface hover:text-primary transition-colors duration-300"
+            className="group flex items-center gap-2.5 text-lg font-extrabold tracking-[-0.04em] text-on-surface"
           >
-            {name}
+            {profile.logoUrl && !blogName ? (
+              <img
+                src={profile.logoUrl}
+                alt=""
+                width="32"
+                height="32"
+                className="w-8 h-8 rounded-xl object-contain"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="grid size-8 place-items-center rounded-xl editorial-gradient text-white shadow-sm transition-transform duration-200 group-hover:-rotate-3"
+              >
+                <PenLine className="size-4" />
+              </span>
+            )}
+            <span>{name}</span>
           </Link>
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center gap-1">
             <Link
               href="/"
+              aria-current={activeLink === "feed" ? "page" : undefined}
               className={`${activeLink === "feed" ? "theme-nav-link-active" : "theme-nav-link"} transition-colors duration-300`}
             >
-              Feed
+              Stories
             </Link>
             <Link
               href="/explore"
+              aria-current={activeLink === "explore" ? "page" : undefined}
               className={`${activeLink === "explore" ? "theme-nav-link-active" : "theme-nav-link"} transition-colors duration-300`}
             >
-              Explore
+              All stories
             </Link>
-            {canAccessDashboard && (
+            {publication.pages.about.enabled && (
               <Link
-                href="/dashboard"
-                className={`${activeLink === "dashboard" ? "theme-nav-link-active" : "theme-nav-link"} transition-colors duration-300`}
-              >
-                Dashboard
-              </Link>
-            )}
-            {user?.role === "AGENT" && (
-              <Link
-                href="/agent"
+                href="/about"
                 className="theme-nav-link transition-colors duration-300"
               >
-                Account
+                {publication.pages.about.title}
               </Link>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Link
+            href="/explore"
+            aria-label="Search stories"
+            className="grid min-h-11 min-w-11 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+          >
+            <Search className="size-[1.15rem]" />
+          </Link>
+          <ColorModeToggle />
           {showBack && (
             <Link
               href={backHref}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm theme-nav-link transition-colors rounded-lg hover:bg-surface-container/70"
+              className="hidden md:flex items-center gap-2 btn-tertiary"
             >
               <ArrowLeft className="w-5 h-5" />
               {backLabel}
+            </Link>
+          )}
+          {canAccessDashboard && (
+            <Link
+              href="/dashboard"
+              className="btn-primary !hidden sm:!inline-flex"
+            >
+              <LayoutDashboard className="size-4" />
+              Workspace
+            </Link>
+          )}
+          {user?.role === "AGENT" && (
+            <Link
+              href="/agent"
+              className="btn-secondary !hidden sm:!inline-flex"
+            >
+              <UserRound className="size-4" />
+              Account
             </Link>
           )}
           {user && <LogoutButton />}

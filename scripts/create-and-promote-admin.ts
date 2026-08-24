@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { PrismaClient } from "../src/lib/prisma";
+import { PrismaClient } from "../src/lib/prisma/client";
 
 const [, , email, name] = process.argv;
 
@@ -27,7 +27,7 @@ const prisma = new PrismaClient({ adapter });
 async function main(): Promise<void> {
   const resolvedName = name || email;
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.findFirst({
     where: { email: { mode: "insensitive", equals: email } },
     include: { profile: true },
   });

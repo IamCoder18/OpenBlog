@@ -1,0 +1,35 @@
+# syntax=docker/dockerfile:1.7
+
+ARG POSTGRES_VERSION=16.14-bookworm
+ARG PG_CRON_VERSION=1.6.7
+
+FROM postgres:${POSTGRES_VERSION} AS pg-cron-builder
+
+ARG PG_CRON_VERSION
+ARG PG_CRON_SHA256=d950bc29155f31017567e23a31d268ff672e98276c0e9d062512fb7870351f03
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates curl gcc libc6-dev make postgresql-server-dev-16 \
+    && curl --fail --location --silent --show-error \
+      "https://github.com/citusdata/pg_cron/archive/refs/tags/v${PG_CRON_VERSION}.tar.gz" \
+      --output /tmp/pg_cron.tar.gz \
+    && echo "${PG_CRON_SHA256}  /tmp/pg_cron.tar.gz" | sha256sum --check --strict \
+    && mkdir /tmp/pg_cron \
+    && tar --extract --gzip --file /tmp/pg_cron.tar.gz --strip-components=1 --directory /tmp/pg_cron \
+    && make --directory /tmp/pg_cron \
+    && make --directory /tmp/pg_cron install DESTDIR=/opt/pg_cron
+
+FROM postgres:${POSTGRES_VERSION}
+
+ARG PG_CRON_VERSION
+
+LABEL org.opencontainers.image.title="OpenBlog PostgreSQL" \
+      org.opencontainers.image.description="PostgreSQL with pg_cron for OpenBlog scheduled publishing" \
+      org.opencontainers.image.source="https://github.com/IamCoder18/OpenBlog" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${PG_CRON_VERSION}"
+
+COPY --from=pg-cron-builder /opt/pg_cron/usr/lib/postgresql/16/lib/pg_cron.so /usr/lib/postgresql/16/lib/pg_cron.so
+COPY --from=pg-cron-builder /opt/pg_cron/usr/share/postgresql/16/extension/ /usr/share/postgresql/16/extension/
+
+CMD ["postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.use_background_workers=on"]

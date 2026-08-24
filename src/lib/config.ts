@@ -5,11 +5,15 @@ export const config = {
     );
   },
   get BASE_URL() {
-    return (
+    const configured =
       process.env.BASE_URL ||
       process.env.NEXT_PUBLIC_BASE_URL ||
-      "http://localhost:3000"
-    );
+      "http://localhost:3000";
+    try {
+      return new URL(configured).origin;
+    } catch {
+      return "http://localhost:3000";
+    }
   },
   get PORT() {
     return parseInt(process.env.PORT || "3000", 10);
@@ -42,11 +46,7 @@ export async function getTheme(): Promise<string> {
       where: { key: "theme" },
     });
     return setting?.value || "default";
-  } catch (error) {
-    // Fallback for when database is not available (e.g., during build)
-    console.warn(
-      "Database not available for theme lookup, using default theme"
-    );
+  } catch {
     return "default";
   }
 }
@@ -70,11 +70,7 @@ export async function getFuzzySearchThreshold(): Promise<number> {
     if (!rawValue || typeof rawValue !== "string") return 0.3;
     const value = parseFloat(rawValue);
     return isNaN(value) ? 0.3 : Math.max(0, Math.min(1, value));
-  } catch (error) {
-    // Fallback for when database is not available (e.g., during build)
-    console.warn(
-      "Database not available for fuzzy search threshold, using default"
-    );
+  } catch {
     return 0.3;
   }
 }

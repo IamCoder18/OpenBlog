@@ -1,50 +1,94 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Trash2 } from "lucide-react";
 
 export default function DeleteModal({
   title,
   onConfirm,
   onCancel,
+  pending = false,
+  error = "",
 }: {
   title: string;
   onConfirm: () => void;
   onCancel: () => void;
+  pending?: boolean;
+  error?: string;
 }) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previous = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    previous.current = document.activeElement as HTMLElement;
+    cancelRef.current?.focus();
+    function keydown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !pending) onCancel();
+      if (event.key === "Tab" && dialogRef.current) {
+        const items = [
+          ...dialogRef.current.querySelectorAll<HTMLElement>(
+            "button:not(:disabled)"
+          ),
+        ];
+        if (!items.length) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    document.addEventListener("keydown", keydown);
+    return () => {
+      document.removeEventListener("keydown", keydown);
+      previous.current?.focus();
+    };
+  }, [onCancel, pending]);
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] grid place-items-center p-4 bg-black/60">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onCancel}
-      />
-      <div className="relative bg-surface-container-low rounded-2xl border border-outline-variant/10 shadow-2xl max-w-md w-full p-6 animate-scale-in">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 theme-danger-soft rounded-lg">
-            <Trash2 className="w-5 h-5 theme-danger-text" />
-          </div>
-          <h3 className="font-headline text-lg font-bold text-on-surface">
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-title"
+        aria-describedby="delete-description"
+        className="bg-surface-container rounded-2xl max-w-md w-full p-6 shadow-2xl"
+      >
+        <div className="flex gap-3 items-center">
+          <Trash2 className="theme-danger-text" />
+          <h2 id="delete-title" className="text-xl font-bold">
             Delete story
-          </h3>
+          </h2>
         </div>
-        <p className="text-sm text-on-surface-variant mb-6">
-          Are you sure you want to delete{" "}
-          <span className="text-on-surface font-semibold">
-            &quot;{title}&quot;
-          </span>
-          ? This action cannot be undone.
+        <p id="delete-description" className="mt-4 text-on-surface-variant">
+          Permanently delete “{title}”? This cannot be undone.
         </p>
-        <div className="flex gap-3 justify-end">
+        {error && (
+          <p role="alert" className="mt-3 theme-danger-text">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-end gap-3 mt-6">
           <button
+            ref={cancelRef}
+            type="button"
+            disabled={pending}
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-on-surface rounded-lg border border-outline-variant/20 hover:bg-surface-container transition-colors"
+            className="btn-secondary"
           >
             Cancel
           </button>
           <button
+            type="button"
+            disabled={pending}
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-semibold theme-danger-soft theme-danger-text rounded-lg border border-current/15 hover:opacity-90 transition-colors active:scale-95"
+            className="theme-danger-soft theme-danger-text px-5 rounded-lg font-semibold"
           >
-            Delete
+            {pending ? "Deleting…" : "Delete permanently"}
           </button>
         </div>
       </div>

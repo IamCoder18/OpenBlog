@@ -105,9 +105,9 @@ COPY --from=builder --chown=node:node /app/src/lib/prisma ./src/lib/prisma
 COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
 
 COPY --from=builder --chown=node:node /app/scripts/entrypoint.sh ./entrypoint.sh
-COPY --from=builder --chown=node:node /app/scripts/create-admin.js ./scripts/create-admin.js
-COPY --from=builder --chown=node:node /app/scripts/promote-admin.js ./scripts/promote-admin.js
-COPY --from=builder --chown=node:node /app/scripts/change-password.js ./scripts/change-password.js
+COPY --from=builder --chown=node:node /app/scripts/create-admin.ts ./scripts/create-admin.ts
+COPY --from=builder --chown=node:node /app/scripts/promote-admin.ts ./scripts/promote-admin.ts
+COPY --from=builder --chown=node:node /app/scripts/change-password.ts ./scripts/change-password.ts
 RUN chmod +x ./entrypoint.sh
 
 RUN mkdir -p .next && chown -R node:node .next

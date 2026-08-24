@@ -6,24 +6,31 @@ import { apiHandler } from "@/lib/api-error";
 // Note: This endpoint is only used for E2E tests
 // In production, this should be properly secured
 export const POST = apiHandler(async function POST(req: Request) {
+  if (process.env.E2E_TESTING !== "true") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   const session = await auth.api.getSession({ headers: req.headers });
 
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { email, role } = await req.json();
+  const { email, role, self } = await req.json();
 
-  if (!email || !role) {
+  if (
+    (!email && self !== true) ||
+    !role ||
+    !["ADMIN", "AUTHOR", "AGENT", "GUEST"].includes(role)
+  ) {
     return NextResponse.json(
       { error: "Missing email or role" },
       { status: 400 }
     );
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+  const user = email
+    ? await prisma.user.findUnique({ where: { email } })
+    : await prisma.user.findUnique({ where: { id: session.user.id } });
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });

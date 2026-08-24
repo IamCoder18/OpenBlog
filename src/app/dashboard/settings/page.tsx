@@ -30,15 +30,15 @@ export default async function SettingsPage({
     <div className="pt-20 lg:pt-8 px-4 sm:px-6 lg:px-12 pb-12 max-w-4xl mx-auto">
       {/* Header */}
       <header className="mb-8">
-        <span className="text-primary font-label text-[10px] tracking-[0.2em] uppercase">
-          {isPersonal ? "Your Workspace" : "Admin Mode"}
+        <span className="eyebrow">
+          {isPersonal ? "Your workspace" : "Publication view"}
         </span>
-        <h1 className="font-headline text-3xl sm:text-4xl font-extrabold tracking-tight text-on-surface mt-2">
+        <h1 className="mt-2 font-headline text-3xl font-extrabold tracking-[-0.045em] text-on-surface sm:text-4xl">
           Settings
         </h1>
         <p className="text-on-surface-variant text-sm mt-2">
           {isPersonal
-            ? "Customize your experience and manage API access."
+            ? "Manage reading preferences, security, and API access."
             : "Manage themes, users, and platform configuration."}
         </p>
       </header>

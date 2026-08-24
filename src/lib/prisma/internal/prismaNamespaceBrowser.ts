@@ -58,6 +58,7 @@ export const ModelName = {
   UserProfile: 'UserProfile',
   ApiKey: 'ApiKey',
   Post: 'Post',
+  PostRedirect: 'PostRedirect',
   PostMetadata: 'PostMetadata',
   SiteSettings: 'SiteSettings',
   PageView: 'PageView'
@@ -151,10 +152,14 @@ export type UserProfileScalarFieldEnum = (typeof UserProfileScalarFieldEnum)[key
 export const ApiKeyScalarFieldEnum = {
   id: 'id',
   key: 'key',
+  prefix: 'prefix',
   name: 'name',
   userId: 'userId',
   createdAt: 'createdAt',
-  expiresAt: 'expiresAt'
+  expiresAt: 'expiresAt',
+  lastUsedAt: 'lastUsedAt',
+  revokedAt: 'revokedAt',
+  scopes: 'scopes'
 } as const
 
 export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof ApiKeyScalarFieldEnum]
@@ -169,6 +174,9 @@ export const PostScalarFieldEnum = {
   visibility: 'visibility',
   authorId: 'authorId',
   publishedAt: 'publishedAt',
+  scheduledAt: 'scheduledAt',
+  isPinned: 'isPinned',
+  isFeatured: 'isFeatured',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -176,10 +184,21 @@ export const PostScalarFieldEnum = {
 export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
 
 
+export const PostRedirectScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  postId: 'postId',
+  createdAt: 'createdAt'
+} as const
+
+export type PostRedirectScalarFieldEnum = (typeof PostRedirectScalarFieldEnum)[keyof typeof PostRedirectScalarFieldEnum]
+
+
 export const PostMetadataScalarFieldEnum = {
   id: 'id',
   seoDescription: 'seoDescription',
   coverImage: 'coverImage',
+  coverImageAlt: 'coverImageAlt',
   tags: 'tags',
   postId: 'postId'
 } as const
@@ -190,7 +209,8 @@ export type PostMetadataScalarFieldEnum = (typeof PostMetadataScalarFieldEnum)[k
 export const SiteSettingsScalarFieldEnum = {
   id: 'id',
   key: 'key',
-  value: 'value'
+  value: 'value',
+  updatedAt: 'updatedAt'
 } as const
 
 export type SiteSettingsScalarFieldEnum = (typeof SiteSettingsScalarFieldEnum)[keyof typeof SiteSettingsScalarFieldEnum]

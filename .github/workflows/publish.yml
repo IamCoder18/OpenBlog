@@ -389,6 +389,12 @@ jobs:
         with:
           tag_name: ${{ needs.version.outputs.tag }}
           name: "OpenBlog ${{ needs.version.outputs.tag }}"
+          # `docker-compose.prod.yaml` is the installer's download target —
+          # see scripts/install.sh's COMPOSE_URL. Keeping the same file name
+          # across releases means the installer's "latest" download URL
+          # (`/releases/latest/download/docker-compose.prod.yaml`) always
+          # points at the most recent release's compose.
+          files: docker-compose.prod.yaml
           generate_release_notes: true
           prerelease: ${{ needs.version.outputs.is_prerelease == 'true' }}
           body: |

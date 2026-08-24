@@ -62,7 +62,10 @@ services:
       - -c
       - cron.use_background_workers=on
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PG 18+ stores data under /var/lib/postgresql with a major-version
+      # subdir (e.g. /var/lib/postgresql/18). Mounting at /data breaks the
+      # init flow; mount the parent and let PG create the version dir.
+      - postgres_data:/var/lib/postgresql
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:

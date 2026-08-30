@@ -40,7 +40,7 @@ OpenBlog ships a **pre-built Docker image** to GitHub Container Registry. You do
 ### Path A — one-line installer (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IamCoder18/OpenBlog/main/scripts/install.sh | bash
+curl -fsSL https://openblog.aaravlabs.com/install | bash
 ```
 
 The installer:
@@ -54,7 +54,7 @@ The installer:
 Non-interactive form (CI, scripted installs):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IamCoder18/OpenBlog/main/scripts/install.sh | \
+curl -fsSL https://openblog.aaravlabs.com/install | \
   bash -s -- --non-interactive \
     --base-url "https://blog.example.com" \
     --admin-email "you@example.com" \

@@ -62,14 +62,14 @@ $script:X  = if ($script:SupportsColor) { "`e[0m"  } else { "" }
 
 Function Write-Banner {
   Clear-Host
-  Write-Host "$script:BL$script:B   ____                  ______ _ _               $script:X"
-  Write-Host "$script:BL$script:B  / __ \                |  ____(_) |              $script:X"
-  Write-Host "$script:BL$script:B | |  | |_ __   ___ _ __| |__   _| | ___   __ _   $script:X"
-  Write-Host "$script:BL$script:B | |  | | '_ \ / _ \ '_ \  __| | | |/ _ \ / _` |   $script:X"
-  Write-Host "$script:BL$script:B | |__| | |_) |  __/ | | | |  | | | | (_) | (_| |   $script:X"
-  Write-Host "$script:BL$script:B  \____/| .__/ \___|_| |_|  |_|_|_|\___/ \__, |   $script:X"
-  Write-Host "$script:BL$script:B        | |                            __/ |   $script:X"
-  Write-Host "$script:BL$script:B        |_|       setup assistant    |___/    $script:X"
+  Write-Host "$script:BL$script:B   ____                   ____  _               $script:X"
+  Write-Host "$script:BL$script:B  / __ \                 |  _ \| |              $script:X"
+  Write-Host "$script:BL$script:B | |  | |_ __   ___ _ __ | |_) | | ___   __ _   $script:X"
+  Write-Host "$script:BL$script:B | |  | | '_ \ / _ \ '_ \|  _ <| |/ _ \ / _` |  $script:X"
+  Write-Host "$script:BL$script:B | |__| | |_) |  __/ | | | |_) | | (_) | (_| |  $script:X"
+  Write-Host "$script:BL$script:B  \____/| .__/ \___|_| |_|____/|_|\___/ \__, |  $script:X"
+  Write-Host "$script:BL$script:B        | |                              __/ |  $script:X"
+  Write-Host "$script:BL$script:B        |_|      setup assistant        |___/   $script:X"
   Write-Host "$script:D  Modern publishing for humans and machines.$script:X"
 }
 

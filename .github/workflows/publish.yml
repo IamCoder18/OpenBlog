@@ -309,7 +309,7 @@ jobs:
           provenance: mode=max
           sbom: true
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: Build and push PostgreSQL with pg_cron
         id: database-build
@@ -328,7 +328,7 @@ jobs:
           provenance: mode=max
           sbom: true
           cache-from: type=gha,scope=postgres
-          cache-to: type=gha,mode=max,scope=postgres
+          cache-to: type=gha,mode=min,scope=postgres
 
   # ──────────────────────────────────────────────────────────────────────────
   # 3. Create the GitHub Release. Skipped on PRs (no push happened).
